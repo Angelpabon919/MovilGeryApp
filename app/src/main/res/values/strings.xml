@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">MolviGeryApp</string>
+
+    <string-array name="tipos_documento">
+        <item>Selecciona un tipo de documento</item>
+        <item>Cédula de Ciudadania</item>
+        <item>Cédula de Extranjería</item>
+        <item>Pasaporte</item>
+    </string-array>
+
 </resources>
