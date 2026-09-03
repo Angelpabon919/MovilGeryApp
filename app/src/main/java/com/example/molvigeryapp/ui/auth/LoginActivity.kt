@@ -2,6 +2,7 @@ package com.example.molvigeryapp.ui.auth
 
 import android.os.Bundle
 import android.util.Patterns
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.databinding.ActivityLoginBinding
@@ -41,6 +42,18 @@ class LoginActivity : AppCompatActivity() {
             val prefs = getSharedPreferences(PREFS_NAME,MODE_PRIVATE)
             val correoGuardado = prefs.getString(KEY_CORREO, "")
             val contrasenaGuardada = prefs.getString(KEY_CONTRASENA, "")
+            
+            if (correoGuardado.isNullOrEmpty() || contrasenaGuardada.isNullOrEmpty()){
+                Toast.makeText(this, "No hay cuenta registrada ", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (contraseña == correoGuardado && contraseña == contrasenaGuardada){
+                Toast.makeText(this, "Inicio de sesion exitoso", Toast.LENGTH_SHORT).show()
+
+
+
+            }else{
+                Toast.makeText(this, "Correo o contraseña incorrecta", Toast.LENGTH_SHORT).show()}
         }
     }
 }
