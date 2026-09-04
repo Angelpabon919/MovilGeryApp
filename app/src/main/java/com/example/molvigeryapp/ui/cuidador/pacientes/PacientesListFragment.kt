@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.molvigeryapp.data.api.RetrofitInstance
+import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesListBinding
 
@@ -33,7 +33,7 @@ class PacientesListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // 1. Inicializar la arquitectura (Repository y ViewModel)
-        val repository = PacienteRepository(RetrofitInstance.api)
+        val repository = PacienteRepository()
         viewModel = PacienteViewModel(repository)
 
         // 2. Configurar el RecyclerView y el Buscador
