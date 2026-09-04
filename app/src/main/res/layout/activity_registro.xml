@@ -276,7 +276,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:background="@drawable/bg_info_register"
                     android:padding="15dp"
                     android:text="ⓘ  El rol de usuario será asignado por el administrador según tus funciones en la fundación."
                     android:textColor="@color/color_primary"
