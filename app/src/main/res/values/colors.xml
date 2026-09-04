@@ -9,6 +9,12 @@
     <color name="color_surface">#E9ECEF</color>
     <color name="color_text_secondary">#666666</color>
     <color name="color_alert_red">#E63946</color>
+    <color name="text_status">#7A5C07</color>
+
+
+    <color name="on_surface_variant">#454652</color>
+    <color name="secondary">#2761FE</color>
+    <color name="surface_card">#FFFFFF</color>
 
 
 </resources>

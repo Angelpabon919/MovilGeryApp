@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- ================================================= -->
+        <!-- HEADER AZUL DEL CUIDADOR -->
+        <!-- ================================================= -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_rounded"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="22dp">
+
+            <!-- Barra superior -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_marginTop="15dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- BOTÓN ATRÁS -->
+
+                <TextView
+                    android:id="@+id/btnVolver"
+                    android:layout_width="20dp"
+                    android:layout_height="35dp"
+                    android:layout_marginEnd="23dp"
+                    android:layout_marginBottom="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Volver"
+                    android:gravity="center"
+                    android:text="‹"
+                    android:textColor="#FFFFFF"
+                    android:textSize="30sp" />
+
+                <!-- TÍTULO -->
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    android:text="Detalle del cuidador"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <!-- CAMPANA -->
+
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp">
+
+                    <ImageView
+                        android:id="@+id/btnNotificaciones"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:padding="11dp"
+                        android:src="@drawable/notifications"
+                        android:background="@drawable/bg_notifi"
+                        android:contentDescription="Notificaciones" />
+
+                    <TextView
+                        android:id="@+id/txtNotificaciones"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="top|end"
+                        android:gravity="center"
+                        android:text="5"
+                        android:textColor="#FFFFFF"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_badge" />
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <!-- ============================================= -->
+            <!-- INFORMACIÓN DEL CUIDADOR -->
+            <!-- ============================================= -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- FOTO -->
+
+                <ImageView
+                    android:id="@+id/imgCuidador"
+                    android:layout_width="82dp"
+                    android:layout_height="82dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/img"
+                    android:background="@drawable/bg_rounded"
+                    android:contentDescription="Foto del cuidador" />
+
+                <!-- INFORMACIÓN -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtNombreCuidador"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="María Fernández"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtCargoCuidador"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Auxiliar de Enfermería"
+                        android:textColor="#DDE5FF"
+                        android:textSize="13sp" />
+
+                    <!-- ID + ESTADO -->
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/txtIdCuidador"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="3dp"
+                            android:paddingBottom="3dp"
+                            android:text="C-0042"
+                            android:textColor="#FFFFFF"
+                            android:textSize="10sp"
+                            android:background="#3152C8" />
+
+                        <TextView
+                            android:id="@+id/txtEstadoCuidador"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="7dp"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="3dp"
+                            android:paddingBottom="3dp"
+                            android:text="Activo"
+                            android:textColor="@color/text_status"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/bg_status_activo" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- ============================================= -->
+            <!-- INFORMACIÓN RÁPIDA -->
+            <!-- ============================================= -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="62dp"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/redondeado"
+                android:padding="8dp">
+
+                <!-- TURNO -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TURNO"
+                        android:textColor="#DDE5FF"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtTurno"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="Mañana 06:00–14:00"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <!-- INGRESO -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="INGRESO"
+                        android:textColor="#DDE5FF"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtIngreso"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="12 Mar 2022"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <!-- PACIENTES -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PACIENTES"
+                        android:textColor="#DDE5FF"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtCantidadPacientes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="3"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ================================================= -->
+        <!-- CONTENIDO -->
+        <!-- ================================================= -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="30dp">
+
+            <!-- ============================================= -->
+            <!-- MÓDULOS HORIZONTALES -->
+            <!-- ============================================= -->
+
+            <HorizontalScrollView
+                android:id="@+id/scrollModulos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/redondeado_scroll"
+                android:paddingTop="12dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <!-- ========================================= -->
+                    <!-- EVENTOS ADVERSOS -->
+                    <!-- ========================================= -->
+
+                    <LinearLayout
+                        android:id="@+id/moduloEventos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingEnd="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textEventos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Eventos Adversos"
+                            android:textColor="#3B5BDB"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:id="@+id/lineaEventos"
+                            android:layout_width="match_parent"
+                            android:layout_height="3dp"
+                            android:layout_marginTop="8dp"
+                            android:background="#3B5BDB" />
+
+                    </LinearLayout>
+
+
+                    <!-- ========================================= -->
+                    <!-- VER TURNOS -->
+                    <!-- ========================================= -->
+
+                    <LinearLayout
+                        android:id="@+id/moduloTurnos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingEnd="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textTurnos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Ver Turnos"
+                            android:textColor="#98A2B3"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:id="@+id/lineaTurnos"
+                            android:layout_width="match_parent"
+                            android:layout_height="3dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@android:color/transparent" />
+
+                    </LinearLayout>
+
+
+                    <!-- ========================================= -->
+                    <!-- PACIENTES ASIGNADOS -->
+                    <!-- ========================================= -->
+
+                    <LinearLayout
+                        android:id="@+id/moduloPacientes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingEnd="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textPacientes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pacientes Asignados"
+                            android:textColor="#98A2B3"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:id="@+id/lineaPacientes"
+                            android:layout_width="match_parent"
+                            android:layout_height="3dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@android:color/transparent" />
+
+                    </LinearLayout>
+
+
+                    <!-- ========================================= -->
+                    <!-- STOCK MEDICACIÓN -->
+                    <!-- ========================================= -->
+
+                    <LinearLayout
+                        android:id="@+id/moduloMedicamentos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingEnd="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textMedicamentos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Stock Medicación"
+                            android:textColor="#98A2B3"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:id="@+id/lineaMedicamentos"
+                            android:layout_width="match_parent"
+                            android:layout_height="3dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@android:color/transparent" />
+
+                    </LinearLayout>
+
+
+                    <!-- ========================================= -->
+                    <!-- RESPONSABILIDADES -->
+                    <!-- ========================================= -->
+
+                    <LinearLayout
+                        android:id="@+id/moduloResponsabilidades"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingEnd="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textResponsabilidades"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Responsabilidades"
+                            android:textColor="#98A2B3"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:id="@+id/lineaResponsabilidades"
+                            android:layout_width="match_parent"
+                            android:layout_height="3dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@android:color/transparent" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+            <FrameLayout
+                android:id="@+id/contenedorContenido"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
