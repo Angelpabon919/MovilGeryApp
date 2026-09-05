@@ -1,5 +1,6 @@
 package com.example.molvigeryapp.ui.auth
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.Toast
@@ -18,6 +19,12 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.tvCrearCuenta.setOnClickListener {
+            val intent = Intent (this, RegistroActivity::class.java)
+            startActivity(intent)
+
+        }
 
         binding.btnIniciarSesion.setOnClickListener {
             val correo = binding.etCorreo.text.toString()

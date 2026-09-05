@@ -6,7 +6,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "https://geriapp-web-1.onrender.com/api/pacientes/"
+    private const val BASE_URL = "https://geriapp-web-1.onrender.com/"
     private val loggin = HttpLoggingInterceptor().apply {
         level= HttpLoggingInterceptor.Level.BODY
     }
@@ -19,10 +19,5 @@ object RetrofitClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(ApiService::class.java)
-
-
-
-
-
 
 }
