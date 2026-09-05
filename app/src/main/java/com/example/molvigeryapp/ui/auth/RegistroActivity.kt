@@ -15,6 +15,9 @@ import com.example.molvigeryapp.databinding.ActivityRegistroBinding
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.model.Usuario
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class RegistroActivity : AppCompatActivity() {
 
@@ -90,6 +93,7 @@ class RegistroActivity : AppCompatActivity() {
             }
             if (correo.isEmpty()) {
                 binding.etCorreo.error = "Ingrese el correo"
+                return@setOnClickListener
             }
             if (!Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
                 binding.etCorreo.error = "Ingrese un correo válido"
@@ -112,13 +116,23 @@ class RegistroActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val tipoDocumentoApi = when (tipoDocumento) {
-                "Cédula de cuidadanía" -> "CC"
-                "Tarjeta de identidad" -> "TI"
-                "Cédula de extranjería" -> "CE"
-                "Pasaporte" -> "PA"
-                else -> ""
+            val tipoDocumentoApi = when (binding.spTipoDocumento.selectedItemPosition) {
+                1 -> "CC"
+                2 -> "TI"
+                3 -> "CE"
+                4 -> "PA"
+                else -> {
+                    Toast.makeText(
+                        this,
+                        "selecione un tipo de documento valido",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@setOnClickListener
+                }
             }
+
+            val fechaIngreso = SimpleDateFormat("yyyy-MM-dd",
+                Locale.getDefault()).format(Date())
 
             val usuario = Usuario(
                 tipoDocumento = tipoDocumentoApi,
@@ -127,6 +141,7 @@ class RegistroActivity : AppCompatActivity() {
                 apellidos = apellidos,
                 correo = correo,
                 telefono = telefono,
+                fechaIngreso = fechaIngreso,
                 contrasena = contrasena
             )
 
@@ -140,13 +155,14 @@ class RegistroActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 } catch (e: Exception) {
+
                     Toast.makeText(
                         this@RegistroActivity,
-                        "Error: ${e.message}",
-                        Toast.LENGTH_SHORT
+                        "Error al Registrase",
+                        Toast.LENGTH_LONG
                     ).show()
+                }
                 }
             }
         }
-    }
     }

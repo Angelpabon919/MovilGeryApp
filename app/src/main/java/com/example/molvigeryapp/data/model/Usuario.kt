@@ -9,10 +9,10 @@ class Usuario (
     @SerializedName("tipo_documento")
     val tipoDocumento: String,
 
-    @SerializedName("numnero_documento")
+    @SerializedName("numero_documento")
     val numeroDocumento: String,
 
-    @SerializedName("nombre")
+    @SerializedName("nombres")
     val nombres: String,
 
     @SerializedName("apellidos")
