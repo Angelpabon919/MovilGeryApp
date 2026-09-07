@@ -11,7 +11,7 @@ interface ApiService {
     @GET("api/pacientes/")
     suspend fun getPacientes(): List<Paciente>
 
-    @POST("api/usuarios/")
+    @POST("api/usuarios/registro/")
     suspend fun registrarUsuario(
         @Body usuario: Usuario
     ): Usuario
