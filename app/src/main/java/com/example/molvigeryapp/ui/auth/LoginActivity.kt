@@ -2,23 +2,20 @@ package com.example.molvigeryapp.ui.auth
 
 import android.content.Intent
 import retrofit2.HttpException
-import android.os.Build
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.Toast
-import androidx.annotation.RequiresExtension
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.molvigeryapp.MainActivity
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.databinding.ActivityLoginBinding
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
 
-    @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
@@ -76,12 +73,8 @@ class LoginActivity : AppCompatActivity() {
                 // Consumimos el endpoint de login
                 val respuesta = RetrofitClient.api.loginUsuario(datos)
 
-                // Login correcto
-                Toast.makeText(
-                    this@LoginActivity,
-                    respuesta.mensaje,
-                    Toast.LENGTH_SHORT
-                ).show()
+
+
 
                 // Obtenemos los datos del usuario
                 val usuario = respuesta.usuario
@@ -92,8 +85,11 @@ class LoginActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
+                val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+
                 // Aquí posteriormente pondremos la navegación
-                // hacia MainActivity.
 
             } catch (e: HttpException) {
 
