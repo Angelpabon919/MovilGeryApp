@@ -99,11 +99,11 @@ class DatosBasicosFragment : Fragment() {
             paciente?.let {
 
                 binding.etTipoDocumento.setText(
-                    it.tipo_documento ?: ""
+                    it.tipoDocumento ?: ""
                 )
 
                 binding.etNumeroDocumento.setText(
-                    it.numero_documento ?: ""
+                    it.numeroDocumento ?: ""
                 )
 
                 binding.etEps.setText(
@@ -123,7 +123,7 @@ class DatosBasicosFragment : Fragment() {
                 )
 
                 binding.etGrupoSanguineo.setText(
-                    "${it.grupo_sanguineo ?: ""}${it.rh ?: ""}"
+                    "${it.grupoSanguineo ?: ""}${it.rh ?: ""}"
                 )
             }
         }
@@ -154,13 +154,13 @@ class DatosBasicosFragment : Fragment() {
             val pacienteModificado =
                 pacienteActual.copy(
 
-                    tipo_documento =
+                    tipoDocumento =
                         binding.etTipoDocumento
                             .text
                             .toString()
                             .trim(),
 
-                    numero_documento =
+                    numeroDocumento =
                         binding.etNumeroDocumento
                             .text
                             .toString()

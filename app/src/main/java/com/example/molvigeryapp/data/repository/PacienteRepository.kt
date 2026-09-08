@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 
 class PacienteRepository {
 
-    private val api = RetrofitClient.api
+    private val api = RetrofitClient.apiService
 
     suspend fun obtenerPacientes(): List<Paciente> =
         withContext(Dispatchers.IO) {
@@ -18,4 +18,5 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
             api.getPacienteById(id)
         }
+
 }

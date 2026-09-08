@@ -1,5 +1,4 @@
 package com.example.molvigeryapp.data.api
-
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
 import com.example.molvigeryapp.data.model.Paciente
@@ -10,30 +9,22 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface ApiService {
-
-    // =========================================================
-    // PACIENTES
-    // =========================================================
-
-    @GET("pacientes/")
+    @GET("api/pacientes/")
     suspend fun getPacientes(): List<Paciente>
 
-    @GET("pacientes/{id}/")
-    suspend fun getPacienteById(
-        @Path("id") id: Int
-    ): Paciente
+    @GET("api/pacientes/{id}/")
+    suspend fun getPacienteById(@Path("id") id: Int): Paciente
 
-    // =========================================================
-    // USUARIOS
-    // =========================================================
-
-    @POST("usuarios/registro/")
+    @POST("api/usuarios/registro/")
     suspend fun registrarUsuario(
         @Body usuario: Usuario
     ): Usuario
 
-    @POST("usuarios/login/")
+    @POST("api/usuarios/login/")
     suspend fun loginUsuario(
         @Body datos: LoginRequest
     ): LoginResponse
+
+    @GET("api/usuarios/")
+    suspend fun getUsuarios(): List<Usuario>
 }

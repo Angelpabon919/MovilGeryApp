@@ -91,7 +91,7 @@ class CitasEncargadoFragment : Fragment() {
 
             try {
 
-                val pacientes = RetrofitClient.api.getPacientes()
+                val pacientes = RetrofitClient.apiService.getPacientes()
 
                 listaPacientes = pacientes
 
