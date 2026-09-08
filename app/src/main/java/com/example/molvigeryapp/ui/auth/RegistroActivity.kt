@@ -28,16 +28,6 @@ class RegistroActivity : AppCompatActivity() {
         binding = ActivityRegistroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.scrollRegistro) { view, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(
-                view.paddingLeft,
-                systemBars.top,
-                view.paddingRight,
-                systemBars.bottom
-            )
-            insets
-        }
 
         val adapter = ArrayAdapter.createFromResource(
             this, R.array.tipos_documento,
@@ -157,7 +147,7 @@ class RegistroActivity : AppCompatActivity() {
 
                     Toast.makeText(
                         this@RegistroActivity,
-                        "Error al Registrase",1
+                        "Error al Registrase", Toast.LENGTH_SHORT
                     ).show()
                 }
                 }
