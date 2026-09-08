@@ -32,6 +32,7 @@
                 android:id="@+id/btnVolverEvento"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:layout_marginTop="15dp"
                 android:background="@android:color/transparent"
                 android:contentDescription="Volver"
                 android:padding="8dp"
@@ -44,6 +45,8 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:text="Detalle del evento"
+                android:layout_marginTop="15dp
+"
                 android:textColor="#FFFFFF"
                 android:textSize="20sp"
                 android:textStyle="bold" />

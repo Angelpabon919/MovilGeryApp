@@ -16,66 +16,204 @@ class DatosBasicosFragment : Fragment() {
     private var _binding: FragmentDatosBasicosBinding? = null
     private val binding get() = _binding!!
 
-    // Compartimos el ViewModel con la Activity o Fragment contenedor
+    // =========================================================
+    // VIEWMODEL COMPARTIDO
+    // =========================================================
+
     private val viewModel: PacienteViewModel by activityViewModels {
-        PacienteViewModelFactory(PacienteRepository())
+        PacienteViewModelFactory(
+            PacienteRepository()
+        )
     }
+
+    // =========================================================
+    // CREAR VISTA
+    // =========================================================
+
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentDatosBasicosBinding.inflate(inflater, container, false)
+
+        _binding =
+            FragmentDatosBasicosBinding.inflate(
+                inflater,
+                container,
+                false
+            )
+
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    // =========================================================
+    // CONFIGURAR VISTA
+    // =========================================================
 
-        // 1. Obtención correcta de argumentos (buscando en 'arguments' directo o en 'parentFragment')
-        val pacienteArgs = (arguments?.getSerializable("paciente_data")
-            ?: parentFragment?.arguments?.getSerializable("paciente_data")) as? Paciente
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
-        // Si llegaron argumentos, los asignamos al ViewModel
-        pacienteArgs?.let {
-            viewModel.seleccionarPaciente(it)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        cargarPacienteDesdeArgumentos()
+
+        observarPaciente()
+
+        configurarGuardar()
+    }
+
+    // =========================================================
+    // CARGAR PACIENTE
+    // =========================================================
+
+    private fun cargarPacienteDesdeArgumentos() {
+
+        val pacienteArgs =
+            arguments?.getSerializable(
+                "paciente_data"
+            ) as? Paciente
+
+        pacienteArgs?.let { paciente ->
+
+            viewModel.seleccionarPaciente(
+                paciente
+            )
         }
+    }
 
-        // 2. Observamos el LiveData del ViewModel para llenar los EditText de forma reactiva
-        viewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { p ->
-            p?.let {
-                binding.etTipoDocumento.setText(it.tipo_documento ?: "")
-                binding.etNumeroDocumento.setText(it.numero_documento ?: "")
-                binding.etEps.setText(it.eps ?: "")
-                binding.etSede.setText(it.sede ?: "")
-                binding.etHabitacion.setText(it.habitacion?.toString() ?: "")
-                binding.etCama.setText(it.cama?.toString() ?: "")
-                binding.etGrupoSanguineo.setText("${it.grupo_sanguineo ?: ""}${it.rh ?: ""}")
-            }
-        }
+    // =========================================================
+    // OBSERVAR PACIENTE
+    // =========================================================
 
-        // 3. Evento Guardar Cambios
-        binding.btnGuardarDatos.setOnClickListener {
-            val pacienteActual = viewModel.pacienteSeleccionado.value
-            if (pacienteActual != null) {
-                // Aquí extraes los textos modificados por el usuario
-                val pacienteModificado = pacienteActual.copy(
-                    tipo_documento = binding.etTipoDocumento.text.toString(),
-                    numero_documento = binding.etNumeroDocumento.text.toString(),
-                    eps = binding.etEps.text.toString(),
-                    sede = binding.etSede.text.toString(),
-                    habitacion = binding.etHabitacion.text.toString().toIntOrNull(),
-                    cama = binding.etCama.text.toString().toIntOrNull()
+    private fun observarPaciente() {
+
+        viewModel.pacienteSeleccionado.observe(
+            viewLifecycleOwner
+        ) { paciente ->
+
+            paciente?.let {
+
+                binding.etTipoDocumento.setText(
+                    it.tipo_documento ?: ""
                 )
 
-                Toast.makeText(requireContext(), "Guardando cambios de ${pacienteModificado.nombre ?: "paciente"}...", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(requireContext(), "No se encontró el paciente para actualizar", Toast.LENGTH_SHORT).show()
+                binding.etNumeroDocumento.setText(
+                    it.numero_documento ?: ""
+                )
+
+                binding.etEps.setText(
+                    it.eps ?: ""
+                )
+
+                binding.etSede.setText(
+                    it.sede ?: ""
+                )
+
+                binding.etHabitacion.setText(
+                    it.habitacion?.toString() ?: ""
+                )
+
+                binding.etCama.setText(
+                    it.cama?.toString() ?: ""
+                )
+
+                binding.etGrupoSanguineo.setText(
+                    "${it.grupo_sanguineo ?: ""}${it.rh ?: ""}"
+                )
             }
         }
     }
 
+    // =========================================================
+    // GUARDAR CAMBIOS
+    // =========================================================
+
+    private fun configurarGuardar() {
+
+        binding.btnGuardarDatos.setOnClickListener {
+
+            val pacienteActual =
+                viewModel.pacienteSeleccionado.value
+
+            if (pacienteActual == null) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró el paciente para actualizar",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                return@setOnClickListener
+            }
+
+            val pacienteModificado =
+                pacienteActual.copy(
+
+                    tipo_documento =
+                        binding.etTipoDocumento
+                            .text
+                            .toString()
+                            .trim(),
+
+                    numero_documento =
+                        binding.etNumeroDocumento
+                            .text
+                            .toString()
+                            .trim(),
+
+                    eps =
+                        binding.etEps
+                            .text
+                            .toString()
+                            .trim(),
+
+                    sede =
+                        binding.etSede
+                            .text
+                            .toString()
+                            .trim(),
+
+                    habitacion =
+                        binding.etHabitacion
+                            .text
+                            .toString()
+                            .trim()
+                            .toIntOrNull(),
+
+                    cama =
+                        binding.etCama
+                            .text
+                            .toString()
+                            .trim()
+                            .toIntOrNull()
+                )
+
+            // Actualizamos el paciente dentro del ViewModel
+            viewModel.seleccionarPaciente(
+                pacienteModificado
+            )
+
+            Toast.makeText(
+                requireContext(),
+                "Cambios guardados correctamente",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    // =========================================================
+    // DESTRUIR BINDING
+    // =========================================================
+
     override fun onDestroyView() {
+
         super.onDestroyView()
+
         _binding = null
     }
 }

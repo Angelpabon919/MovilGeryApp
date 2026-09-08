@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
+
+        <!-- Imagen paciente -->
+
+        <ImageView
+            android:id="@+id/imgPaciente"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:padding="10dp"
+            android:src="@drawable/img"
+            android:contentDescription="Paciente" />
+
+
+        <!-- Información -->
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="14dp">
+
+            <TextView
+                android:id="@+id/txtNombrePaciente"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Rosa Martínez"
+                android:textColor="#1F2937"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtHabitacionPaciente"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Habitación 204 · Cama 2"
+                android:textColor="#667085"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtEpsPaciente"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="EPS: Sura"
+                android:textColor="#98A2B3"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+
+        <!-- Flecha -->
+
+        <ImageView
+            android:id="@+id/imgIrPaciente"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="7dp"
+            android:src="@drawable/arrow"
+            android:contentDescription="Ver paciente" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
