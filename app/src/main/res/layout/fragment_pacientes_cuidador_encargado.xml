@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- ENCABEZADO -->
+
+    <LinearLayout
+        android:id="@+id/headerPacientes"
+        android:layout_width="0dp"
+        android:layout_height="170dp"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="18dp"
+        android:background="@drawable/bg_rounded"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- BOTÓN VOLVER -->
+
+        <ImageButton
+            android:id="@+id/btnVolverPacientes"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Volver"
+            android:padding="8dp"
+            android:src="@drawable/arrow_back"
+            app:tint="#FFFFFF" />
+
+        <!-- INFORMACIÓN DEL CUIDADOR -->
+
+        <TextView
+            android:id="@+id/txtNombreCuidadorPacientes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="María Fernández"
+            android:textColor="#FFFFFF"
+            android:textSize="21sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtCargoCuidadorPacientes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Auxiliar de Enfermería"
+            android:textColor="#E8EDFF"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+
+    <!-- RESUMEN -->
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardResumenPacientes"
+        android:layout_width="0dp"
+        android:layout_height="85dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="-20dp"
+        android:layout_marginEnd="20dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:layout_constraintTop_toBottomOf="@id/headerPacientes"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pacientes asignados"
+                    android:textColor="#667085"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/txtCantidadPacientesAsignados"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="0"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_icono_modulo"
+                android:contentDescription="Pacientes"
+                android:padding="11dp"
+                android:src="@drawable/person"
+                app:tint="#3B5BDB" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+    <!-- TÍTULO -->
+
+    <TextView
+        android:id="@+id/txtTituloPacientes"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="20dp"
+        android:text="Pacientes bajo su cuidado"
+        android:textColor="#1F2937"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/cardResumenPacientes"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <!-- LISTA DE PACIENTES -->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerPacientesCuidador"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="20dp"
+        app:layout_constraintTop_toBottomOf="@id/txtTituloPacientes"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <!-- MENSAJE SIN PACIENTES -->
+
+    <TextView
+        android:id="@+id/txtSinPacientesCuidador"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:gravity="center"
+        android:text="Este cuidador no tiene pacientes asignados."
+        android:textColor="#98A2B3"
+        android:textSize="14sp"
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="@id/recyclerPacientesCuidador"
+        app:layout_constraintBottom_toBottomOf="@id/recyclerPacientesCuidador"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

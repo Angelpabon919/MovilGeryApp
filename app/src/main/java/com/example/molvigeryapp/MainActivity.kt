@@ -1,29 +1,19 @@
 package com.example.molvigeryapp
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import android.content.Intent
-import com.example.molvigeryapp.databinding.ActivityMainBinding
-import com.example.molvigeryapp.ui.auth.LoginActivity
-import com.example.molvigeryapp.ui.cuidador.pacientes.PacientesListFragment
+import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        if (savedInstanceState == null){
-            supportFragmentManager.beginTransaction().replace(
-                binding.fragmentContainer.id, PacientesListFragment()
-            ).commit()
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, HomeEncargadoFragment())
+                .commit()
         }
     }
 }

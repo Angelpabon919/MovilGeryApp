@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+
+    <!-- ========================= -->
+    <!-- ENCABEZADO -->
+    <!-- ========================= -->
+
+    <LinearLayout
+        android:id="@+id/headerDetalleCita"
+        android:layout_width="0dp"
+        android:layout_height="82dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="22dp"
+        android:background="@drawable/bg_rounded"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+        <!-- VOLVER -->
+
+        <ImageView
+            android:id="@+id/btnVolverDetalleCita"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="10dp"
+            android:src="@drawable/arrow_back"
+            android:tint="@color/white"
+            android:contentDescription="Volver" />
+
+
+        <!-- TÍTULO -->
+
+        <TextView
+            android:id="@+id/txtTituloDetalleCita"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Detalle de cita"
+            android:textColor="@android:color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+
+        <!-- NOTIFICACIONES -->
+
+        <FrameLayout
+            android:layout_width="52dp"
+            android:layout_height="52dp">
+
+            <ImageView
+                android:id="@+id/btnNotificacionesDetalleCita"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:padding="15dp"
+                android:src="@drawable/notifications"
+                android:background="@drawable/bg_notifi"
+                android:contentDescription="Notificaciones" />
+
+            <TextView
+                android:id="@+id/txtNotificacionesDetalleCita"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="top|end"
+                android:gravity="center"
+                android:text="3"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_badge" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+
+    <!-- ========================= -->
+    <!-- CONTENIDO -->
+    <!-- ========================= -->
+
+    <ScrollView
+        android:id="@+id/scrollDetalleCita"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="30dp"
+        android:overScrollMode="never"
+        app:layout_constraintTop_toBottomOf="@id/headerDetalleCita"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+            <!-- ========================= -->
+            <!-- TÍTULO -->
+            <!-- ========================= -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CITA MÉDICA"
+                android:textColor="#687078"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+
+            <!-- ========================= -->
+            <!-- PACIENTE -->
+            <!-- ========================= -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardPacienteDetalleCita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+
+                    <ImageView
+                        android:id="@+id/imgPacienteDetalleCita"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:padding="10dp"
+                        android:src="@drawable/img"
+                        android:contentDescription="Paciente" />
+
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="13dp"
+                        android:orientation="vertical">
+
+
+                        <TextView
+                            android:id="@+id/txtPacienteDetalleCita"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Rosa Martínez"
+                            android:textColor="#1F2937"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+
+                        <TextView
+                            android:id="@+id/txtHabitacionDetalleCita"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Habitación 204 · Cama 2"
+                            android:textColor="#667085"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+
+            <!-- ========================= -->
+            <!-- INFORMACIÓN -->
+            <!-- ========================= -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="INFORMACIÓN DE LA CITA"
+                android:textColor="#687078"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+
+            <!-- TIPO -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="Tipo de cita"
+                android:textColor="#98A2B3"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtTipoDetalleCita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Consulta médica"
+                android:textColor="#1F2937"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
+            <!-- ESPECIALIDAD -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Especialidad"
+                android:textColor="#98A2B3"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtEspecialidadDetalleCita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Medicina general"
+                android:textColor="#1F2937"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
+            <!-- FECHA -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Fecha"
+                android:textColor="#98A2B3"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtFechaDetalleCita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="12 septiembre 2026"
+                android:textColor="#1F2937"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
+            <!-- HORA -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Hora"
+                android:textColor="#98A2B3"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtHoraDetalleCita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="10:30 AM"
+                android:textColor="#1F2937"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
+            <!-- ========================= -->
+            <!-- ESTADO -->
+            <!-- ========================= -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:text="ESTADO"
+                android:textColor="#687078"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+
+            <TextView
+                android:id="@+id/txtEstadoDetalleCita"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:text="PROGRAMADA"
+                android:textColor="#3B5BDB"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_status_activo" />
+
+
+            <!-- ========================= -->
+            <!-- OBSERVACIONES -->
+            <!-- ========================= -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="OBSERVACIONES"
+                android:textColor="#687078"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+
+            <TextView
+                android:id="@+id/txtObservacionesDetalleCita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="14dp"
+                android:background="@drawable/bg_search"
+                android:text="Control médico general."
+                android:textColor="#667085"
+                android:textSize="15sp" />
+
+
+            <!-- ========================= -->
+            <!-- BOTÓN EDITAR -->
+            <!-- ========================= -->
+
+            <Button
+                android:id="@+id/btnEditarCita"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="25dp"
+                android:text="EDITAR CITA"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#3B5BDB" />
+
+
+            <!-- ========================= -->
+            <!-- BOTÓN ELIMINAR -->
+            <!-- ========================= -->
+
+            <Button
+                android:id="@+id/btnEliminarCita"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="20dp"
+                android:text="ELIMINAR CITA"
+                android:textColor="#D32F2F"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#FDECEC" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

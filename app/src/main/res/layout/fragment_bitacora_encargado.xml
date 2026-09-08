@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+
+    <!-- ====================================================== -->
+    <!-- ENCABEZADO -->
+    <!-- ====================================================== -->
+
+    <LinearLayout
+        android:id="@+id/headerBitacora"
+        android:layout_width="0dp"
+        android:layout_height="200dp"
+        android:orientation="vertical"
+        android:paddingStart="28dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="35dp"
+        android:paddingBottom="24dp"
+        android:background="@drawable/bg_rounded"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+        <!-- TÍTULO + NOTIFICACIONES -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GerIApp"
+                    android:textColor="@android:color/white"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Bitácora"
+                    android:textColor="#DDE5FF"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+
+            <!-- CAMPANA -->
+
+            <FrameLayout
+                android:layout_width="52dp"
+                android:layout_height="52dp">
+
+                <ImageView
+                    android:id="@+id/btnNotificacionesBitacora"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:padding="15dp"
+                    android:src="@drawable/notifications"
+                    android:background="@drawable/bg_notifi"
+                    android:contentDescription="Notificaciones" />
+
+                <TextView
+                    android:id="@+id/txtNotificacionesBitacora"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="top|end"
+                    android:gravity="center"
+                    android:text="3"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_badge" />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+
+        <!-- ================================================== -->
+        <!-- BUSCADOR -->
+        <!-- ================================================== -->
+
+        <LinearLayout
+            android:id="@+id/searchContainerBitacora"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="26dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:background="@drawable/bg_search">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/search"
+                android:contentDescription="Buscar" />
+
+            <EditText
+                android:id="@+id/edtBuscarBitacora"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:background="@android:color/transparent"
+                android:hint="Buscar paciente o cuidador..."
+                android:singleLine="true"
+                android:textSize="16sp"
+                android:textColor="#212529"
+                android:textColorHint="#8A8F98"
+                android:padding="0dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <!-- ====================================================== -->
+    <!-- CONTENIDO DESPLAZABLE -->
+    <!-- ====================================================== -->
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollBitacora"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingBottom="110dp"
+        app:layout_constraintTop_toBottomOf="@id/headerBitacora"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationBitacora"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp">
+
+
+            <!-- ================================================== -->
+            <!-- RESUMEN -->
+            <!-- ================================================== -->
+
+            <LinearLayout
+                android:id="@+id/resumenBitacora"
+                android:layout_width="match_parent"
+                android:layout_height="90dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/bg_search"
+                android:padding="8dp">
+
+
+                <!-- REGISTROS -->
+
+                <LinearLayout
+                    android:id="@+id/cardTotalRegistros"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtTotalRegistros"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="12"
+                        android:textColor="#3B5BDB"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Registros"
+                        android:textColor="#687078"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+
+                <!-- DIVISOR -->
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="50dp"
+                    android:background="#D9DEE5" />
+
+
+                <!-- PENDIENTES -->
+
+                <LinearLayout
+                    android:id="@+id/cardPendientes"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtPendientes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2"
+                        android:textColor="#E76F51"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Pendientes"
+                        android:textColor="#687078"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+            <!-- ================================================== -->
+            <!-- FILTROS -->
+            <!-- ================================================== -->
+
+            <HorizontalScrollView
+                android:id="@+id/filtrosBitacora"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+
+                    <!-- TODOS -->
+
+                    <LinearLayout
+                        android:id="@+id/filtroTodos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:background="@drawable/bg_tab_seleccionada"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textFiltroTodos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Todos"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+
+                    <!-- EVENTOS -->
+
+                    <LinearLayout
+                        android:id="@+id/filtroEventos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:background="@drawable/bg_search"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textFiltroEventos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Eventos"
+                            android:textColor="#98A2B3"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
+
+
+                    <!-- ACTIVIDADES -->
+
+                    <LinearLayout
+                        android:id="@+id/filtroActividades"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:background="@drawable/bg_search"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textFiltroActividades"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Actividades"
+                            android:textColor="#98A2B3"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
+
+
+                    <!-- OBSERVACIONES -->
+
+                    <LinearLayout
+                        android:id="@+id/filtroObservaciones"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:background="@drawable/bg_search"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:id="@+id/textFiltroObservaciones"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Observaciones"
+                            android:textColor="#98A2B3"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+
+            <!-- ================================================== -->
+            <!-- TÍTULO -->
+            <!-- ================================================== -->
+
+            <TextView
+                android:id="@+id/txtTituloRegistros"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:letterSpacing="0.08"
+                android:text="REGISTROS RECIENTES"
+                android:textColor="#687078"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+
+            <!-- ================================================== -->
+            <!-- LISTA DE EVENTOS -->
+            <!-- ================================================== -->
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerEventosBitacora"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:paddingBottom="15dp"
+                tools:listitem="@layout/item_evento_bitacora_encargado" />
+
+
+            <!-- ================================================== -->
+            <!-- SIN REGISTROS -->
+            <!-- ================================================== -->
+
+            <TextView
+                android:id="@+id/txtSinRegistrosBitacora"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:gravity="center"
+                android:text="No hay registros para mostrar"
+                android:textColor="#98A2B3"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+    <!-- ====================================================== -->
+    <!-- MENÚ INFERIOR -->
+    <!-- ====================================================== -->
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/bottomNavigationBitacora"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="55dp"
+        app:cardBackgroundColor="#E9ECEF"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+
+            <!-- ================================================== -->
+            <!-- INICIO -->
+            <!-- ================================================== -->
+
+            <LinearLayout
+                android:id="@+id/navInicioBitacora"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconInicioBitacora"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/home"
+                    android:contentDescription="Inicio"
+                    app:tint="#98A2B3" />
+
+                <TextView
+                    android:id="@+id/textInicioBitacora"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Inicio"
+                    android:textColor="#98A2B3"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+
+            <!-- ================================================== -->
+            <!-- CITAS -->
+            <!-- ================================================== -->
+
+            <LinearLayout
+                android:id="@+id/navCitasBitacora"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconCitasBitacora"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/calendario"
+                    android:contentDescription="Citas"
+                    app:tint="#98A2B3" />
+
+                <TextView
+                    android:id="@+id/textCitasBitacora"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Citas"
+                    android:textColor="#98A2B3"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+
+            <!-- ================================================== -->
+            <!-- BITÁCORA SELECCIONADA -->
+            <!-- ================================================== -->
+
+            <LinearLayout
+                android:id="@+id/navBitacoraBitacora"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconBitacoraBitacora"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/bitacora"
+                    android:contentDescription="Bitácora"
+                    app:tint="#3B5BDB" />
+
+                <TextView
+                    android:id="@+id/textBitacoraBitacora"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Bitácora"
+                    android:textColor="#3B5BDB"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+
+            <!-- ================================================== -->
+            <!-- PERFIL -->
+            <!-- ================================================== -->
+
+            <LinearLayout
+                android:id="@+id/navPerfilBitacora"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconPerfilBitacora"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/person"
+                    android:contentDescription="Mi perfil"
+                    app:tint="#98A2B3" />
+
+                <TextView
+                    android:id="@+id/textPerfilBitacora"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Mi perfil"
+                    android:textColor="#98A2B3"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

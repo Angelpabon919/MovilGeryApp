@@ -6,13 +6,23 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.R
+import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Cuidador
+import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.databinding.FragmentHomeEncargadoBinding
+import com.example.molvigeryapp.ui.encargado.NavegacionEncargado
+import com.example.molvigeryapp.ui.encargado.bitacora.BitacoraEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.citas.CitasEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.cuidadores.CuidadorAdapter
 import com.example.molvigeryapp.ui.encargado.cuidadores.DetalleCuidadorEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.perfil.PerfilEncargadoFragment
+import kotlinx.coroutines.launch
 
 class HomeEncargadoFragment : Fragment() {
 
@@ -37,43 +47,7 @@ class HomeEncargadoFragment : Fragment() {
     // LISTA DE CUIDADORES
     // =====================================================
 
-    private val listaCuidadores = listOf(
-
-        Cuidador(
-            nombre = "María Fernández",
-            cargo = "Auxiliar de Enfermería",
-            estado = "Activo",
-            pacientes = 3
-        ),
-
-        Cuidador(
-            nombre = "Javier Ríos",
-            cargo = "Enfermero Profesional",
-            estado = "Activo",
-            pacientes = 2
-        ),
-
-        Cuidador(
-            nombre = "Ana Suárez",
-            cargo = "Auxiliar de Enfermería",
-            estado = "Descanso",
-            pacientes = 3
-        ),
-
-        Cuidador(
-            nombre = "Carlos Rodríguez",
-            cargo = "Auxiliar de Enfermería",
-            estado = "Activo",
-            pacientes = 2
-        ),
-
-        Cuidador(
-            nombre = "Lucía Gómez",
-            cargo = "Enfermera Profesional",
-            estado = "Activo",
-            pacientes = 4
-        )
-    )
+    private var listaCuidadores: List<Cuidador> = emptyList()
 
 
     // =====================================================
@@ -109,6 +83,12 @@ class HomeEncargadoFragment : Fragment() {
         configurarRecyclerView()
 
         configurarBuscador()
+
+        configurarNotificaciones()
+
+        configurarMenuInferior()
+
+        cargarCuidadores()
     }
 
 
@@ -123,7 +103,7 @@ class HomeEncargadoFragment : Fragment() {
 
 
         adapter = CuidadorAdapter(
-            listaCuidadores
+            emptyList()
         ) { cuidador ->
 
             abrirDetalleCuidador(cuidador)
@@ -131,6 +111,192 @@ class HomeEncargadoFragment : Fragment() {
 
 
         binding.recyclerCuidadores.adapter = adapter
+    }
+
+
+    // =====================================================
+    // CARGAR CUIDADORES DESDE LA API
+    // =====================================================
+
+    private fun cargarCuidadores() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            try {
+
+                val usuarios =
+                    RetrofitClient.api.getUsuarios()
+
+
+                // =================================================
+                // FILTRAR SOLAMENTE LOS CUIDADORES
+                // id_rol = 5
+                // =================================================
+
+                listaCuidadores =
+                    usuarios
+                        .filter { usuario ->
+                            usuario.id_rol == 5
+                        }
+                        .map { usuario ->
+
+                            convertirACuidador(usuario)
+                        }
+
+
+                adapter.actualizarLista(
+                    listaCuidadores
+                )
+
+
+            } catch (e: Exception) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "No se pudieron cargar los cuidadores",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                e.printStackTrace()
+            }
+        }
+    }
+
+
+    // =====================================================
+    // CONVERTIR USUARIO → CUIDADOR
+    // =====================================================
+
+    private fun convertirACuidador(
+        usuario: Usuario
+    ): Cuidador {
+
+        val nombreCompleto =
+            "${usuario.nombres} ${usuario.apellidos}"
+                .trim()
+
+
+        val estado =
+            if (usuario.estado) {
+                "Activo"
+            } else {
+                "Inactivo"
+            }
+
+
+        return Cuidador(
+
+            idUsuario = usuario.id_usuario,
+
+            nombre = nombreCompleto,
+
+            cargo = "Cuidador",
+
+            estado = estado,
+
+            pacientes = 0
+        )
+    }
+
+
+    // =====================================================
+    // CONFIGURAR NOTIFICACIONES
+    // =====================================================
+
+    private fun configurarNotificaciones() {
+
+        binding.btnNotificaciones.setOnClickListener {
+
+            abrirNotificaciones()
+        }
+    }
+
+
+    // =====================================================
+    // ABRIR PANTALLA DE NOTIFICACIONES
+    // =====================================================
+
+    private fun abrirNotificaciones() {
+
+        val notificaciones =
+            NotificacionesEncargadoFragment()
+
+
+        parentFragmentManager
+            .beginTransaction()
+            .replace(
+                R.id.fragmentContainer,
+                notificaciones
+            )
+            .addToBackStack(null)
+            .commit()
+    }
+
+
+    // =====================================================
+    // CONFIGURAR MENÚ INFERIOR
+    // =====================================================
+
+    private fun configurarMenuInferior() {
+
+        NavegacionEncargado.configurar(
+
+            navInicio = binding.navInicio,
+            iconInicio = binding.iconInicio,
+            textInicio = binding.textInicio,
+
+            navCitas = binding.navCitas,
+            iconCitas = binding.iconCitas,
+            textCitas = binding.textCitas,
+
+            navBitacora = binding.navBitacora,
+            iconBitacora = binding.iconBitacora,
+            textBitacora = binding.textBitacora,
+
+            navPerfil = binding.navPerfil,
+            iconPerfil = binding.iconPerfil,
+            textPerfil = binding.textPerfil,
+
+            pantallaActual =
+                NavegacionEncargado.Pantalla.INICIO,
+
+            onInicio = {
+                // Ya estamos en Inicio.
+            },
+
+            onCitas = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        CitasEncargadoFragment()
+                    )
+                    .commit()
+            },
+
+            onBitacora = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        BitacoraEncargadoFragment()
+                    )
+                    .commit()
+            },
+
+            onPerfil = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        PerfilEncargadoFragment()
+                    )
+                    .commit()
+            }
+        )
     }
 
 
@@ -150,7 +316,7 @@ class HomeEncargadoFragment : Fragment() {
                     count: Int,
                     after: Int
                 ) {
-                    // No necesitamos hacer nada aquí
+                    // No hacemos nada.
                 }
 
 
@@ -166,14 +332,16 @@ class HomeEncargadoFragment : Fragment() {
                             .trim()
                             .lowercase()
 
-                    filtrarCuidadores(textoBuscado)
+                    filtrarCuidadores(
+                        textoBuscado
+                    )
                 }
 
 
                 override fun afterTextChanged(
                     s: Editable?
                 ) {
-                    // No necesitamos hacer nada aquí
+                    // No hacemos nada.
                 }
             }
         )
@@ -191,9 +359,6 @@ class HomeEncargadoFragment : Fragment() {
         val listaFiltrada =
 
             if (texto.isEmpty()) {
-
-                // Si el buscador está vacío,
-                // mostramos todos los cuidadores.
 
                 listaCuidadores
 
@@ -220,7 +385,9 @@ class HomeEncargadoFragment : Fragment() {
             }
 
 
-        adapter.actualizarLista(listaFiltrada)
+        adapter.actualizarLista(
+            listaFiltrada
+        )
     }
 
 
@@ -236,26 +403,36 @@ class HomeEncargadoFragment : Fragment() {
             DetalleCuidadorEncargadoFragment()
 
 
+        val datos = Bundle()
+
+
         // =================================================
-        // ENVIAR INFORMACIÓN DEL CUIDADOR
+        // ID REAL DEL USUARIO
         // =================================================
 
-        val datos = Bundle()
+        datos.putInt(
+            "id_usuario",
+            cuidador.idUsuario
+        )
+
 
         datos.putString(
             "nombre",
             cuidador.nombre
         )
 
+
         datos.putString(
             "cargo",
             cuidador.cargo
         )
 
+
         datos.putString(
             "estado",
             cuidador.estado
         )
+
 
         datos.putInt(
             "pacientes",
@@ -265,10 +442,6 @@ class HomeEncargadoFragment : Fragment() {
 
         detalle.arguments = datos
 
-
-        // =================================================
-        // ABRIR FRAGMENT DEL DETALLE
-        // =================================================
 
         parentFragmentManager
             .beginTransaction()
@@ -286,6 +459,7 @@ class HomeEncargadoFragment : Fragment() {
     // =====================================================
 
     override fun onDestroyView() {
+
         super.onDestroyView()
 
         _binding = null

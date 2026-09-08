@@ -18,11 +18,12 @@ class DetalleEventoAdversoEncargadoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding = FragmentDetalleEventoAdversoEncargadoBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+        _binding =
+            FragmentDetalleEventoAdversoEncargadoBinding.inflate(
+                inflater,
+                container,
+                false
+            )
 
         return binding.root
     }
@@ -33,45 +34,71 @@ class DetalleEventoAdversoEncargadoFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        cargarDatos()
+        cargarDatosEvento()
+
         configurarBotonVolver()
     }
 
-    private fun cargarDatos() {
+    private fun cargarDatosEvento() {
 
-        val paciente =
-            arguments?.getString("paciente") ?: "Paciente"
-
-        val tipo =
-            arguments?.getString("tipo") ?: "Evento adverso"
-
-        val fecha =
-            arguments?.getString("fecha") ?: ""
+        val tipoEvento =
+            arguments?.getString("tipoEvento")
+                ?: "EVENTO ADVERSO"
 
         val estado =
-            arguments?.getString("estado") ?: "Pendiente"
+            arguments?.getString("estado")
+                ?: "PENDIENTE"
+
+        val paciente =
+            arguments?.getString("paciente")
+                ?: "Paciente no disponible"
+
+        val fecha =
+            arguments?.getString("fecha")
+                ?: "Sin fecha"
+
+        val hora =
+            arguments?.getString("hora")
+                ?: "Sin hora"
 
         val cuidador =
-            arguments?.getString("cuidador") ?: ""
+            arguments?.getString("cuidador")
+                ?: "Cuidador no disponible"
 
         val descripcion =
-            arguments?.getString("descripcion") ?: ""
+            arguments?.getString("descripcion")
+                ?: "Sin descripción"
 
         val observaciones =
-            arguments?.getString("observaciones") ?: ""
+            arguments?.getString("observaciones")
+                ?: "Sin observaciones registradas"
+
+        binding.txtTipoEvento.text = tipoEvento
+
+        binding.txtEstadoEvento.text = estado
 
         binding.txtPacienteEvento.text = paciente
-        binding.txtTipoEvento.text = tipo
-        binding.txtFechaEvento.text = fecha
-        binding.txtEstadoEvento.text = estado
-        binding.txtCuidadorEvento.text = cuidador
-        binding.txtDescripcionEvento.text = descripcion
-        binding.txtObservacionesEvento.text = observaciones
+
+        binding.txtFechaEvento.text =
+            "$fecha · $hora"
+
+        binding.txtCuidadorEvento.text =
+            cuidador
+
+        binding.txtDescripcionEvento.text =
+            descripcion
+
+        binding.txtObservacionesEvento.text =
+            observaciones
+
+        binding.txtFechaFotografia.text =
+            "Registrada el $fecha · $hora"
     }
 
     private fun configurarBotonVolver() {
 
         binding.btnVolverEvento.setOnClickListener {
+
             parentFragmentManager.popBackStack()
         }
     }

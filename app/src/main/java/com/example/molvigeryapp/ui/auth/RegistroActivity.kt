@@ -147,7 +147,7 @@ class RegistroActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    val respuesta = RetrofitClient.apiService.registrarUsuario(usuario)
+                    val respuesta = RetrofitClient.api.registrarUsuario(usuario)
                     Toast.makeText(this@RegistroActivity, "Registro Exitoso", Toast.LENGTH_SHORT)
                         .show()
 
