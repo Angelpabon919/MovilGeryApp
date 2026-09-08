@@ -23,51 +23,11 @@
         app:tabIndicatorColor="#2563EB"
         app:tabSelectedTextColor="#2563EB"
         app:tabTextColor="#64748B"
-        app:tabMode="scrollable"
-        >
+        app:tabMode="scrollable" />
 
-
-
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Información General" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Historial Medico" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Medicamentos" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Citas" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Observaciones" />
-
-    </com.google.android.material.tabs.TabLayout>
-
-    <FrameLayout
-        android:id="@+id/containerTabContent"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp">
-
-        <TextView
-            android:id="@+id/tvContenidoTab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Selecciona una pestaña para ver el detalle."
-            android:textSize="16sp" />
-    </FrameLayout>
+        android:layout_height="match_parent" />
 
 </LinearLayout>

@@ -5,12 +5,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.databinding.FragmentPacienteDetailBinding
-import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 
 class PacienteDetailFragment: Fragment() {
     private var _binding: FragmentPacienteDetailBinding? = null
     private val binding get() = _binding!!
+
+    private val titulosTabs = arrayOf(
+        "Datos Básicos",
+        "Medicamentos",
+        "Cardex",
+        "Recomendaciones",
+        "Insumos"
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -23,18 +32,20 @@ class PacienteDetailFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val nombrePaciente = arguments?.getString("nombre_paciente") ?: "Paciente Seleccionado"
-        binding.tvNombreDetalle.text = nombrePaciente
-
-        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                binding.tvContenidoTab.text = "Mostrando información de: ${tab?.text}"
-            }
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-            override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
+        // Obtener el paciente desde los argumentos
+        val paciente = (parentFragment?.arguments?.getSerializable("paciente_data")
+            ?: arguments?.getSerializable("paciente_data")) as? Paciente
+        setupViewPager()
     }
 
+    private fun setupViewPager() {
+        val adapter = PacienteDetailAdapter(this)
+        binding.viewPager.adapter = adapter
+
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = titulosTabs[position]
+        }.attach()
+    }
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

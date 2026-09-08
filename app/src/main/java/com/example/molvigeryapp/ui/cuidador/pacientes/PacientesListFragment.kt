@@ -6,10 +6,10 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.molvigeryapp.data.api.RetrofitClient
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesListBinding
 
@@ -19,7 +19,11 @@ class PacientesListFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var adapter: PacienteAdapter
-    private lateinit var viewModel: PacienteViewModel
+
+    // 1. Usar ViewModel compartido a nivel de Activity
+    private val viewModel: PacienteViewModel by activityViewModels {
+        PacienteViewModelFactory(PacienteRepository())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,32 +36,33 @@ class PacientesListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. Inicializar la arquitectura (Repository y ViewModel)
-        val repository = PacienteRepository()
-        viewModel = PacienteViewModel(repository)
-
-        // 2. Configurar el RecyclerView y el Buscador
         setupRecyclerView()
         setupSearch()
-
-        // 3. Observar la respuesta de la API y cargar datos
         observarDatos()
+
         viewModel.cargarPacientes()
     }
 
     private fun setupRecyclerView() {
         adapter = PacienteAdapter { pacienteSeleccionado ->
+            // 2. Guardar el objeto completo en el ViewModel compartido
+            viewModel.seleccionarPaciente(pacienteSeleccionado)
+
+            // 3. Enviar el objeto COMPLETO como Serializable en el Bundle
             val bundle = Bundle().apply {
-                putString("nombre_paciente", "${pacienteSeleccionado.nombre} ${pacienteSeleccionado.apellido}")
+                putSerializable("paciente_data", pacienteSeleccionado)
             }
-            val detailFragment= PacienteDetailFragment().apply {
+
+            val detailFragment = PacienteDetailFragment().apply {
                 arguments = bundle
             }
+
             parentFragmentManager.beginTransaction()
-                .replace(com.example.molvigeryapp.R.id.main, detailFragment) // Asegúrate de que R.id.main sea el ID de tu contenedor principal en MainActivity
+                .replace(R.id.main, detailFragment)
                 .addToBackStack(null)
                 .commit()
         }
+
         binding.rvPacientes.layoutManager = LinearLayoutManager(requireContext())
         binding.rvPacientes.adapter = adapter
     }
