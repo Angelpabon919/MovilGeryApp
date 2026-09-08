@@ -6,14 +6,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "https://geriapp-web-1.onrender.com/"
+    private const val BASE_URL = "https://geriapp-web-1.onrender.com/api/"
     private val loggin = HttpLoggingInterceptor().apply {
         level= HttpLoggingInterceptor.Level.BODY
     }
     private val client = OkHttpClient.Builder()
         .addInterceptor( loggin )
         .build()
-    val api : ApiService =  Retrofit.Builder()
+    val apiService : ApiService =  Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())

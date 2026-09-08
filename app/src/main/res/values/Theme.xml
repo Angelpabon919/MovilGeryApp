@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.GeriApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Usa NoActionBar para evitar que Android superponga su barra propia -->
+    </style>
+</resources>

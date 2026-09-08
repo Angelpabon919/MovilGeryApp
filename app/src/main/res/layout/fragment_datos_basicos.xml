@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Tipo de Documento -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tipo de Documento"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etTipoDocumento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ej. CC, TI, CE"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- Número de Documento -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Número de Documento"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etNumeroDocumento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- EPS -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="EPS"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etEps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- Sede -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Sede"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etSede"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- Habitación -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Habitación"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etHabitacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- Cama -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Cama"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etCama"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- Grupo Sanguíneo y RH -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Grupo Sanguíneo / RH"
+            android:textColor="#1A1A1A"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etGrupoSanguineo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ej. O+"
+            android:textColor="#333333"
+            android:textSize="15sp" />
+
+        <!-- Botón Guardar -->
+        <Button
+            android:id="@+id/btnGuardarDatos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:backgroundTint="#0052CC"
+            android:text="Guardar Cambios"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+</ScrollView>

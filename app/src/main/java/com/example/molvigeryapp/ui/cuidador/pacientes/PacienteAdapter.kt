@@ -3,20 +3,33 @@ package com.example.molvigeryapp.ui.cuidador.pacientes
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.molvigeryapp.databinding.ItemPacienteBinding
-import kotlin.collections.filter
 import com.example.molvigeryapp.data.model.Paciente
-
+import com.example.molvigeryapp.databinding.ItemPacienteBinding
 
 class PacienteAdapter(
-    private var listaOriginal: List<Paciente> = emptyList(),
-    private val onPacienteClick: (Paciente) -> Unit
+    private val onItemClick: (Paciente) -> Unit
 ) : RecyclerView.Adapter<PacienteAdapter.PacienteViewHolder>() {
 
-    private var listaFiltrada: List<Paciente> = listaOriginal
+    private var listaOriginal: List<Paciente> = emptyList()
+    private var listaDiferida: List<Paciente> = emptyList()
 
-    inner class PacienteViewHolder(val binding: ItemPacienteBinding) :
-        RecyclerView.ViewHolder(binding.root)
+    fun actualizarLista(nuevaLista: List<Paciente>) {
+        listaOriginal = nuevaLista
+        listaDiferida = nuevaLista
+        notifyDataSetChanged()
+    }
+
+    fun filtrar(texto: String) {
+        listaDiferida = if (texto.trim().isEmpty()) {
+            listaOriginal
+        } else {
+            listaOriginal.filter { paciente ->
+                val nombreCompleto = "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}".lowercase()
+                nombreCompleto.contains(texto.lowercase().trim())
+            }
+        }
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PacienteViewHolder {
         val binding = ItemPacienteBinding.inflate(
@@ -28,32 +41,29 @@ class PacienteAdapter(
     }
 
     override fun onBindViewHolder(holder: PacienteViewHolder, position: Int) {
-        val paciente = listaFiltrada[position]
-        with(holder.binding) {
-            tvNombrePaciente.text = "${paciente.nombre} ${paciente.apellido}"
-
-            root.setOnClickListener {
-                onPacienteClick(paciente)
-            }
-        }
+        val paciente = listaDiferida[position]
+        holder.bind(paciente)
     }
 
-    override fun getItemCount(): Int = listaFiltrada.size
+    override fun getItemCount(): Int = listaDiferida.size
 
-    fun actualizarLista(nuevaLista: List<Paciente>) {
-        listaOriginal = nuevaLista
-        listaFiltrada = nuevaLista
-        notifyDataSetChanged()
-    }
+    inner class PacienteViewHolder(private val binding: ItemPacienteBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
-    fun filtrar(texto: String) {
-        listaFiltrada = if (texto.isEmpty()) {
-            listaOriginal
-        } else {
-            listaOriginal.filter { paciente ->
-                "${paciente.nombre} ${paciente.apellido}".lowercase().contains(texto.lowercase())
+        fun bind(paciente: Paciente) {
+            val nombre = paciente.nombre ?: ""
+            val apellido = paciente.apellido ?: ""
+            val nombreCompleto = "$nombre $apellido".trim()
+            
+            binding.tvNombrePaciente.text = if (nombreCompleto.isNotEmpty()) {
+                nombreCompleto
+            } else {
+                "Sin nombre registrado"
+            }
+
+            binding.root.setOnClickListener {
+                onItemClick(paciente)
             }
         }
-        notifyDataSetChanged()
     }
 }
