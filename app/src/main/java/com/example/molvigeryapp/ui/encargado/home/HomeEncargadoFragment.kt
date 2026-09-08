@@ -125,7 +125,7 @@ class HomeEncargadoFragment : Fragment() {
             try {
 
                 val usuarios =
-                    RetrofitClient.api.getUsuarios()
+                    RetrofitClient.apiService.getUsuarios()
 
 
                 // =================================================
@@ -136,7 +136,7 @@ class HomeEncargadoFragment : Fragment() {
                 listaCuidadores =
                     usuarios
                         .filter { usuario ->
-                            usuario.id_rol == 5
+                            usuario.idRol == 5
                         }
                         .map { usuario ->
 
@@ -186,7 +186,7 @@ class HomeEncargadoFragment : Fragment() {
 
         return Cuidador(
 
-            idUsuario = usuario.id_usuario,
+            idUsuario = usuario.idUsuario ?: 0,
 
             nombre = nombreCompleto,
 

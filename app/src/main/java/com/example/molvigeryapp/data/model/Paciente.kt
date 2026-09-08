@@ -1,6 +1,7 @@
 package com.example.molvigeryapp.data.model
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class Paciente(
 
@@ -51,4 +52,4 @@ data class Paciente(
 
     @SerializedName("estado")
     val estado: Boolean = true
-)
+) : Serializable

@@ -2,7 +2,6 @@ package com.example.molvigeryapp.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.util.Patterns
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -147,7 +146,7 @@ class RegistroActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    val respuesta = RetrofitClient.api.registrarUsuario(usuario)
+                    val respuesta = RetrofitClient.apiService.registrarUsuario(usuario)
                     Toast.makeText(this@RegistroActivity, "Registro Exitoso", Toast.LENGTH_SHORT)
                         .show()
 
@@ -158,8 +157,7 @@ class RegistroActivity : AppCompatActivity() {
 
                     Toast.makeText(
                         this@RegistroActivity,
-                        "Error al Registrase",
-                        Toast.LENGTH_LONG
+                        "Error al Registrase",1
                     ).show()
                 }
                 }

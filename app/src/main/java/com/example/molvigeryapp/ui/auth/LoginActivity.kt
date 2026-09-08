@@ -71,9 +71,7 @@ class LoginActivity : AppCompatActivity() {
                 )
 
                 // Consumimos el endpoint de login
-                val respuesta = RetrofitClient.api.loginUsuario(datos)
-
-
+                val respuesta = RetrofitClient.apiService.loginUsuario(datos)
 
 
                 // Obtenemos los datos del usuario
@@ -85,11 +83,12 @@ class LoginActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
+                val idRol = usuario.id_rol ?: -1
+
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                intent.putExtra("ID_ROL", usuario.id_rol)
                 startActivity(intent)
                 finish()
-
-                // Aquí posteriormente pondremos la navegación
 
             } catch (e: HttpException) {
 
