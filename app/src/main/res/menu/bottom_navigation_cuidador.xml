@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_cuidador_inicio"
+        android:icon="@drawable/home"
+        android:title="Inicio" />
+
+    <item
+        android:id="@+id/nav_cuidador_evento"
+        android:icon="@drawable/bitacora"
+        android:title="Evento adverso" />
+
+    <item
+        android:id="@+id/nav_cuidador_actividades"
+        android:icon="@drawable/bitacora"
+        android:title="Actividades" />
+
+    <item
+        android:id="@+id/nav_cuidador_perfil"
+        android:icon="@drawable/person"
+        android:title="Perfil" />
+
+</menu>

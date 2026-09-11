@@ -150,6 +150,11 @@
                     android:textStyle="bold"
                     android:layout_marginTop="24dp" />
 
+
+                <!-- ==================== -->
+                <!-- OLVIDASTE CONTRASEÑA -->
+                <!-- ==================== -->
+
                 <EditText
                     android:id="@+id/etContrasena"
                     android:layout_width="match_parent"
@@ -157,17 +162,12 @@
                     android:layout_marginTop="8dp"
                     android:background="@drawable/bg_input"
                     android:hint="Ingresa tu contraseña"
+                    android:inputType="textPassword"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:textColor="@color/black"
                     android:textColorHint="@color/color_surface"
-                    android:textSize="16sp"
-                    android:inputType="textPassword" />
-
-
-                <!-- ==================== -->
-                <!-- OLVIDASTE CONTRASEÑA -->
-                <!-- ==================== -->
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvOlvidaste"
