@@ -7,7 +7,8 @@ import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.databinding.ItemPacienteBinding
 
 class PacienteAdapter(
-    private val onItemClick: (Paciente) -> Unit
+    private val onItemClick: (Paciente) -> Unit,
+    private val onSelectionToggle: (Paciente) -> Unit
 ) : RecyclerView.Adapter<PacienteAdapter.PacienteViewHolder>() {
 
     private var listaOriginal: List<Paciente> = emptyList()
@@ -24,7 +25,7 @@ class PacienteAdapter(
             listaOriginal
         } else {
             listaOriginal.filter { paciente ->
-                val nombreCompleto = "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}".lowercase()
+                val nombreCompleto = "${paciente.nombre} ${paciente.apellido}".lowercase()
                 nombreCompleto.contains(texto.lowercase().trim())
             }
         }
@@ -51,19 +52,28 @@ class PacienteAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(paciente: Paciente) {
-            val nombre = paciente.nombre ?: ""
-            val apellido = paciente.apellido ?: ""
+            val nombre = paciente.nombre
+            val apellido = paciente.apellido
             val nombreCompleto = "$nombre $apellido".trim()
-            
+
             binding.tvNombrePaciente.text = if (nombreCompleto.isNotEmpty()) {
                 nombreCompleto
             } else {
                 "Sin nombre registrado"
             }
 
+            // Si tienes un CheckBox en item_paciente.xml (ej. cbSeleccionar), actualiza su estado visual
+            // binding.cbSeleccionar.isChecked = paciente.isSelected
+
+            // Listener para abrir el detalle del paciente
             binding.root.setOnClickListener {
                 onItemClick(paciente)
             }
+
+            // Si tienes un CheckBox o botón de selección en la tarjeta:
+            // binding.cbSeleccionar.setOnClickListener {
+            //     onSelectionToggle(paciente)
+            // }
         }
     }
 }

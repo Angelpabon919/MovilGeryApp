@@ -42,30 +42,40 @@ class PacientesListFragment : Fragment() {
 
         viewModel.cargarPacientes()
     }
-
     private fun setupRecyclerView() {
-        adapter = PacienteAdapter { pacienteSeleccionado ->
-            // 2. Guardar el objeto completo en el ViewModel compartido
-            viewModel.seleccionarPaciente(pacienteSeleccionado)
+        adapter = PacienteAdapter(
+            onItemClick = { pacienteSeleccionado ->
+                // Guardar el objeto completo en el ViewModel compartido
+                viewModel.seleccionarPaciente(pacienteSeleccionado)
 
-            // 3. Enviar el objeto COMPLETO como Serializable en el Bundle
-            val bundle = Bundle().apply {
-                putSerializable("paciente_data", pacienteSeleccionado)
+                // Enviar el objeto COMPLETO como Serializable en el Bundle
+                val bundle = Bundle().apply {
+                    putSerializable("paciente_data", pacienteSeleccionado)
+                }
+
+                val detailFragment = PacienteDetailFragment().apply {
+                    arguments = bundle
+                }
+
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.main, detailFragment)
+                    .addToBackStack(null)
+                    .commit()
+            },
+            onSelectionToggle = { paciente ->
+                // Alternar la marca del paciente en el ViewModel
+                paciente.idPaciente?.let { id ->
+                    viewModel.toggleSeleccionPaciente(id)
+                }
             }
+        )
 
-            val detailFragment = PacienteDetailFragment().apply {
-                arguments = bundle
-            }
-
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.main, detailFragment)
-                .addToBackStack(null)
-                .commit()
-        }
 
         binding.rvPacientes.layoutManager = LinearLayoutManager(requireContext())
         binding.rvPacientes.adapter = adapter
     }
+
+
 
     private fun setupSearch() {
         binding.etBuscar.addTextChangedListener(object : TextWatcher {
@@ -87,4 +97,5 @@ class PacientesListFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
 }

@@ -6,10 +6,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.R
-import com.example.molvigeryapp.data.model.TratamientoMedicamento
+import com.example.molvigeryapp.data.model.AplicacionMedicamento
 
 class MedicamentoAdapter(
-    private var lista: List<TratamientoMedicamento> = emptyList()
+    private var lista: List<AplicacionMedicamento> = emptyList()
 ) : RecyclerView.Adapter<MedicamentoAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -26,25 +26,50 @@ class MedicamentoAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val med = lista[position]
+        val application = lista[position]
 
-        // Extraemos el nombre del medicamento de las observaciones o un valor por defecto
-        val nombreMed = when (position) {
-            0 -> "Losartán 50mg"
-            1 -> "Omeprazol 20mg"
-            2 -> "Metformina 850mg"
-            else -> "Tratamiento #${med.id_tratamiento_medicamento ?: (position + 1)}"
+        // 1. Mostrar las observaciones o un título por defecto limpio
+        val observacionTexto = application.observacion ?: ""
+        if (observacionTexto.isNotBlank()) {
+            holder.tvNombre.text = observacionTexto
+        } else {
+            holder.tvNombre.text = "Aplicación de Medicamento"
         }
 
-        holder.tvNombre.text = nombreMed
-        holder.tvEstado.text = med.estado?.uppercase() ?: "ACTIVO"
-        holder.tvDetalles.text = "${med.dosis ?: 1} Dosis - ${med.via_administracion ?: "Vía Oral"} | ${med.frecuencia ?: "Cada 8h"}"
-        holder.tvObservaciones.text = "Obs: ${med.observaciones ?: "Sin indicaciones extra"}"
+        // 2. Formatear la fecha/hora corta (extrae la hora "08:00")
+        val fechaRaw = application.fechaHora ?: ""
+        val horaFormateada = if (fechaRaw.contains("T")) {
+            try {
+                val horaPart = fechaRaw.split("T")[1].substring(0, 5)
+                "$horaPart hs"
+            } catch (e: Exception) {
+                fechaRaw
+            }
+        } else {
+            fechaRaw
+        }
+
+        // 3. Formato de Detalles
+        val dosis = application.dosisAdministrada ?: ""
+        val via = application.viaAdministracion ?: ""
+        holder.tvDetalles.text = "$dosis - Vía $via | $horaFormateada"
+
+        // 4. Estado visual
+        if (application.estado == true) {
+            holder.tvEstado.text = "APLICADO"
+            holder.tvEstado.setTextColor(android.graphics.Color.parseColor("#15803D")) // Verde oscuro
+        } else {
+            holder.tvEstado.text = "PENDIENTE"
+            holder.tvEstado.setTextColor(android.graphics.Color.parseColor("#B91C1C")) // Rojo
+        }
+
+        // Ocultamos tvObservaciones para no repetir la información
+        holder.tvObservaciones.visibility = View.GONE
     }
 
     override fun getItemCount(): Int = lista.size
 
-    fun actualizarLista(nuevaLista: List<TratamientoMedicamento>) {
+    fun actualizarLista(nuevaLista: List<AplicacionMedicamento>) {
         lista = nuevaLista
         notifyDataSetChanged()
     }

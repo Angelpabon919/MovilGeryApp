@@ -9,10 +9,19 @@
     <!-- Encabezado / Barra Superior -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="200dp"
         android:background="#2563EB"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="28dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="35dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+
+
+        >
 
         <TextView
             android:layout_width="wrap_content"
@@ -22,19 +31,27 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Bienvenida,Angela"
+            android:textColor="#DDE5FF"
+            android:textSize="16sp" />
 
         <!-- Barra de Búsqueda Blanca -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp"
             app:cardBackgroundColor="#FFFFFF">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="362dp"
+                android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp"
@@ -51,12 +68,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginStart="12dp"
+                    android:layout_weight="1"
                     android:background="@null"
-                    android:hint="Buscar paciente por nombre..."
+                    android:hint="Buscar paciente..."
                     android:inputType="text"
                     android:textColor="#0F172A"
                     android:textColorHint="#94A3B8"
                     android:textSize="14sp" />
+
 
             </LinearLayout>
 
@@ -65,6 +84,21 @@
     </LinearLayout>
 
     <!-- Lista de Pacientes -->
+
+    <TextView
+        android:id="@+id/txtTituloCuidadores"
+        android:layout_width="114dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:letterSpacing="0.08"
+        android:text="PACIENTES"
+        android:textColor="#687078"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPacientes"
         android:layout_width="match_parent"
@@ -72,6 +106,8 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingVertical="12dp"
+
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
 
 </LinearLayout>
