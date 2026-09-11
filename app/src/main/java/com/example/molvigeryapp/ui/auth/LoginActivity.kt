@@ -21,6 +21,19 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val preferences = getSharedPreferences("SESION", MODE_PRIVATE)
+        val sesionIniciada = preferences.getBoolean("SESION_INICIADA", false)
+
+        if (sesionIniciada){
+            val idRol = preferences.getInt("ID_ROL", -1)
+
+            val intent = Intent (this, MainActivity::class.java)
+            intent.putExtra("ID_ROL", idRol)
+            startActivity(intent)
+            finish()
+
+        }
+
         binding.tvCrearCuenta.setOnClickListener {
             val intent = Intent(this, RegistroActivity::class.java)
             startActivity(intent)
@@ -84,6 +97,12 @@ class LoginActivity : AppCompatActivity() {
                 ).show()
 
                 val idRol = usuario.id_rol ?: -1
+
+                val preferences = getSharedPreferences("SESION", MODE_PRIVATE)
+                preferences.edit()
+                    .putBoolean("SESION_INICIADA", true)
+                    .putInt("ID_ROL", idRol)
+                    .apply()
 
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 intent.putExtra("ID_ROL", usuario.id_rol)

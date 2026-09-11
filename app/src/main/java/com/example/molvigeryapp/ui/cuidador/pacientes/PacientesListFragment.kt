@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.molvigeryapp.MainActivity
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesListBinding
@@ -42,15 +43,30 @@ class PacientesListFragment : Fragment() {
 
         viewModel.cargarPacientes()
     }
+
+    // Mostrar nuevamente el BottomNavigation
+    // cuando regresamos a la lista de pacientes
+    override fun onResume() {
+        super.onResume()
+
+        (requireActivity() as MainActivity)
+            .mostrarBottomNavigation()
+    }
+
     private fun setupRecyclerView() {
+
         adapter = PacienteAdapter(
             onItemClick = { pacienteSeleccionado ->
+
                 // Guardar el objeto completo en el ViewModel compartido
                 viewModel.seleccionarPaciente(pacienteSeleccionado)
 
                 // Enviar el objeto COMPLETO como Serializable en el Bundle
                 val bundle = Bundle().apply {
-                    putSerializable("paciente_data", pacienteSeleccionado)
+                    putSerializable(
+                        "paciente_data",
+                        pacienteSeleccionado
+                    )
                 }
 
                 val detailFragment = PacienteDetailFragment().apply {
@@ -58,11 +74,16 @@ class PacientesListFragment : Fragment() {
                 }
 
                 parentFragmentManager.beginTransaction()
-                    .replace(R.id.main, detailFragment)
+                    .replace(
+                        R.id.fragmentContainer,
+                        detailFragment
+                    )
                     .addToBackStack(null)
                     .commit()
             },
+
             onSelectionToggle = { paciente ->
+
                 // Alternar la marca del paciente en el ViewModel
                 paciente.idPaciente?.let { id ->
                     viewModel.toggleSeleccionPaciente(id)
@@ -70,25 +91,48 @@ class PacientesListFragment : Fragment() {
             }
         )
 
+        binding.rvPacientes.layoutManager =
+            LinearLayoutManager(requireContext())
 
-        binding.rvPacientes.layoutManager = LinearLayoutManager(requireContext())
         binding.rvPacientes.adapter = adapter
     }
 
-
-
     private fun setupSearch() {
-        binding.etBuscar.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                adapter.filtrar(s.toString())
+
+        binding.etBuscar.addTextChangedListener(
+            object : TextWatcher {
+
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
+
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
+                    adapter.filtrar(s.toString())
+                }
+
+                override fun afterTextChanged(
+                    s: Editable?
+                ) {
+                }
             }
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        )
     }
 
     private fun observarDatos() {
-        viewModel.pacientes.observe(viewLifecycleOwner) { listaPacientes ->
+
+        viewModel.pacientes.observe(
+            viewLifecycleOwner
+        ) { listaPacientes ->
+
             adapter.actualizarLista(listaPacientes)
         }
     }
@@ -97,5 +141,4 @@ class PacientesListFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-
 }
