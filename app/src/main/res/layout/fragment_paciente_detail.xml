@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:text="Detalle del Paciente"
-        android:textSize="20sp"
+        android:textSize="3sp"
         android:textStyle="bold" />
 
     <com.google.android.material.tabs.TabLayout

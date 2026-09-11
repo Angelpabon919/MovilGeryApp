@@ -168,7 +168,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="⚠️ Prevención de Caídas"
-                    android:textColor="#C62828"
+                    android:textColor="#A29B9B"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -177,7 +177,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:background="#C62828"
+                    android:background="#E2DADA"
                     android:paddingHorizontal="14dp"
                     android:paddingVertical="6dp"
                     android:text="Ver Protocolo Alto Riesgo"

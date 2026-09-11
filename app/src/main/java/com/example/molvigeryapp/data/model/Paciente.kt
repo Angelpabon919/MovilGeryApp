@@ -51,5 +51,7 @@ data class Paciente(
     val cama: Int? = null,
 
     @SerializedName("estado")
-    val estado: Boolean = true
+    val estado: Boolean = true,
+
+    var isSelected: Boolean = false
 ) : Serializable
