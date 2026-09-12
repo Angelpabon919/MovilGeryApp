@@ -1,12 +1,13 @@
 package com.example.molvigeryapp.data.api
 
 import com.example.molvigeryapp.data.model.AplicacionMedicamento
+import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
 import com.example.molvigeryapp.data.model.Paciente
-import com.example.molvigeryapp.data.model.Usuario
+import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.Turno
-import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
+import com.example.molvigeryapp.data.model.Usuario
 
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -30,6 +31,15 @@ interface ApiService {
     suspend fun getAplicacionesPorPaciente(
         @Query("id_Paciente") idPaciente: Int
     ): List<AplicacionMedicamento>
+
+    @GET("recomendaciones/")
+    suspend fun getRecomendacionesPorPaciente(
+        @Query("id_paciente") idPaciente: Int
+    ): List<Recomendacion>
+
+    // =========================================================
+    // USUARIOS
+    // =========================================================
 
     @POST("usuarios/registro/")
     suspend fun registrarUsuario(
@@ -81,6 +91,4 @@ interface ApiService {
     suspend fun eliminarAsignacionTurno(
         @Path("id") id: Int
     )
-
-
 }

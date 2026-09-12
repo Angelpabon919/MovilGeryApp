@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.Paciente
+import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import kotlinx.coroutines.launch
 
@@ -21,6 +22,9 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     private val _aplicacionesMedicamentos = MutableLiveData<List<AplicacionMedicamento>>()
     val aplicacionesMedicamentos: LiveData<List<AplicacionMedicamento>> get() = _aplicacionesMedicamentos
+
+    private val _recomendaciones = MutableLiveData<List<Recomendacion>>()
+    val recomendaciones: LiveData<List<Recomendacion>> get() = _recomendaciones
 
     fun cargarPacientes() {
         viewModelScope.launch {
@@ -72,8 +76,15 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     fun cargarAplicacionesMedicamentos(idPaciente: Int) {
         viewModelScope.launch {
-            val lista = repository.getAplicacionesMedicamentos(idPaciente)
+            val lista = repository.getAplicacionesporPaciente(idPaciente)
             _aplicacionesMedicamentos.value = lista ?: emptyList()
+        }
+    }
+
+    fun cargarRecomendaciones(idPaciente: Int) {
+        viewModelScope.launch {
+            val lista = repository.getRecomendaciones(idPaciente)
+            _recomendaciones.value = lista ?: emptyList()
         }
     }
 }
