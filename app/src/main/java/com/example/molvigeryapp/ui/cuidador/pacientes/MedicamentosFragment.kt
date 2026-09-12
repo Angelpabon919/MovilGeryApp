@@ -34,7 +34,7 @@ class MedicamentosFragment : Fragment() {
         // 2. Observamos el paciente seleccionado para obtener su ID
         pacienteViewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
             val idPaciente = paciente?.idPaciente
-            
+
             if (idPaciente != null) {
                 android.util.Log.d("DEBUG_PACIENTE", "Consultando medicamentos para id_paciente: $idPaciente")
                 // 3. Ejecutamos la petición a la API
