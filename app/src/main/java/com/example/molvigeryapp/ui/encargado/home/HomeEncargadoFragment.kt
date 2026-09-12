@@ -16,7 +16,7 @@ import com.example.molvigeryapp.data.model.Cuidador
 import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.databinding.FragmentHomeEncargadoBinding
 import com.example.molvigeryapp.ui.encargado.NavegacionEncargado
-import com.example.molvigeryapp.ui.encargado.bitacora.BitacoraEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.citas.CitasEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.cuidadores.CuidadorAdapter
 import com.example.molvigeryapp.ui.encargado.cuidadores.DetalleCuidadorEncargadoFragment
@@ -128,10 +128,8 @@ class HomeEncargadoFragment : Fragment() {
                     RetrofitClient.apiService.getUsuarios()
 
 
-                // =================================================
                 // FILTRAR SOLAMENTE LOS CUIDADORES
                 // id_rol = 5
-                // =================================================
 
                 listaCuidadores =
                     usuarios
@@ -241,28 +239,80 @@ class HomeEncargadoFragment : Fragment() {
 
         NavegacionEncargado.configurar(
 
+            // =========================
+            // INICIO
+            // =========================
+
             navInicio = binding.navInicio,
             iconInicio = binding.iconInicio,
             textInicio = binding.textInicio,
+
+
+            // =========================
+            // ASIGNAR TURNO
+            // =========================
+
+            navAsignarTurno = binding.navAsignarTurno,
+            iconAsignarTurno = binding.iconAsignarTurno,
+            textAsignarTurno = binding.textAsignarTurno,
+
+
+            // =========================
+            // CITAS
+            // =========================
 
             navCitas = binding.navCitas,
             iconCitas = binding.iconCitas,
             textCitas = binding.textCitas,
 
-            navBitacora = binding.navBitacora,
-            iconBitacora = binding.iconBitacora,
-            textBitacora = binding.textBitacora,
+
+            // =========================
+            // PERFIL
+            // =========================
 
             navPerfil = binding.navPerfil,
             iconPerfil = binding.iconPerfil,
             textPerfil = binding.textPerfil,
 
+
+            // =========================
+            // PANTALLA ACTUAL
+            // =========================
+
             pantallaActual =
                 NavegacionEncargado.Pantalla.INICIO,
 
+
+            // =========================
+            // IR A INICIO
+            // =========================
+
             onInicio = {
+
                 // Ya estamos en Inicio.
+
             },
+
+
+            // =========================
+            // IR A ASIGNAR TURNO
+            // =========================
+
+            onAsignarTurno = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        AsignarTurnoEncargadoFragment()
+                    )
+                    .commit()
+            },
+
+
+            // =========================
+            // IR A CITAS
+            // =========================
 
             onCitas = {
 
@@ -275,16 +325,10 @@ class HomeEncargadoFragment : Fragment() {
                     .commit()
             },
 
-            onBitacora = {
 
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        BitacoraEncargadoFragment()
-                    )
-                    .commit()
-            },
+            // =========================
+            // IR A PERFIL
+            // =========================
 
             onPerfil = {
 
@@ -455,7 +499,7 @@ class HomeEncargadoFragment : Fragment() {
 
 
     // =====================================================
-    // DESTRUIR BINDING
+    // DESTRUIR VISTA
     // =====================================================
 
     override fun onDestroyView() {

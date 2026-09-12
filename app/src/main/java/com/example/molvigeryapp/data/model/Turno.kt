@@ -1,12 +1,11 @@
 package com.example.molvigeryapp.data.model
 
 data class Turno(
-    val id: Int = 0,
-    val tipo: String,
-    val fechaInicio: String,
-    val fechaFin: String,
-    val horaInicio: String,
-    val horaFin: String,
-    val duracion: String,
-    val estado: String = "Asignado"
+    val id_turno: Int? = null,
+    val fecha: String,
+    val hora_inicio: String,
+    val hora_fin: String? = null,
+    val estado: Boolean = true,
+    val nombre: String,
+    val descripcion: String
 )

@@ -2,6 +2,7 @@ package com.example.molvigeryapp.ui.encargado
 
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.Typeface
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -16,22 +17,23 @@ object NavegacionEncargado {
         iconInicio: ImageView,
         textInicio: TextView,
 
+        navAsignarTurno: LinearLayout,
+        iconAsignarTurno: ImageView,
+        textAsignarTurno: TextView,
+
         navCitas: LinearLayout,
         iconCitas: ImageView,
         textCitas: TextView,
-
-        navBitacora: LinearLayout,
-        iconBitacora: ImageView,
-        textBitacora: TextView,
 
         navPerfil: LinearLayout,
         iconPerfil: ImageView,
         textPerfil: TextView,
 
         pantallaActual: Pantalla,
+
         onInicio: () -> Unit,
+        onAsignarTurno: () -> Unit,
         onCitas: () -> Unit,
-        onBitacora: () -> Unit,
         onPerfil: () -> Unit
     ) {
 
@@ -46,15 +48,15 @@ object NavegacionEncargado {
         )
 
         seleccionar(
-            iconCitas,
-            textCitas,
-            pantallaActual == Pantalla.CITAS
+            iconAsignarTurno,
+            textAsignarTurno,
+            pantallaActual == Pantalla.ASIGNAR_TURNO
         )
 
         seleccionar(
-            iconBitacora,
-            textBitacora,
-            pantallaActual == Pantalla.BITACORA
+            iconCitas,
+            textCitas,
+            pantallaActual == Pantalla.CITAS
         )
 
         seleccionar(
@@ -69,8 +71,21 @@ object NavegacionEncargado {
         // =========================
 
         navInicio.setOnClickListener {
+
             if (pantallaActual != Pantalla.INICIO) {
                 onInicio()
+            }
+        }
+
+
+        // =========================
+        // BOTÓN ASIGNAR TURNO
+        // =========================
+
+        navAsignarTurno.setOnClickListener {
+
+            if (pantallaActual != Pantalla.ASIGNAR_TURNO) {
+                onAsignarTurno()
             }
         }
 
@@ -80,19 +95,9 @@ object NavegacionEncargado {
         // =========================
 
         navCitas.setOnClickListener {
+
             if (pantallaActual != Pantalla.CITAS) {
                 onCitas()
-            }
-        }
-
-
-        // =========================
-        // BOTÓN BITÁCORA
-        // =========================
-
-        navBitacora.setOnClickListener {
-            if (pantallaActual != Pantalla.BITACORA) {
-                onBitacora()
             }
         }
 
@@ -102,12 +107,17 @@ object NavegacionEncargado {
         // =========================
 
         navPerfil.setOnClickListener {
+
             if (pantallaActual != Pantalla.PERFIL) {
                 onPerfil()
             }
         }
     }
 
+
+    // =====================================================
+    // CAMBIAR COLOR DE OPCIÓN
+    // =====================================================
 
     private fun seleccionar(
         icono: ImageView,
@@ -121,24 +131,36 @@ object NavegacionEncargado {
             Color.parseColor(GRIS)
         }
 
-        icono.imageTintList = ColorStateList.valueOf(color)
+        icono.imageTintList =
+            ColorStateList.valueOf(color)
+
         texto.setTextColor(color)
+
         texto.isAllCaps = false
+
         texto.setTypeface(
             null,
             if (seleccionado) {
-                android.graphics.Typeface.BOLD
+                Typeface.BOLD
             } else {
-                android.graphics.Typeface.NORMAL
+                Typeface.NORMAL
             }
         )
     }
 
 
+    // =====================================================
+    // PANTALLAS PRINCIPALES
+    // =====================================================
+
     enum class Pantalla {
+
         INICIO,
+
+        ASIGNAR_TURNO,
+
         CITAS,
-        BITACORA,
+
         PERFIL
     }
 }

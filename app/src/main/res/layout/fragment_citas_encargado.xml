@@ -330,8 +330,6 @@
 
             </LinearLayout>
 
-
-
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -362,7 +360,9 @@
             android:gravity="center">
 
 
-            <!-- INICIO -->
+            <!-- ================================================== -->
+            <!-- 1. INICIO -->
+            <!-- ================================================== -->
 
             <LinearLayout
                 android:id="@+id/navInicioCitas"
@@ -395,7 +395,44 @@
             </LinearLayout>
 
 
-            <!-- CITAS - SELECCIONADO -->
+            <!-- ================================================== -->
+            <!-- 2. ASIGNAR TURNO -->
+            <!-- ================================================== -->
+
+            <LinearLayout
+                android:id="@+id/navAsignarTurnoCitas"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconAsignarTurnoCitas"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/calendar_dia"
+                    android:contentDescription="Asignar turno"
+                    app:tint="#98A2B3" />
+
+                <TextView
+                    android:id="@+id/textAsignarTurnoCitas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Asignar turno"
+                    android:textColor="#98A2B3"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+
+            <!-- ================================================== -->
+            <!-- 3. CITAS - SELECCIONADO -->
+            <!-- ================================================== -->
 
             <LinearLayout
                 android:id="@+id/navCitasCitas"
@@ -429,40 +466,9 @@
             </LinearLayout>
 
 
-            <!-- BITÁCORA -->
-
-            <LinearLayout
-                android:id="@+id/navBitacoraCitas"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
-
-                <ImageView
-                    android:id="@+id/iconBitacoraCitas"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:src="@drawable/bitacora"
-                    android:contentDescription="Bitácora"
-                    app:tint="#98A2B3" />
-
-                <TextView
-                    android:id="@+id/textBitacoraCitas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Bitácora"
-                    android:textColor="#98A2B3"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-
-            <!-- MI PERFIL -->
+            <!-- ================================================== -->
+            <!-- 4. MI PERFIL -->
+            <!-- ================================================== -->
 
             <LinearLayout
                 android:id="@+id/navPerfilCitas"

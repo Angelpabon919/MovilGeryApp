@@ -55,7 +55,7 @@
                     android:src="@drawable/arrow_back"
                     app:tint="@android:color/white" />
 
-                <!-- NOMBRE -->
+                <!-- NOMBRE DEL CUIDADOR -->
 
                 <TextView
                     android:id="@+id/txtNombreCuidadorTurno"
@@ -90,7 +90,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingStart="20dp"
-                android:paddingTop="22dp"
+                android:paddingTop="24dp"
                 android:paddingEnd="20dp"
                 android:paddingBottom="30dp">
 
@@ -102,7 +102,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.08"
-                    android:text="NUEVO TURNO"
+                    android:text="TURNOS"
                     android:textColor="#687078"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -111,287 +111,69 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:text="Programa los días y horarios de trabajo"
+                    android:text="Gestiona los turnos de este cuidador."
                     android:textColor="#212529"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <!-- ================================================= -->
-                <!-- TIPO DE TURNO -->
-                <!-- ================================================= -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="22dp"
-                    android:text="Tipo de turno"
-                    android:textColor="#343A40"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
 
                 <!-- ================================================= -->
-                <!-- DIURNO -->
+                <!-- SELECTOR DE SECCIONES -->
                 <!-- ================================================= -->
 
                 <LinearLayout
-                    android:id="@+id/cardTurnoDiurno"
+                    android:id="@+id/selectorTurnos"
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_turno_seleccionado"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_selector_citas"
                     android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp">
+                    android:padding="4dp">
 
-                    <!-- ICONO SOL -->
-
-                    <LinearLayout
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_icono_modulo"
-                        android:gravity="center">
-
-                        <ImageView
-                            android:layout_width="23dp"
-                            android:layout_height="23dp"
-                            android:contentDescription="Turno diurno"
-                            android:src="@drawable/sun"
-                            app:tint="#3B5BDB" />
-
-                    </LinearLayout>
-
-                    <!-- INFORMACIÓN -->
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/txtDiurno"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Diurno"
-                            android:textColor="#212529"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="7:00 AM - 7:00 PM"
-                            android:textColor="#687078"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <!-- ICONO SELECCIÓN DIURNO -->
-
-                    <ImageView
-                        android:id="@+id/iconoDiurnoSeleccion"
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:contentDescription="Diurno seleccionado"
-                        android:src="@drawable/check_circle"
-                        app:tint="#3B5BDB" />
-
-                </LinearLayout>
-
-
-                <!-- ================================================= -->
-                <!-- NOCTURNO -->
-                <!-- ================================================= -->
-
-                <LinearLayout
-                    android:id="@+id/cardTurnoNocturno"
-                    android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_turno_no_seleccionado"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp">
-
-                    <!-- ICONO LUNA -->
-
-                    <LinearLayout
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_icono_modulo"
-                        android:gravity="center">
-
-                        <ImageView
-                            android:layout_width="23dp"
-                            android:layout_height="23dp"
-                            android:contentDescription="Turno nocturno"
-                            android:src="@drawable/moon"
-                            app:tint="#3B5BDB" />
-
-                    </LinearLayout>
-
-                    <!-- INFORMACIÓN -->
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/txtNocturno"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Nocturno"
-                            android:textColor="#212529"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="7:00 PM - 7:00 AM"
-                            android:textColor="#687078"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <!-- ICONO SELECCIÓN NOCTURNO -->
-
-                    <ImageView
-                        android:id="@+id/iconoNocturnoSeleccion"
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:contentDescription="Nocturno no seleccionado"
-                        android:src="@drawable/radio_button_u"
-                        app:tint="#98A2B3" />
-
-                </LinearLayout>
-
-
-                <!-- ================================================= -->
-                <!-- FECHA INICIO -->
-                <!-- ================================================= -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="Fecha de inicio"
-                    android:textColor="#343A40"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/btnFechaInicio"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_search"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp">
-
-                    <ImageView
-                        android:layout_width="21dp"
-                        android:layout_height="21dp"
-                        android:contentDescription="Fecha de inicio"
-                        android:src="@drawable/calendario"
-                        app:tint="#3B5BDB" />
+                    <!-- ============================================= -->
+                    <!-- TURNOS ASIGNADOS -->
+                    <!-- ============================================= -->
 
                     <TextView
-                        android:id="@+id/txtFechaInicio"
+                        android:id="@+id/btnTurnosAsignados"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="11dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:text="Seleccionar fecha"
-                        android:textColor="#687078"
-                        android:textSize="14sp" />
+                        android:background="@drawable/bg_selector_activo"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Turnos asignados"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="Seleccionar"
-                        android:src="@drawable/chevron_right"
-                        app:tint="#98A2B3" />
-
-                </LinearLayout>
-
-
-                <!-- ================================================= -->
-                <!-- FECHA FIN -->
-                <!-- ================================================= -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Fecha de fin"
-                    android:textColor="#343A40"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/btnFechaFin"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_search"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp">
-
-                    <ImageView
-                        android:layout_width="21dp"
-                        android:layout_height="21dp"
-                        android:contentDescription="Fecha de fin"
-                        android:src="@drawable/calendario"
-                        app:tint="#3B5BDB" />
+                    <!-- ============================================= -->
+                    <!-- TURNOS PASADOS -->
+                    <!-- ============================================= -->
 
                     <TextView
-                        android:id="@+id/txtFechaFin"
+                        android:id="@+id/btnTurnosPasados"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="11dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:text="Seleccionar fecha"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Turnos pasados"
                         android:textColor="#687078"
-                        android:textSize="14sp" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="Seleccionar"
-                        android:src="@drawable/chevron_right"
-                        app:tint="#98A2B3" />
+                        android:textSize="13sp"
+                        android:textStyle="normal" />
 
                 </LinearLayout>
 
 
                 <!-- ================================================= -->
-                <!-- DURACIÓN -->
+                <!-- INFORMACIÓN -->
                 <!-- ================================================= -->
 
                 <LinearLayout
-                    android:id="@+id/cardDuracion"
+                    android:id="@+id/cardInfoTurnos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
@@ -403,131 +185,50 @@
                     <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
-                        android:contentDescription="Duración"
+                        android:contentDescription="Información de turnos"
                         android:src="@drawable/calendar_dia"
                         app:tint="#3B5BDB" />
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/txtInfoTurnos"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Duración del turno"
-                            android:textColor="#687078"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/txtDuracion"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Selecciona las fechas"
-                            android:textColor="#212529"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                    </LinearLayout>
+                        android:text="Estos son los turnos actualmente asignados al cuidador."
+                        android:textColor="#687078"
+                        android:textSize="13sp" />
 
                 </LinearLayout>
 
 
                 <!-- ================================================= -->
-                <!-- RESUMEN -->
+                <!-- MENSAJE SIN TURNOS -->
                 <!-- ================================================= -->
-
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/cardResumenTurno"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Resumen"
-                            android:textColor="#212529"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/txtResumenTurno"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:lineSpacingExtra="3dp"
-                            android:text="Selecciona el tipo de turno y las fechas para ver el resumen."
-                            android:textColor="#687078"
-                            android:textSize="13sp" />
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-
-                <!-- ================================================= -->
-                <!-- BOTÓN ASIGNAR -->
-                <!-- ================================================= -->
-
-                <TextView
-                    android:id="@+id/btnAsignarTurno"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="20dp"
-                    android:background="@drawable/bg_boton_azul"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="Asignar turno"
-                    android:textColor="@android:color/white"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-
-                <!-- ================================================= -->
-                <!-- TURNOS ASIGNADOS -->
-                <!-- ================================================= -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="30dp"
-                    android:letterSpacing="0.08"
-                    android:text="TURNOS ASIGNADOS"
-                    android:textColor="#687078"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/txtSinTurnos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/bg_icono_modulo"
                     android:gravity="center"
-                    android:padding="20dp"
+                    android:padding="24dp"
                     android:text="Este cuidador no tiene turnos asignados."
                     android:textColor="#98A2B3"
                     android:textSize="14sp"
                     android:visibility="gone" />
 
+
+                <!-- ================================================= -->
+                <!-- LISTA DE TURNOS -->
+                <!-- ================================================= -->
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerTurnos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="14dp"
                     android:nestedScrollingEnabled="false"
                     android:overScrollMode="never"
                     tools:listitem="@layout/item_turno_encargado" />

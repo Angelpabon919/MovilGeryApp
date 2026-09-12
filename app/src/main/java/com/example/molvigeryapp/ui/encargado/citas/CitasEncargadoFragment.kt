@@ -15,11 +15,11 @@ import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.CitasRepository
 import com.example.molvigeryapp.databinding.FragmentCitasEncargadoBinding
-import com.example.molvigeryapp.ui.encargado.bitacora.BitacoraEncargadoFragment
-import com.example.molvigeryapp.ui.encargado.perfil.PerfilEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.NavegacionEncargado
+import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.perfil.PerfilEncargadoFragment
 import kotlinx.coroutines.launch
 
 class CitasEncargadoFragment : Fragment() {
@@ -64,6 +64,7 @@ class CitasEncargadoFragment : Fragment() {
         mostrarPacientes()
     }
 
+
     // =========================================================
     // PACIENTES
     // =========================================================
@@ -91,11 +92,14 @@ class CitasEncargadoFragment : Fragment() {
 
             try {
 
-                val pacientes = RetrofitClient.apiService.getPacientes()
+                val pacientes =
+                    RetrofitClient.apiService.getPacientes()
 
                 listaPacientes = pacientes
 
-                pacienteAdapter.actualizarLista(pacientes)
+                pacienteAdapter.actualizarLista(
+                    pacientes
+                )
 
             } catch (e: Exception) {
 
@@ -110,8 +114,11 @@ class CitasEncargadoFragment : Fragment() {
 
     private fun mostrarPacientes() {
 
-        binding.contenedorPacientesCitas.visibility = View.VISIBLE
-        binding.contenedorCitasProgramadas.visibility = View.GONE
+        binding.contenedorPacientesCitas.visibility =
+            View.VISIBLE
+
+        binding.contenedorCitasProgramadas.visibility =
+            View.GONE
 
         actualizarPestanaPacientes()
     }
@@ -121,7 +128,9 @@ class CitasEncargadoFragment : Fragment() {
     // ABRIR PACIENTE
     // =========================================================
 
-    private fun abrirPaciente(paciente: Paciente) {
+    private fun abrirPaciente(
+        paciente: Paciente
+    ) {
 
         val datos = Bundle()
 
@@ -150,7 +159,8 @@ class CitasEncargadoFragment : Fragment() {
             paciente.cama ?: -1
         )
 
-        val fragment = NuevaCitaEncargadoFragment()
+        val fragment =
+            NuevaCitaEncargadoFragment()
 
         fragment.arguments = datos
 
@@ -180,7 +190,8 @@ class CitasEncargadoFragment : Fragment() {
 
         binding.recyclerCitasEncargado.apply {
 
-            layoutManager = LinearLayoutManager(requireContext())
+            layoutManager =
+                LinearLayoutManager(requireContext())
 
             adapter = citaAdapter
 
@@ -192,9 +203,11 @@ class CitasEncargadoFragment : Fragment() {
 
     private fun mostrarCitas() {
 
-        binding.contenedorPacientesCitas.visibility = View.GONE
+        binding.contenedorPacientesCitas.visibility =
+            View.GONE
 
-        binding.contenedorCitasProgramadas.visibility = View.VISIBLE
+        binding.contenedorCitasProgramadas.visibility =
+            View.VISIBLE
 
         actualizarListaCitas()
 
@@ -203,17 +216,22 @@ class CitasEncargadoFragment : Fragment() {
 
     private fun actualizarListaCitas() {
 
-        val citas = CitasRepository.obtenerCitas()
+        val citas =
+            CitasRepository.obtenerCitas()
 
-        citaAdapter.actualizarLista(citas)
+        citaAdapter.actualizarLista(
+            citas
+        )
 
         if (citas.isEmpty()) {
 
-            binding.txtSinCitas.visibility = View.VISIBLE
+            binding.txtSinCitas.visibility =
+                View.VISIBLE
 
         } else {
 
-            binding.txtSinCitas.visibility = View.GONE
+            binding.txtSinCitas.visibility =
+                View.GONE
         }
     }
 
@@ -340,22 +358,25 @@ class CitasEncargadoFragment : Fragment() {
 
         binding.edtBuscarPaciente.addTextChangedListener {
 
-            val texto = it
-                ?.toString()
-                ?.trim()
-                ?.lowercase()
-                ?: ""
+            val texto =
+                it?.toString()
+                    ?.trim()
+                    ?.lowercase()
+                    ?: ""
 
-            val filtrados = listaPacientes.filter { paciente ->
+            val filtrados =
+                listaPacientes.filter { paciente ->
 
-                val nombreCompleto =
-                    "${paciente.nombre} ${paciente.apellido}"
-                        .lowercase()
+                    val nombreCompleto =
+                        "${paciente.nombre} ${paciente.apellido}"
+                            .lowercase()
 
-                nombreCompleto.contains(texto)
-            }
+                    nombreCompleto.contains(texto)
+                }
 
-            pacienteAdapter.actualizarLista(filtrados)
+            pacienteAdapter.actualizarLista(
+                filtrados
+            )
         }
     }
 
@@ -364,7 +385,9 @@ class CitasEncargadoFragment : Fragment() {
     // DETALLE DE CITA
     // =========================================================
 
-    private fun abrirDetalleCita(cita: Cita) {
+    private fun abrirDetalleCita(
+        cita: Cita
+    ) {
 
         Toast.makeText(
             requireContext(),
@@ -407,23 +430,74 @@ class CitasEncargadoFragment : Fragment() {
     private fun configurarNavegacion() {
 
         NavegacionEncargado.configurar(
-            navInicio = binding.navInicioCitas,
-            navCitas = binding.navCitasCitas,
-            navBitacora = binding.navBitacoraCitas,
-            navPerfil = binding.navPerfilCitas,
 
-            iconInicio = binding.iconInicioCitas,
-            iconCitas = binding.iconCitasCitas,
-            iconBitacora = binding.iconBitacoraCitas,
-            iconPerfil = binding.iconPerfilCitas,
+            // =========================
+            // INICIO
+            // =========================
 
-            textInicio = binding.textInicioCitas,
-            textCitas = binding.textCitasCitas,
-            textBitacora = binding.textBitacoraCitas,
-            textPerfil = binding.textPerfilCitas,
+            navInicio =
+                binding.navInicioCitas,
 
-            pantallaActual = NavegacionEncargado.Pantalla.CITAS,
+            iconInicio =
+                binding.iconInicioCitas,
 
+            textInicio =
+                binding.textInicioCitas,
+
+
+            // =========================
+            // ASIGNAR TURNO
+            // =========================
+
+            navAsignarTurno =
+                binding.navAsignarTurnoCitas,
+
+            iconAsignarTurno =
+                binding.iconAsignarTurnoCitas,
+
+            textAsignarTurno =
+                binding.textAsignarTurnoCitas,
+
+
+            // =========================
+            // CITAS
+            // =========================
+
+            navCitas =
+                binding.navCitasCitas,
+
+            iconCitas =
+                binding.iconCitasCitas,
+
+            textCitas =
+                binding.textCitasCitas,
+
+
+            // =========================
+            // PERFIL
+            // =========================
+
+            navPerfil =
+                binding.navPerfilCitas,
+
+            iconPerfil =
+                binding.iconPerfilCitas,
+
+            textPerfil =
+                binding.textPerfilCitas,
+
+
+            // =========================
+            // PANTALLA ACTUAL
+            // =========================
+
+            pantallaActual =
+                NavegacionEncargado.Pantalla.CITAS,
+
+
+            // =========================
+            // IR A INICIO
+            // =========================
 
             onInicio = {
 
@@ -432,16 +506,33 @@ class CitasEncargadoFragment : Fragment() {
                 )
             },
 
-            onCitas = {
-                // Ya estamos en Citas
-            },
 
-            onBitacora = {
+            // =========================
+            // IR A ASIGNAR TURNO
+            // =========================
+
+            onAsignarTurno = {
 
                 abrirSeccion(
-                    BitacoraEncargadoFragment()
+                    AsignarTurnoEncargadoFragment()
                 )
             },
+
+
+            // =========================
+            // YA ESTAMOS EN CITAS
+            // =========================
+
+            onCitas = {
+
+                // Ya estamos en Citas.
+
+            },
+
+
+            // =========================
+            // IR A PERFIL
+            // =========================
 
             onPerfil = {
 
@@ -457,7 +548,9 @@ class CitasEncargadoFragment : Fragment() {
     // CAMBIO DE SECCIÓN
     // =========================================================
 
-    private fun abrirSeccion(fragment: Fragment) {
+    private fun abrirSeccion(
+        fragment: Fragment
+    ) {
 
         parentFragmentManager
             .beginTransaction()

@@ -31,6 +31,7 @@
             android:layout_height="42dp"
             android:background="@android:color/transparent"
             android:contentDescription="Volver"
+            android:layout_marginTop="10dp"
             android:padding="8dp"
             android:src="@drawable/arrow_back"
             app:tint="#FFFFFF" />

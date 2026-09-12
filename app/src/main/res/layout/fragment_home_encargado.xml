@@ -134,16 +134,6 @@
     <!-- TÍTULO CUIDADORES -->
     <!-- ========================= -->
 
-
-    <!-- ========================= -->
-    <!-- LISTA DE CUIDADORES -->
-    <!-- ========================= -->
-
-
-    <!-- ========================= -->
-    <!-- MENÚ INFERIOR -->
-    <!-- ========================= -->
-
     <TextView
         android:id="@+id/txtTituloCuidadores"
         android:layout_width="wrap_content"
@@ -157,6 +147,11 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header" />
+
+
+    <!-- ========================= -->
+    <!-- LISTA DE CUIDADORES -->
+    <!-- ========================= -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerCuidadores"
@@ -175,6 +170,11 @@
         app:layout_constraintTop_toBottomOf="@id/txtTituloCuidadores"
         app:layout_constraintVertical_bias="0.0"
         tools:listitem="@layout/item_cuidador_encargado" />
+
+
+    <!-- ========================= -->
+    <!-- MENÚ INFERIOR -->
+    <!-- ========================= -->
 
     <androidx.cardview.widget.CardView
         android:id="@+id/bottomNavigation"
@@ -195,6 +195,7 @@
             android:layout_height="match_parent"
             android:orientation="horizontal"
             android:gravity="center">
+
 
             <!-- ================= -->
             <!-- INICIO -->
@@ -217,8 +218,7 @@
                     android:layout_height="25dp"
                     android:src="@drawable/home"
                     android:contentDescription="Inicio"
-                    app:tint="#3B5BDB"
-                    />
+                    app:tint="#3B5BDB" />
 
                 <TextView
                     android:id="@+id/textInicio"
@@ -229,6 +229,41 @@
                     android:textColor="#3B5BDB"
                     android:textSize="10sp"
                     android:textStyle="bold" />
+
+            </LinearLayout>
+
+
+            <!-- ================= -->
+            <!-- ASIGNAR TURNO -->
+            <!-- ================= -->
+
+            <LinearLayout
+                android:id="@+id/navAsignarTurno"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconAsignarTurno"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/calendar_dia"
+                    android:contentDescription="Asignar turno"
+                    app:tint="#98A2B3" />
+
+                <TextView
+                    android:id="@+id/textAsignarTurno"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Asignar turno"
+                    android:textColor="#98A2B3"
+                    android:textSize="10sp" />
 
             </LinearLayout>
 
@@ -261,40 +296,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Citas"
-                    android:textColor="#98A2B3"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-
-            <!-- ================= -->
-            <!-- BITÁCORA -->
-            <!-- ================= -->
-
-            <LinearLayout
-                android:id="@+id/navBitacora"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
-
-                <ImageView
-                    android:id="@+id/iconBitacora"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:src="@drawable/bitacora"
-                    android:contentDescription="Bitácora" />
-
-                <TextView
-                    android:id="@+id/textBitacora"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Bitácora"
                     android:textColor="#98A2B3"
                     android:textSize="10sp" />
 
