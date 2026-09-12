@@ -2,10 +2,14 @@ package com.example.molvigeryapp.data.api
 
 import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
+import com.example.molvigeryapp.data.model.Bitacora
+import com.example.molvigeryapp.data.model.EventoAdverso
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
+import com.example.molvigeryapp.data.model.SignosVitales
+import com.example.molvigeryapp.data.model.TipoEmergencia
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.Usuario
 
@@ -36,10 +40,6 @@ interface ApiService {
     suspend fun getRecomendacionesPorPaciente(
         @Query("id_paciente") idPaciente: Int
     ): List<Recomendacion>
-
-    // =========================================================
-    // USUARIOS
-    // =========================================================
 
     @POST("usuarios/registro/")
     suspend fun registrarUsuario(
@@ -91,4 +91,23 @@ interface ApiService {
     suspend fun eliminarAsignacionTurno(
         @Path("id") id: Int
     )
+
+    @POST("bitacora/")
+    suspend fun crearBitacora(
+        @Body bitacora: Bitacora
+    ): Bitacora
+
+    @POST("evento_adverso/")
+    suspend fun crearEventoAdverso(
+        @Body evento : EventoAdverso
+    ): EventoAdverso
+
+    @POST("signos_vitales/")
+    suspend fun crearSignosVitales(
+        @Body signos: SignosVitales
+    ): SignosVitales
+
+    @GET("tipo_emergencia")
+    suspend fun getTiposEmergencia():
+            List<TipoEmergencia>
 }
