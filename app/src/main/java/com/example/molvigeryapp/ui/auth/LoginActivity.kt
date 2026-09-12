@@ -97,11 +97,13 @@ class LoginActivity : AppCompatActivity() {
                 ).show()
 
                 val idRol = usuario.id_rol ?: -1
+                val idUsuario = usuario.id_usuario ?: -1
 
                 val preferences = getSharedPreferences("SESION", MODE_PRIVATE)
                 preferences.edit()
                     .putBoolean("SESION_INICIADA", true)
                     .putInt("ID_ROL", idRol)
+                    .putInt("ID_USUARIO", idUsuario)
                     .apply()
 
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
