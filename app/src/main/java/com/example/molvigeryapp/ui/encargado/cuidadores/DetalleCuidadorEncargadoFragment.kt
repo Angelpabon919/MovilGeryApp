@@ -189,6 +189,11 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
         val datos =
             Bundle().apply {
 
+                putInt(
+                    "id_usuario",
+                    arguments?.getInt("id_usuario") ?: 0
+                )
+
                 putString(
                     "nombre",
                     arguments?.getString("nombre")

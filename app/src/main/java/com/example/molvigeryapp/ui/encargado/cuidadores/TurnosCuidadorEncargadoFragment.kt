@@ -1,38 +1,102 @@
 package com.example.molvigeryapp.ui.encargado.cuidadores
 
-import android.app.DatePickerDialog
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.R
+import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Turno
+import com.example.molvigeryapp.data.model.TurnoUI
+import com.example.molvigeryapp.data.repository.TurnoRepository
 import com.example.molvigeryapp.databinding.FragmentTurnosCuidadorEncargadoBinding
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 class TurnosCuidadorEncargadoFragment : Fragment() {
 
+    // =========================================================
+    // VIEW BINDING
+    // =========================================================
+
     private var _binding: FragmentTurnosCuidadorEncargadoBinding? = null
     private val binding get() = _binding!!
 
+    // =========================================================
+    // ADAPTER Y REPOSITORY
+    // =========================================================
+
     private lateinit var adapter: TurnoAdapter
 
-    private val listaTurnos = mutableListOf<Turno>()
+    private val repository = TurnoRepository()
 
-    private var tipoTurno = "Diurno"
+    // =========================================================
+    // ID DEL CUIDADOR
+    // =========================================================
 
-    private var fechaInicio: Calendar? = null
-    private var fechaFin: Calendar? = null
+    private var idUsuario: Int = 0
 
-    // ID del turno que estamos editando.
-    // Si es null, estamos creando un turno nuevo.
-    private var turnoEditandoId: Int? = null
+    // =========================================================
+    // LISTAS DE TURNOS
+    // =========================================================
+
+    /*
+     * Turnos que todavía están vigentes:
+     * - Hoy
+     * - Fechas futuras
+     */
+    private var turnosAsignados: List<TurnoUI> = emptyList()
+
+    /*
+     * Turnos cuya fecha final ya pasó.
+     */
+    private var turnosPasados: List<TurnoUI> = emptyList()
+
+    // =========================================================
+    // ESTADO DE LA PANTALLA
+    // =========================================================
+
+    /*
+     * false = Turnos asignados
+     * true  = Turnos pasados
+     */
+    private var mostrandoHistorial = false
+
+    // =========================================================
+    // CICLO DE VIDA
+    // =========================================================
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        /*
+         * Recuperamos el ID del cuidador.
+         *
+         * Este ID viene desde:
+         *
+         * Inicio
+         *   ↓
+         * Cuidador
+         *   ↓
+         * Detalle del cuidador
+         *   ↓
+         * Turnos
+         */
+        idUsuario =
+            arguments?.getInt("id_usuario") ?: 0
+    }
+
+    // =========================================================
+    // CREAR VISTA
+    // =========================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,697 +114,308 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
         return binding.root
     }
 
+    // =========================================================
+    // VISTA CREADA
+    // =========================================================
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
 
-        cargarDatosCuidador()
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        // =====================================================
+        // BOTÓN VOLVER
+        // =====================================================
+
+        binding.btnVolverTurnos.setOnClickListener {
+
+            requireActivity()
+                .supportFragmentManager
+                .popBackStack()
+        }
+
+        // =====================================================
+        // DATOS DEL CUIDADOR
+        // =====================================================
+
+        configurarDatosCuidador()
+
+        // =====================================================
+        // RECYCLERVIEW
+        // =====================================================
 
         configurarRecyclerView()
 
-        configurarSeleccionTurno()
+        // =====================================================
+        // SELECTOR DE TURNOS
+        // =====================================================
 
-        configurarFechas()
+        configurarSelectorTurnos()
 
-        configurarBotonAsignar()
+        /*
+         * Al entrar a la pantalla comenzamos
+         * mostrando los turnos asignados.
+         */
+        mostrarTurnosAsignados()
 
-        configurarBotonVolver()
+        // =====================================================
+        // CARGAR INFORMACIÓN DESDE LA API
+        // =====================================================
+
+        cargarTurnos()
     }
 
     // =========================================================
     // DATOS DEL CUIDADOR
     // =========================================================
 
-    private fun cargarDatosCuidador() {
+    private fun configurarDatosCuidador() {
 
-        val nombre =
+        binding.txtNombreCuidadorTurno.text =
             arguments?.getString("nombre")
                 ?: "Cuidador"
 
-        val cargo =
+        binding.txtCargoCuidadorTurno.text =
             arguments?.getString("cargo")
                 ?: "Cuidador"
-
-        binding.txtNombreCuidadorTurno.text =
-            nombre
-
-        binding.txtCargoCuidadorTurno.text =
-            cargo
     }
 
     // =========================================================
-    // RECYCLERVIEW
+    // CONFIGURAR RECYCLERVIEW
     // =========================================================
 
     private fun configurarRecyclerView() {
 
-        binding.recyclerTurnos.layoutManager =
-            LinearLayoutManager(requireContext())
-
         adapter = TurnoAdapter(
-            listaTurnos,
+            emptyList(),
 
             onEditar = { turno ->
+
                 editarTurno(turno)
             },
 
             onEliminar = { turno ->
+
                 eliminarTurno(turno)
             }
         )
 
-        binding.recyclerTurnos.adapter = adapter
+        binding.recyclerTurnos.apply {
 
-        actualizarVisibilidadLista()
-    }
-
-    // =========================================================
-    // SELECCIÓN DIURNO / NOCTURNO
-    // =========================================================
-
-    private fun configurarSeleccionTurno() {
-
-        seleccionarTurnoDiurno()
-
-        binding.cardTurnoDiurno.setOnClickListener {
-
-            seleccionarTurnoDiurno()
-        }
-
-        binding.cardTurnoNocturno.setOnClickListener {
-
-            seleccionarTurnoNocturno()
-        }
-    }
-
-    private fun seleccionarTurnoDiurno() {
-
-        tipoTurno = "Diurno"
-
-        binding.cardTurnoDiurno.setBackgroundResource(
-            R.drawable.bg_turno_seleccionado
-        )
-
-        binding.cardTurnoNocturno.setBackgroundResource(
-            R.drawable.bg_turno_no_seleccionado
-        )
-
-        binding.iconoDiurnoSeleccion.setImageResource(
-            R.drawable.check_circle
-        )
-
-        binding.iconoNocturnoSeleccion.setImageResource(
-            R.drawable.radio_button_u
-        )
-
-        binding.iconoDiurnoSeleccion.setColorFilter(
-            Color.parseColor("#3B5BDB")
-        )
-
-        binding.iconoNocturnoSeleccion.setColorFilter(
-            Color.parseColor("#98A2B3")
-        )
-
-        actualizarResumen()
-    }
-
-    private fun seleccionarTurnoNocturno() {
-
-        tipoTurno = "Nocturno"
-
-        binding.cardTurnoDiurno.setBackgroundResource(
-            R.drawable.bg_turno_no_seleccionado
-        )
-
-        binding.cardTurnoNocturno.setBackgroundResource(
-            R.drawable.bg_turno_seleccionado
-        )
-
-        binding.iconoDiurnoSeleccion.setImageResource(
-            R.drawable.radio_button_u
-        )
-
-        binding.iconoNocturnoSeleccion.setImageResource(
-            R.drawable.check_circle
-        )
-
-        binding.iconoDiurnoSeleccion.setColorFilter(
-            Color.parseColor("#98A2B3")
-        )
-
-        binding.iconoNocturnoSeleccion.setColorFilter(
-            Color.parseColor("#3B5BDB")
-        )
-
-        actualizarResumen()
-    }
-
-    // =========================================================
-    // FECHAS
-    // =========================================================
-
-    private fun configurarFechas() {
-
-        binding.btnFechaInicio.setOnClickListener {
-
-            mostrarSelectorFecha(true)
-        }
-
-        binding.btnFechaFin.setOnClickListener {
-
-            mostrarSelectorFecha(false)
-        }
-    }
-
-    private fun mostrarSelectorFecha(
-        esFechaInicio: Boolean
-    ) {
-
-        val calendario =
-            Calendar.getInstance()
-
-        DatePickerDialog(
-            requireContext(),
-            { _, year, month, dayOfMonth ->
-
-                val fechaSeleccionada =
-                    Calendar.getInstance()
-
-                fechaSeleccionada.set(
-                    year,
-                    month,
-                    dayOfMonth,
-                    0,
-                    0,
-                    0
+            layoutManager =
+                LinearLayoutManager(
+                    requireContext()
                 )
 
-                fechaSeleccionada.set(
-                    Calendar.MILLISECOND,
-                    0
-                )
+            adapter =
+                this@TurnosCuidadorEncargadoFragment.adapter
 
-                if (esFechaInicio) {
+            setHasFixedSize(true)
 
-                    fechaInicio =
-                        fechaSeleccionada
-
-                    binding.txtFechaInicio.text =
-                        formatearFecha(
-                            fechaSeleccionada
-                        )
-
-                } else {
-
-                    fechaFin =
-                        fechaSeleccionada
-
-                    binding.txtFechaFin.text =
-                        formatearFecha(
-                            fechaSeleccionada
-                        )
-                }
-
-                calcularDuracion()
-
-            },
-            calendario.get(Calendar.YEAR),
-            calendario.get(Calendar.MONTH),
-            calendario.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
-
-    // =========================================================
-    // DURACIÓN
-    // =========================================================
-
-    private fun calcularDuracion() {
-
-        val inicio = fechaInicio
-        val fin = fechaFin
-
-        if (inicio == null || fin == null) {
-
-            binding.txtDuracion.text =
-                "Selecciona las fechas"
-
-            actualizarResumen()
-
-            return
-        }
-
-        if (fin.before(inicio)) {
-
-            binding.txtDuracion.text =
-                "La fecha final debe ser posterior"
-
-            actualizarResumen()
-
-            return
-        }
-
-        val diferencia =
-            fin.timeInMillis -
-                    inicio.timeInMillis
-
-        val dias =
-            (diferencia /
-                    (1000L * 60L * 60L * 24L)) + 1L
-
-        binding.txtDuracion.text =
-            if (dias == 1L) {
-                "1 día"
-            } else {
-                "$dias días"
-            }
-
-        actualizarResumen()
-    }
-
-    // =========================================================
-    // RESUMEN
-    // =========================================================
-
-    private fun actualizarResumen() {
-
-        val inicio = fechaInicio
-        val fin = fechaFin
-
-        if (inicio == null || fin == null) {
-
-            binding.txtResumenTurno.text =
-                "Selecciona el tipo de turno y las fechas para ver el resumen."
-
-            return
-        }
-
-        if (fin.before(inicio)) {
-
-            binding.txtResumenTurno.text =
-                "La fecha final no puede ser anterior a la fecha inicial."
-
-            return
-        }
-
-        val fechaInicioTexto =
-            formatearFecha(inicio)
-
-        val fechaFinTexto =
-            formatearFecha(fin)
-
-        val horario =
-            if (tipoTurno == "Diurno") {
-
-                "7:00 AM - 7:00 PM"
-
-            } else {
-
-                "7:00 PM - 7:00 AM del día siguiente"
-            }
-
-        binding.txtResumenTurno.text =
-            "Turno $tipoTurno\n" +
-                    "$fechaInicioTexto → $fechaFinTexto\n" +
-                    horario
-    }
-
-    // =========================================================
-    // BOTÓN ASIGNAR / ACTUALIZAR
-    // =========================================================
-
-    private fun configurarBotonAsignar() {
-
-        binding.btnAsignarTurno.setOnClickListener {
-
-            if (turnoEditandoId == null) {
-
-                asignarTurno()
-
-            } else {
-
-                actualizarTurno()
-            }
+            /*
+             * Como el RecyclerView está dentro de un
+             * NestedScrollView, desactivamos su scroll
+             * interno.
+             */
+            isNestedScrollingEnabled = false
         }
     }
 
     // =========================================================
-    // ASIGNAR NUEVO TURNO
+    // CONFIGURAR SELECTOR
     // =========================================================
 
-    private fun asignarTurno() {
+    private fun configurarSelectorTurnos() {
 
-        val inicio = fechaInicio
-        val fin = fechaFin
+        // -----------------------------------------------------
+        // TURNOS ASIGNADOS
+        // -----------------------------------------------------
 
-        if (inicio == null || fin == null) {
+        binding.btnTurnosAsignados.setOnClickListener {
 
-            binding.txtResumenTurno.text =
-                "Selecciona las fechas antes de asignar el turno."
-
-            return
+            mostrarTurnosAsignados()
         }
 
-        if (fin.before(inicio)) {
+        // -----------------------------------------------------
+        // TURNOS PASADOS
+        // -----------------------------------------------------
 
-            binding.txtResumenTurno.text =
-                "La fecha final no puede ser anterior a la fecha inicial."
+        binding.btnTurnosPasados.setOnClickListener {
 
-            return
+            mostrarTurnosPasados()
         }
+    }
 
-        val horarioInicio: String
-        val horarioFin: String
+    // =========================================================
+    // MOSTRAR TURNOS ASIGNADOS
+    // =========================================================
 
-        if (tipoTurno == "Diurno") {
+    private fun mostrarTurnosAsignados() {
 
-            horarioInicio = "7:00 AM"
-            horarioFin = "7:00 PM"
+        mostrandoHistorial = false
 
-        } else {
+        // Actualizar apariencia de las pestañas
+        actualizarSelector()
 
-            horarioInicio = "7:00 PM"
-            horarioFin = "7:00 AM"
-        }
+        /*
+         * El Adapter queda en modo normal.
+         *
+         * Esto permite:
+         * - Editar
+         * - Eliminar
+         */
+        adapter.establecerModoHistorial(false)
 
-        val dias =
-            calcularDias(
-                inicio,
-                fin
-            )
-
-        val duracion =
-            formatearDuracion(dias)
-
-        val nuevoTurno =
-            Turno(
-                id = obtenerSiguienteId(),
-                tipo = tipoTurno,
-                fechaInicio = formatearFecha(inicio),
-                fechaFin = formatearFecha(fin),
-                horaInicio = horarioInicio,
-                horaFin = horarioFin,
-                duracion = duracion,
-                estado = "Asignado"
-            )
-
-        listaTurnos.add(nuevoTurno)
-
+        // Mostrar solamente próximos/vigentes
         adapter.actualizarLista(
-            listaTurnos
+            turnosAsignados
         )
 
-        actualizarVisibilidadLista()
+        // Información de la sección
+        binding.txtInfoTurnos.text =
+            "Estos son los turnos actualmente asignados al cuidador."
 
-        limpiarFormulario()
-    }
+        // Mensaje cuando no existen turnos
+        binding.txtSinTurnos.text =
+            "Este cuidador no tiene próximos turnos asignados."
 
-    // =========================================================
-    // EDITAR TURNO
-    // =========================================================
-
-    private fun editarTurno(
-        turno: Turno
-    ) {
-
-        turnoEditandoId =
-            turno.id
-
-        // Seleccionar tipo
-        if (turno.tipo == "Diurno") {
-
-            seleccionarTurnoDiurno()
-
-        } else {
-
-            seleccionarTurnoNocturno()
-        }
-
-        // Recuperar fecha inicial
-        fechaInicio =
-            convertirFechaACalendar(
-                turno.fechaInicio
-            )
-
-        // Recuperar fecha final
-        fechaFin =
-            convertirFechaACalendar(
-                turno.fechaFin
-            )
-
-        // Mostrar fechas
-        binding.txtFechaInicio.text =
-            turno.fechaInicio
-
-        binding.txtFechaFin.text =
-            turno.fechaFin
-
-        // Actualizar duración
-        calcularDuracion()
-
-        // Actualizar resumen
-        actualizarResumen()
-
-        // Cambiar botón
-        binding.btnAsignarTurno.text =
-            "Actualizar turno"
-
-        // Llevar el formulario hacia arriba
-        binding.scrollTurnos.smoothScrollTo(
-            0,
-            0
+        actualizarEstadoLista(
+            turnosAsignados
         )
     }
 
     // =========================================================
-    // ACTUALIZAR TURNO
+    // MOSTRAR TURNOS PASADOS
     // =========================================================
 
-    private fun actualizarTurno() {
+    private fun mostrarTurnosPasados() {
 
-        val id =
-            turnoEditandoId
+        mostrandoHistorial = true
 
-        val inicio =
-            fechaInicio
+        // Actualizar apariencia de las pestañas
+        actualizarSelector()
 
-        val fin =
-            fechaFin
+        /*
+         * Activamos modo historial.
+         *
+         * El Adapter ocultará:
+         * - Editar
+         * - Eliminar
+         */
+        adapter.establecerModoHistorial(true)
 
-        if (id == null) {
-            return
-        }
-
-        if (inicio == null || fin == null) {
-
-            binding.txtResumenTurno.text =
-                "Selecciona las fechas antes de actualizar el turno."
-
-            return
-        }
-
-        if (fin.before(inicio)) {
-
-            binding.txtResumenTurno.text =
-                "La fecha final no puede ser anterior a la fecha inicial."
-
-            return
-        }
-
-        val horarioInicio: String
-        val horarioFin: String
-
-        if (tipoTurno == "Diurno") {
-
-            horarioInicio = "7:00 AM"
-            horarioFin = "7:00 PM"
-
-        } else {
-
-            horarioInicio = "7:00 PM"
-            horarioFin = "7:00 AM"
-        }
-
-        val dias =
-            calcularDias(
-                inicio,
-                fin
-            )
-
-        val duracion =
-            formatearDuracion(dias)
-
-        val posicion =
-            listaTurnos.indexOfFirst {
-                it.id == id
-            }
-
-        if (posicion == -1) {
-            return
-        }
-
-        val turnoActualizado =
-            Turno(
-                id = id,
-                tipo = tipoTurno,
-                fechaInicio = formatearFecha(inicio),
-                fechaFin = formatearFecha(fin),
-                horaInicio = horarioInicio,
-                horaFin = horarioFin,
-                duracion = duracion,
-                estado = listaTurnos[posicion].estado
-            )
-
-        listaTurnos[posicion] =
-            turnoActualizado
-
+        // Mostrar solamente turnos pasados
         adapter.actualizarLista(
-            listaTurnos
+            turnosPasados
         )
 
-        actualizarVisibilidadLista()
+        // Información de la sección
+        binding.txtInfoTurnos.text =
+            "Estos son los turnos que ya finalizaron y forman parte del historial."
 
-        limpiarFormulario()
+        // Mensaje cuando no existe historial
+        binding.txtSinTurnos.text =
+            "Este cuidador todavía no tiene turnos pasados."
+
+        actualizarEstadoLista(
+            turnosPasados
+        )
     }
 
     // =========================================================
-    // ELIMINAR TURNO
+    // ACTUALIZAR APARIENCIA DEL SELECTOR
     // =========================================================
 
-    private fun eliminarTurno(
-        turno: Turno
-    ) {
+    private fun actualizarSelector() {
 
-        AlertDialog.Builder(
-            requireContext()
-        )
-            .setTitle("Eliminar turno")
-            .setMessage(
-                "¿Deseas eliminar el turno ${turno.tipo} " +
-                        "del ${turno.fechaInicio} al ${turno.fechaFin}?"
-            )
-            .setNegativeButton(
-                "Cancelar",
-                null
-            )
-            .setPositiveButton(
-                "Eliminar"
-            ) { _, _ ->
+        if (mostrandoHistorial) {
 
-                listaTurnos.remove(turno)
+            // =================================================
+            // TURNOS ASIGNADOS → NO SELECCIONADO
+            // =================================================
 
-                adapter.actualizarLista(
-                    listaTurnos
+            binding.btnTurnosAsignados.apply {
+
+                setBackgroundResource(
+                    R.drawable.bg_selector_no_seleccionado
                 )
 
-                actualizarVisibilidadLista()
+                setTextColor(
+                    Color.parseColor("#687078")
+                )
 
-                // Si estábamos editando este turno,
-                // cancelar el modo edición.
-                if (turnoEditandoId == turno.id) {
-
-                    limpiarFormulario()
-                }
+                setTypeface(
+                    null,
+                    Typeface.NORMAL
+                )
             }
-            .show()
-    }
 
-    // =========================================================
-    // OBTENER SIGUIENTE ID
-    // =========================================================
+            // =================================================
+            // TURNOS PASADOS → SELECCIONADO
+            // =================================================
 
-    private fun obtenerSiguienteId(): Int {
+            binding.btnTurnosPasados.apply {
 
-        if (listaTurnos.isEmpty()) {
-            return 1
-        }
+                setBackgroundResource(
+                    R.drawable.bg_selector_activo
+                )
 
-        return listaTurnos.maxOf {
-            it.id
-        } + 1
-    }
+                setTextColor(
+                    Color.WHITE
+                )
 
-    // =========================================================
-    // CALCULAR DÍAS
-    // =========================================================
+                setTypeface(
+                    null,
+                    Typeface.BOLD
+                )
+            }
 
-    private fun calcularDias(
-        inicio: Calendar,
-        fin: Calendar
-    ): Long {
-
-        val diferencia =
-            fin.timeInMillis -
-                    inicio.timeInMillis
-
-        return (
-                diferencia /
-                        (1000L * 60L * 60L * 24L)
-                ) + 1L
-    }
-
-    // =========================================================
-    // FORMATEAR DURACIÓN
-    // =========================================================
-
-    private fun formatearDuracion(
-        dias: Long
-    ): String {
-
-        return if (dias == 1L) {
-            "1 día"
         } else {
-            "$dias días"
-        }
-    }
 
-    // =========================================================
-    // CONVERTIR FECHA A CALENDAR
-    // =========================================================
+            // =================================================
+            // TURNOS ASIGNADOS → SELECCIONADO
+            // =================================================
 
-    private fun convertirFechaACalendar(
-        fecha: String
-    ): Calendar? {
+            binding.btnTurnosAsignados.apply {
 
-        return try {
-
-            val partes =
-                fecha.split("/")
-
-            if (partes.size != 3) {
-                return null
-            }
-
-            val dia =
-                partes[0].toInt()
-
-            val mes =
-                partes[1].toInt() - 1
-
-            val anio =
-                partes[2].toInt()
-
-            Calendar.getInstance().apply {
-
-                set(
-                    anio,
-                    mes,
-                    dia,
-                    0,
-                    0,
-                    0
+                setBackgroundResource(
+                    R.drawable.bg_selector_activo
                 )
 
-                set(
-                    Calendar.MILLISECOND,
-                    0
+                setTextColor(
+                    Color.WHITE
+                )
+
+                setTypeface(
+                    null,
+                    Typeface.BOLD
                 )
             }
 
-        } catch (e: Exception) {
+            // =================================================
+            // TURNOS PASADOS → NO SELECCIONADO
+            // =================================================
 
-            null
+            binding.btnTurnosPasados.apply {
+
+                setBackgroundResource(
+                    R.drawable.bg_selector_no_seleccionado
+                )
+
+                setTextColor(
+                    Color.parseColor("#687078")
+                )
+
+                setTypeface(
+                    null,
+                    Typeface.NORMAL
+                )
+            }
         }
     }
 
@@ -748,9 +423,11 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
     // MOSTRAR / OCULTAR LISTA
     // =========================================================
 
-    private fun actualizarVisibilidadLista() {
+    private fun actualizarEstadoLista(
+        lista: List<TurnoUI>
+    ) {
 
-        if (listaTurnos.isEmpty()) {
+        if (lista.isEmpty()) {
 
             binding.txtSinTurnos.visibility =
                 View.VISIBLE
@@ -769,55 +446,595 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
     }
 
     // =========================================================
-    // LIMPIAR FORMULARIO
+    // CARGAR TURNOS DESDE LA API
     // =========================================================
 
-    private fun limpiarFormulario() {
+    private fun cargarTurnos() {
 
-        fechaInicio = null
-        fechaFin = null
+        lifecycleScope.launch {
 
-        turnoEditandoId = null
+            try {
 
-        binding.txtFechaInicio.text =
-            "Seleccionar fecha"
+                // =================================================
+                // OBTENER TURNOS
+                // =================================================
 
-        binding.txtFechaFin.text =
-            "Seleccionar fecha"
+                val turnos =
+                    repository.obtenerTurnos()
 
-        binding.txtDuracion.text =
-            "Selecciona las fechas"
+                // =================================================
+                // OBTENER ASIGNACIONES
+                // =================================================
 
-        binding.txtResumenTurno.text =
-            "Selecciona el tipo de turno y las fechas para ver el resumen."
+                val asignaciones =
+                    repository.obtenerAsignaciones()
 
-        // Volver al modo de creación
-        binding.btnAsignarTurno.text =
-            "Asignar turno"
+                // =================================================
+                // FILTRAR ASIGNACIONES DEL CUIDADOR
+                // =================================================
 
-        // Volver a seleccionar Diurno
-        seleccionarTurnoDiurno()
-    }
+                val asignacionesCuidador =
+                    asignaciones.filter {
 
-    // =========================================================
-    // VOLVER
-    // =========================================================
+                        it.id_usuario ==
+                                idUsuario
+                    }
 
-    private fun configurarBotonVolver() {
+                // =================================================
+                // RELACIONAR ASIGNACIÓN CON TURNO
+                // =================================================
 
-        binding.btnVolverTurnos.setOnClickListener {
+                val registros =
+                    asignacionesCuidador
+                        .mapNotNull { asignacion ->
 
-            parentFragmentManager.popBackStack()
+                            val turno =
+                                turnos.find {
+
+                                    it.id_turno ==
+                                            asignacion.id_turno
+                                }
+
+                            if (turno != null) {
+
+                                RegistroTurno(
+                                    asignacion = asignacion,
+                                    turno = turno
+                                )
+
+                            } else {
+
+                                null
+                            }
+                        }
+                        .sortedBy {
+
+                            convertirFechaCalendar(
+                                it.turno.fecha
+                            ).timeInMillis
+                        }
+
+                // =================================================
+                // AGRUPAR TURNOS CONSECUTIVOS
+                // =================================================
+
+                val grupos =
+                    mutableListOf<
+                            MutableList<RegistroTurno>
+                            >()
+
+                for (registro in registros) {
+
+                    val grupoAnterior =
+                        grupos.lastOrNull()
+
+                    if (
+                        grupoAnterior == null ||
+                        !puedeAgruparse(
+                            grupoAnterior.last(),
+                            registro
+                        )
+                    ) {
+
+                        /*
+                         * Comienza un nuevo grupo.
+                         */
+
+                        grupos.add(
+                            mutableListOf(
+                                registro
+                            )
+                        )
+
+                    } else {
+
+                        /*
+                         * Se agrega al grupo anterior.
+                         */
+
+                        grupoAnterior.add(
+                            registro
+                        )
+                    }
+                }
+
+                // =================================================
+                // CONVERTIR GRUPOS A TurnoUI
+                // =================================================
+
+                val listaUI =
+                    grupos.map { grupo ->
+
+                        val primero =
+                            grupo.first()
+
+                        val ultimo =
+                            grupo.last()
+
+                        // -------------------------------------------------
+                        // IDS DE TURNOS
+                        // -------------------------------------------------
+
+                        val idsTurnos =
+                            grupo.mapNotNull {
+
+                                it.turno.id_turno
+                            }
+
+                        // -------------------------------------------------
+                        // IDS DE ASIGNACIONES
+                        // -------------------------------------------------
+
+                        val idsAsignaciones =
+                            grupo.mapNotNull {
+
+                                it.asignacion
+                                    .id_asignacion_turno_usuario
+                            }
+
+                        // -------------------------------------------------
+                        // TIPO DE TURNO
+                        // -------------------------------------------------
+
+                        val tipo =
+                            if (
+                                primero.turno.hora_inicio ==
+                                "07:00:00"
+                            ) {
+
+                                "Diurno"
+
+                            } else {
+
+                                "Nocturno"
+                            }
+
+                        // -------------------------------------------------
+                        // DURACIÓN
+                        // -------------------------------------------------
+
+                        val cantidadDias =
+                            grupo.size
+
+                        val duracion =
+                            if (
+                                cantidadDias == 1
+                            ) {
+
+                                "1 día"
+
+                            } else {
+
+                                "$cantidadDias días"
+                            }
+
+                        // -------------------------------------------------
+                        // CREAR MODELO
+                        // -------------------------------------------------
+
+                        TurnoUI(
+
+                            id =
+                                idsTurnos
+                                    .firstOrNull()
+                                    ?: 0,
+
+                            idsTurnos =
+                                idsTurnos,
+
+                            idsAsignaciones =
+                                idsAsignaciones,
+
+                            tipo =
+                                tipo,
+
+                            fechaInicio =
+                                convertirFecha(
+                                    primero.turno.fecha
+                                ),
+
+                            fechaFin =
+                                convertirFecha(
+                                    ultimo.turno.fecha
+                                ),
+
+                            horaInicio =
+                                convertirHora(
+                                    primero.turno.hora_inicio
+                                ),
+
+                            horaFin =
+                                convertirHora(
+                                    primero.turno.hora_fin
+                                        ?: ""
+                                ),
+
+                            duracion =
+                                duracion,
+
+                            estado =
+                                primero.asignacion.estado
+                        )
+                    }
+
+                // =================================================
+                // SEPARAR TURNOS
+                // =================================================
+
+                separarTurnos(
+                    listaUI
+                )
+
+                // =================================================
+                // RESPETAR PESTAÑA SELECCIONADA
+                // =================================================
+
+                if (mostrandoHistorial) {
+
+                    mostrarTurnosPasados()
+
+                } else {
+
+                    mostrarTurnosAsignados()
+                }
+
+            } catch (e: Exception) {
+
+                Toast.makeText(
+                    requireContext(),
+                    "No se pudieron cargar los turnos: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
     // =========================================================
-    // FORMATO DE FECHA
+    // COMPROBAR SI DOS TURNOS PUEDEN AGRUPARSE
     // =========================================================
 
-    private fun formatearFecha(
-        calendario: Calendar
+    private fun puedeAgruparse(
+        anterior: RegistroTurno,
+        actual: RegistroTurno
+    ): Boolean {
+
+        // =====================================================
+        // COMPROBAR HORARIO
+        // =====================================================
+
+        val mismoHorario =
+            anterior.turno.hora_inicio ==
+                    actual.turno.hora_inicio &&
+                    anterior.turno.hora_fin ==
+                    actual.turno.hora_fin
+
+        if (!mismoHorario) {
+            return false
+        }
+
+        // =====================================================
+        // COMPROBAR ESTADO
+        // =====================================================
+
+        val mismoEstado =
+            anterior.asignacion.estado ==
+                    actual.asignacion.estado
+
+        if (!mismoEstado) {
+            return false
+        }
+
+        // =====================================================
+        // COMPROBAR TIPO / NOMBRE DEL TURNO
+        // =====================================================
+
+        val mismoTurno =
+            anterior.turno.nombre ==
+                    actual.turno.nombre
+
+        if (!mismoTurno) {
+            return false
+        }
+
+        // =====================================================
+        // COMPROBAR FECHAS CONSECUTIVAS
+        // =====================================================
+
+        val fechaAnterior =
+            convertirFechaCalendar(
+                anterior.turno.fecha
+            )
+
+        val fechaActual =
+            convertirFechaCalendar(
+                actual.turno.fecha
+            )
+
+        /*
+         * Creamos una copia de la fecha anterior
+         * y le sumamos exactamente un día.
+         */
+
+        val diaSiguiente =
+            fechaAnterior.clone() as Calendar
+
+        diaSiguiente.add(
+            Calendar.DAY_OF_YEAR,
+            1
+        )
+
+        /*
+         * Si el día siguiente coincide con la fecha
+         * actual, entonces los turnos son consecutivos.
+         */
+
+        return diaSiguiente.timeInMillis ==
+                fechaActual.timeInMillis
+    }
+
+    // =========================================================
+    // SEPARAR TURNOS ASIGNADOS Y PASADOS
+    // =========================================================
+
+    private fun separarTurnos(
+        lista: List<TurnoUI>
+    ) {
+
+        /*
+         * Obtenemos la fecha actual sin hora.
+         */
+
+        val hoy =
+            limpiarHora(
+                Calendar.getInstance()
+            )
+
+        // =====================================================
+        // TURNOS ASIGNADOS
+        // =====================================================
+
+        turnosAsignados =
+            lista.filter { turno ->
+
+                val fechaFin =
+                    convertirFechaParaOrden(
+                        turno.fechaFin
+                    )
+
+                /*
+                 * Si todavía no ha terminado,
+                 * permanece como turno asignado.
+                 *
+                 * También incluye el turno de hoy.
+                 */
+
+                !fechaFin.before(hoy)
+
+            }.sortedBy {
+
+                convertirFechaParaOrden(
+                    it.fechaInicio
+                ).timeInMillis
+            }
+
+        // =====================================================
+        // TURNOS PASADOS
+        // =====================================================
+
+        turnosPasados =
+            lista.filter { turno ->
+
+                val fechaFin =
+                    convertirFechaParaOrden(
+                        turno.fechaFin
+                    )
+
+                /*
+                 * Si la fecha final ya pasó,
+                 * se mueve al historial.
+                 */
+
+                fechaFin.before(hoy)
+
+            }.sortedByDescending {
+
+                convertirFechaParaOrden(
+                    it.fechaInicio
+                ).timeInMillis
+            }
+    }
+
+    // =========================================================
+    // EDITAR TURNO
+    // =========================================================
+
+    private fun editarTurno(
+        turno: TurnoUI
+    ) {
+
+        /*
+         * Esta comprobación evita editar accidentalmente
+         * un turno del historial.
+         */
+
+        if (mostrandoHistorial) {
+
+            Toast.makeText(
+                requireContext(),
+                "Los turnos pasados no se pueden editar.",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        Toast.makeText(
+            requireContext(),
+            "Editar turno: ${turno.tipo}",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        /*
+         * AQUÍ IMPLEMENTAREMOS DESPUÉS:
+         *
+         * - Abrir formulario de edición.
+         * - Cargar fecha inicial.
+         * - Cargar fecha final.
+         * - Cargar tipo.
+         * - Actualizar los registros.
+         */
+    }
+
+    // =========================================================
+    // ELIMINAR TURNO
+    // =========================================================
+
+    private fun eliminarTurno(
+        turno: TurnoUI
+    ) {
+
+        /*
+         * Los turnos históricos no pueden eliminarse.
+         */
+
+        if (mostrandoHistorial) {
+
+            Toast.makeText(
+                requireContext(),
+                "Los turnos pasados no se pueden eliminar.",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        Toast.makeText(
+            requireContext(),
+            "Eliminar turno: ${turno.tipo}",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        /*
+         * AQUÍ IMPLEMENTAREMOS DESPUÉS:
+         *
+         * Primero eliminaremos la asignación
+         * del cuidador.
+         *
+         * Después comprobaremos si el turno
+         * sigue siendo utilizado por otro cuidador.
+         *
+         * No eliminaremos directamente el Turno
+         * para evitar afectar a otros cuidadores.
+         */
+    }
+
+    // =========================================================
+    // CONVERTIR FECHA API → UI
+    // =========================================================
+
+    private fun convertirFecha(
+        fecha: String
     ): String {
+
+        return try {
+
+            val entrada =
+                SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.getDefault()
+                )
+
+            val salida =
+                SimpleDateFormat(
+                    "dd/MM/yyyy",
+                    Locale.getDefault()
+                )
+
+            val date =
+                entrada.parse(fecha)
+
+            if (date != null) {
+
+                salida.format(date)
+
+            } else {
+
+                fecha
+            }
+
+        } catch (e: Exception) {
+
+            fecha
+        }
+    }
+
+    // =========================================================
+    // CONVERTIR HORA API → UI
+    // =========================================================
+
+    private fun convertirHora(
+        hora: String
+    ): String {
+
+        return try {
+
+            val entrada =
+                SimpleDateFormat(
+                    "HH:mm:ss",
+                    Locale.getDefault()
+                )
+
+            val salida =
+                SimpleDateFormat(
+                    "hh:mm a",
+                    Locale.getDefault()
+                )
+
+            val date =
+                entrada.parse(hora)
+
+            if (date != null) {
+
+                salida.format(date)
+
+            } else {
+
+                hora
+            }
+
+        } catch (e: Exception) {
+
+            hora
+        }
+    }
+
+    // =========================================================
+    // CONVERTIR FECHA PARA ORDENAMIENTO
+    // =========================================================
+
+    private fun convertirFechaParaOrden(
+        fecha: String
+    ): Calendar {
 
         val formato =
             SimpleDateFormat(
@@ -825,10 +1042,114 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                 Locale.getDefault()
             )
 
-        return formato.format(
-            calendario.time
+        val calendar =
+            Calendar.getInstance()
+
+        try {
+
+            val date =
+                formato.parse(fecha)
+
+            if (date != null) {
+
+                calendar.time =
+                    date
+            }
+
+        } catch (e: Exception) {
+
+            // Se conserva la fecha actual
+        }
+
+        return limpiarHora(
+            calendar
         )
     }
+
+    // =========================================================
+    // CONVERTIR FECHA API → CALENDAR
+    // =========================================================
+
+    private fun convertirFechaCalendar(
+        fecha: String
+    ): Calendar {
+
+        val formato =
+            SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.getDefault()
+            )
+
+        val calendar =
+            Calendar.getInstance()
+
+        try {
+
+            val date =
+                formato.parse(fecha)
+
+            if (date != null) {
+
+                calendar.time =
+                    date
+            }
+
+        } catch (e: Exception) {
+
+            // Se conserva la fecha actual
+        }
+
+        return limpiarHora(
+            calendar
+        )
+    }
+
+    // =========================================================
+    // LIMPIAR HORA
+    // =========================================================
+
+    private fun limpiarHora(
+        fecha: Calendar
+    ): Calendar {
+
+        val resultado =
+            fecha.clone() as Calendar
+
+        resultado.set(
+            Calendar.HOUR_OF_DAY,
+            0
+        )
+
+        resultado.set(
+            Calendar.MINUTE,
+            0
+        )
+
+        resultado.set(
+            Calendar.SECOND,
+            0
+        )
+
+        resultado.set(
+            Calendar.MILLISECOND,
+            0
+        )
+
+        return resultado
+    }
+
+    // =========================================================
+    // MODELO INTERNO
+    // =========================================================
+
+    private data class RegistroTurno(
+
+        val asignacion:
+        AsignacionTurnoUsuario,
+
+        val turno:
+        Turno
+    )
 
     // =========================================================
     // DESTRUIR BINDING

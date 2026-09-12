@@ -15,6 +15,8 @@
     <color name="on_surface_variant">#454652</color>
     <color name="secondary">#2761FE</color>
     <color name="surface_card">#FFFFFF</color>
+    <color name="colo_boton">#3B5BDB</color>
+    <color name="activo">#F5E8D5</color>
 
 
 </resources>

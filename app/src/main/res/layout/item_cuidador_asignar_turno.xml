@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:id="@+id/contenedorCuidador"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="76dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="10dp">
+
+        <!-- ICONO DEL CUIDADOR -->
+
+        <TextView
+            android:id="@+id/iconoCuidador"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_icono_cuidador"
+            android:gravity="center"
+            android:text="👤"
+            android:textSize="20sp" />
+
+        <!-- INFORMACIÓN -->
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtNombreCuidador"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nombre del cuidador"
+                android:textColor="#1D2939"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtEstadoCuidador"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Activo"
+                android:textColor="#98A2B3"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- CHECKBOX -->
+
+        <CheckBox
+            android:id="@+id/checkCuidador"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:buttonTint="@color/selector_checkbox_cuidador"
+            android:contentDescription="Seleccionar cuidador" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

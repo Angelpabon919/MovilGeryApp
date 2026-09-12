@@ -232,8 +232,6 @@
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
-                <!-- DIVISOR -->
-
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
@@ -259,8 +257,6 @@
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
 
-                <!-- DIVISOR -->
-
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
@@ -285,8 +281,6 @@
                     android:text="correo@ejemplo.com"
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
-
-                <!-- DIVISOR -->
 
                 <View
                     android:layout_width="match_parent"
@@ -412,7 +406,6 @@
                 android:clickable="true"
                 android:focusable="true">
 
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -460,10 +453,10 @@
                 android:layout_marginBottom="15dp"
                 android:gravity="center"
                 android:text="Cerrar sesión"
-                android:textColor="#E76F51"
+                android:textColor="@color/text_status"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:background="@drawable/bg_boton_cerrar_sesion"
+                android:background="@drawable/bg_status_activo"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -496,8 +489,9 @@
             android:orientation="horizontal"
             android:gravity="center">
 
+
             <!-- ================= -->
-            <!-- INICIO -->
+            <!-- 1. INICIO -->
             <!-- ================= -->
 
             <LinearLayout
@@ -516,7 +510,8 @@
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:src="@drawable/home"
-                    android:contentDescription="Inicio" />
+                    android:contentDescription="Inicio"
+                    app:tint="#98A2B3" />
 
                 <TextView
                     android:id="@+id/textInicioPerfil"
@@ -531,7 +526,42 @@
 
 
             <!-- ================= -->
-            <!-- CITAS -->
+            <!-- 2. ASIGNAR TURNO -->
+            <!-- ================= -->
+
+            <LinearLayout
+                android:id="@+id/navAsignarTurnoPerfil"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="7dp">
+
+                <ImageView
+                    android:id="@+id/iconAsignarTurnoPerfil"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/calendar_dia"
+                    android:contentDescription="Asignar turno"
+                    app:tint="#98A2B3" />
+
+                <TextView
+                    android:id="@+id/textAsignarTurnoPerfil"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Asignar turno"
+                    android:textColor="#98A2B3"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+
+            <!-- ================= -->
+            <!-- 3. CITAS -->
             <!-- ================= -->
 
             <LinearLayout
@@ -550,7 +580,8 @@
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:src="@drawable/calendario"
-                    android:contentDescription="Citas" />
+                    android:contentDescription="Citas"
+                    app:tint="#98A2B3" />
 
                 <TextView
                     android:id="@+id/textCitasPerfil"
@@ -565,41 +596,7 @@
 
 
             <!-- ================= -->
-            <!-- BITÁCORA -->
-            <!-- ================= -->
-
-            <LinearLayout
-                android:id="@+id/navBitacoraPerfil"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
-
-                <ImageView
-                    android:id="@+id/iconBitacoraPerfil"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:src="@drawable/bitacora"
-                    android:contentDescription="Bitácora" />
-
-                <TextView
-                    android:id="@+id/textBitacoraPerfil"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Bitácora"
-                    android:textColor="#98A2B3"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-
-            <!-- ================= -->
-            <!-- MI PERFIL -->
+            <!-- 4. MI PERFIL -->
             <!-- ================= -->
 
             <LinearLayout

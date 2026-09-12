@@ -227,7 +227,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2"
-                        android:textColor="#E76F51"
+                        android:textColor="@color/text_status"
                         android:textSize="24sp"
                         android:textStyle="bold" />
 

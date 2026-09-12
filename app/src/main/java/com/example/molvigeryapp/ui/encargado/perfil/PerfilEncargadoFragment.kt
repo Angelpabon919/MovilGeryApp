@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.databinding.FragmentPerfilEncargadoBinding
 import com.example.molvigeryapp.ui.encargado.NavegacionEncargado
-import com.example.molvigeryapp.ui.encargado.bitacora.BitacoraEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.citas.CitasEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
@@ -180,21 +180,21 @@ class PerfilEncargadoFragment : Fragment() {
 
 
             // =================================================
+            // ASIGNAR TURNO
+            // =================================================
+
+            navAsignarTurno = binding.navAsignarTurnoPerfil,
+            iconAsignarTurno = binding.iconAsignarTurnoPerfil,
+            textAsignarTurno = binding.textAsignarTurnoPerfil,
+
+
+            // =================================================
             // CITAS
             // =================================================
 
             navCitas = binding.navCitasPerfil,
             iconCitas = binding.iconCitasPerfil,
             textCitas = binding.textCitasPerfil,
-
-
-            // =================================================
-            // BITÁCORA
-            // =================================================
-
-            navBitacora = binding.navBitacoraPerfil,
-            iconBitacora = binding.iconBitacoraPerfil,
-            textBitacora = binding.textBitacoraPerfil,
 
 
             // =================================================
@@ -231,6 +231,22 @@ class PerfilEncargadoFragment : Fragment() {
 
 
             // =================================================
+            // IR A ASIGNAR TURNO
+            // =================================================
+
+            onAsignarTurno = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        AsignarTurnoEncargadoFragment()
+                    )
+                    .commit()
+            },
+
+
+            // =================================================
             // IR A CITAS
             // =================================================
 
@@ -241,22 +257,6 @@ class PerfilEncargadoFragment : Fragment() {
                     .replace(
                         R.id.fragmentContainer,
                         CitasEncargadoFragment()
-                    )
-                    .commit()
-            },
-
-
-            // =================================================
-            // IR A BITÁCORA
-            // =================================================
-
-            onBitacora = {
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        BitacoraEncargadoFragment()
                     )
                     .commit()
             },
