@@ -1,9 +1,11 @@
 package com.example.molvigeryapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.molvigeryapp.databinding.ActivityMainBinding
+import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.bitacora.EventosAdversosFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacientesListFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
@@ -17,17 +19,12 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         val idRol = intent.getIntExtra("ID_ROL", -1)
-
         if (savedInstanceState == null) {
-
             when (idRol) {
 
-                // ENCARGADO
                 6 -> {
                     ocultarBottomNavigation()
-
                     supportFragmentManager.beginTransaction()
                         .replace(
                             R.id.fragmentContainer,
@@ -36,17 +33,14 @@ class MainActivity : AppCompatActivity() {
                         .commit()
                 }
 
-                // CUIDADOR
                 5 -> {
                     mostrarBottomNavigation()
-
                     supportFragmentManager.beginTransaction()
                         .replace(
                             R.id.fragmentContainer,
                             PacientesListFragment()
                         )
                         .commit()
-
                     configurarNavegacionCuidador()
                 }
             }
@@ -54,53 +48,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configurarNavegacionCuidador() {
-
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-
             when (item.itemId) {
-
-                // 🏠 INICIO
                 R.id.nav_cuidador_inicio -> {
-
                     mostrarBottomNavigation()
-
                     supportFragmentManager.beginTransaction()
                         .replace(
                             R.id.fragmentContainer,
                             PacientesListFragment()
                         )
                         .commit()
-
-                    true
-                }
-
-                // ⚠️ EVENTO ADVERSO
-                R.id.nav_cuidador_evento -> {
-
-                    mostrarBottomNavigation()
-
-                    supportFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            EventosAdversosFragment()
-                        )
-                        .commit()
-
                     true
                 }
 
                 // 📋 ACTIVIDADES
                 R.id.nav_cuidador_actividades -> {
-
                     mostrarBottomNavigation()
                     true
                 }
-
                 // 👤 PERFIL
                 R.id.nav_cuidador_perfil -> {
-
                     mostrarBottomNavigation()
-
                     true
                 }
 
@@ -109,12 +77,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Oculta la barra inferior
+    fun cerrarSesion() {
+
+        val preferencias = getSharedPreferences(
+            "SESION",
+            MODE_PRIVATE
+        )
+
+        preferencias.edit().clear().apply()
+        val intent = Intent(
+            this,
+            LoginActivity::class.java
+        )
+        intent.flags =
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
     fun ocultarBottomNavigation() {
         binding.bottomNavigation.visibility = View.GONE
     }
-
-    // Muestra la barra inferior
     fun mostrarBottomNavigation() {
         binding.bottomNavigation.visibility = View.VISIBLE
     }

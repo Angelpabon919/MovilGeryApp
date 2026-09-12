@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/color_background">
 
+    <!-- CONTENIDO DEL FORMULARIO -->
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -23,6 +24,7 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <!-- TÍTULO -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -32,6 +34,7 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="20dp" />
 
+            <!-- DESCRIPCIÓN -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -48,10 +51,12 @@
                 android:layout_marginBottom="20dp"
                 android:gravity="top"
                 android:textColor="@color/black"
+                android:textColorHint="#94A3B8"
                 android:hint="Describe lo que sucedió..."
                 android:inputType="textMultiLine"
                 android:padding="12dp" />
 
+            <!-- EVALUACIÓN -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -91,6 +96,7 @@
 
             </RadioGroup>
 
+            <!-- SIGNOS VITALES -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -100,6 +106,7 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp" />
 
+            <!-- TEMPERATURA Y FRECUENCIA CARDÍACA -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -112,6 +119,7 @@
                     android:layout_weight="1"
                     android:hint="Temperatura °C"
                     android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
                     android:inputType="numberDecimal"
                     android:layout_marginEnd="8dp" />
 
@@ -122,26 +130,59 @@
                     android:layout_weight="1"
                     android:hint="Frec. cardíaca"
                     android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
                     android:inputType="number"
                     android:layout_marginStart="8dp" />
 
             </LinearLayout>
 
+            <!-- PRESIÓN ARTERIAL -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="24dp">
+                android:layout_marginTop="12dp">
 
                 <EditText
-                    android:id="@+id/etPresion"
+                    android:id="@+id/etPresionSistolica"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="Presión arterial"
+                    android:hint="Presión sistólica"
                     android:textColor="@color/black"
-                    android:inputType="text"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginEnd="8dp" />
+
+                <EditText
+                    android:id="@+id/etPresionDiastolica"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Presión diastólica"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginStart="8dp" />
+
+            </LinearLayout>
+
+            <!-- FRECUENCIA RESPIRATORIA Y SATURACIÓN -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <EditText
+                    android:id="@+id/etFrecuenciaRespiratoria"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Frec. respiratoria"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
                     android:layout_marginEnd="8dp" />
 
                 <EditText
@@ -151,11 +192,89 @@
                     android:layout_weight="1"
                     android:hint="Saturación %"
                     android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
                     android:inputType="number"
                     android:layout_marginStart="8dp" />
 
             </LinearLayout>
 
+            <!-- PESO -->
+            <EditText
+                android:id="@+id/etPeso"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="24dp"
+                android:hint="Peso (kg)"
+                android:textColor="@color/black"
+                android:textColorHint="#94A3B8"
+                android:inputType="numberDecimal" />
+
+            <!-- OBSERVACIONES DE SIGNOS VITALES -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Observaciones"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etObservaciones"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:gravity="top"
+                android:hint="Observaciones de los signos vitales..."
+                android:textColor="@color/black"
+                android:textColorHint="#94A3B8"
+                android:inputType="textMultiLine"
+                android:padding="12dp"
+                android:layout_marginBottom="24dp" />
+
+            <!-- ACCIONES REALIZADAS -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Acciones realizadas"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etAccionesRealizadas"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:gravity="top"
+                android:hint="Describe las acciones realizadas..."
+                android:textColor="@color/black"
+                android:textColorHint="#94A3B8"
+                android:inputType="textMultiLine"
+                android:padding="12dp"
+                android:layout_marginBottom="24dp" />
+
+            <!-- ESTADO DEL EVENTO -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Estado del evento"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etEstado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Estado del evento"
+                android:textColor="@color/black"
+                android:textColorHint="#94A3B8"
+                android:inputType="text"
+                android:layout_marginBottom="24dp" />
+
+            <!-- FOTO -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -183,6 +302,7 @@
                 android:contentDescription="Foto del evento adverso"
                 android:layout_marginBottom="20dp" />
 
+            <!-- GUARDAR -->
             <Button
                 android:id="@+id/btnGuardar"
                 android:layout_width="match_parent"
@@ -193,6 +313,7 @@
                 app:backgroundTint="@null"
                 android:layout_marginBottom="12dp" />
 
+            <!-- CANCELAR -->
             <Button
                 android:id="@+id/btnCancelar"
                 android:layout_width="match_parent"

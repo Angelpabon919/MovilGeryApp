@@ -7,10 +7,6 @@
         android:icon="@drawable/home"
         android:title="Inicio" />
 
-    <item
-        android:id="@+id/nav_cuidador_evento"
-        android:icon="@drawable/bitacora"
-        android:title="Evento adverso" />
 
     <item
         android:id="@+id/nav_cuidador_actividades"

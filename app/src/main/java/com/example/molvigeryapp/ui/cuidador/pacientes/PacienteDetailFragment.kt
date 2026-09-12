@@ -23,7 +23,8 @@ class PacienteDetailFragment : Fragment() {
         "Medicamentos",
         "Cardex",
         "Recomendaciones",
-        "Insumos"
+        "Insumos",
+        "Evento Adverso"
     )
 
     override fun onCreateView(

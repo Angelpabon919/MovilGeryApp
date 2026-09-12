@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -25,13 +26,15 @@
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="300dp">
+                android:layout_height="330dp">
 
+                <!-- FONDO AZUL CON CURVA -->
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="fitXY"
-                    android:src="@drawable/bg_header_login" />
+                    android:src="@drawable/bg_header_login"
+                    android:contentDescription="@null" />
 
                 <!-- CONTENIDO DEL ENCABEZADO -->
                 <LinearLayout
@@ -40,34 +43,44 @@
                     android:layout_gravity="center"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:layout_marginTop="-15dp">
+                    android:layout_marginTop="-5dp">
 
+                    <!-- ==================== -->
                     <!-- LOGO -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="@color/white"
-                        android:textSize="55sp"
-                        android:textStyle="bold" />
+                    <!-- ==================== -->
 
+                    <ImageView
+                        android:id="@+id/imgLogo"
+                        android:layout_width="115dp"
+                        android:layout_height="115dp"
+                        android:src="@drawable/logo_geriapp1"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="Logo de GerlApp" />
+
+                    <!-- ==================== -->
                     <!-- NOMBRE -->
+                    <!-- ==================== -->
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="GerlApp"
                         android:textColor="@color/white"
-                        android:textSize="40sp"
-                        android:textStyle="bold" />
+                        android:textSize="38sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
 
+                    <!-- ==================== -->
                     <!-- DESCRIPCIÓN -->
+                    <!-- ==================== -->
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Gestión geriátrica"
                         android:textColor="@color/white"
                         android:textSize="19sp"
-                        android:layout_marginTop="3dp" />
+                        android:layout_marginTop="2dp" />
 
                 </LinearLayout>
 
@@ -87,7 +100,10 @@
                 android:paddingTop="25dp"
                 android:paddingBottom="30dp">
 
+
+                <!-- ==================== -->
                 <!-- BIENVENIDA -->
+                <!-- ==================== -->
 
                 <TextView
                     android:layout_width="match_parent"
@@ -150,11 +166,6 @@
                     android:textStyle="bold"
                     android:layout_marginTop="24dp" />
 
-
-                <!-- ==================== -->
-                <!-- OLVIDASTE CONTRASEÑA -->
-                <!-- ==================== -->
-
                 <EditText
                     android:id="@+id/etContrasena"
                     android:layout_width="match_parent"
@@ -168,17 +179,6 @@
                     android:textColor="@color/black"
                     android:textColorHint="@color/color_surface"
                     android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/tvOlvidaste"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="¿Olvidaste tu contraseña?"
-                    android:textColor="@color/color_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="18dp" />
 
 
                 <!-- ==================== -->
@@ -196,7 +196,25 @@
                     android:textColor="@color/white"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    app:backgroundTint="@null"/>
+                    app:backgroundTint="@null" />
+
+
+                <!-- ==================== -->
+                <!-- OLVIDASTE CONTRASEÑA -->
+                <!-- AHORA ESTÁ DEBAJO -->
+                <!-- DEL BOTÓN -->
+                <!-- ==================== -->
+
+                <TextView
+                    android:id="@+id/tvOlvidaste"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="¿Olvidaste tu contraseña?"
+                    android:textColor="@color/color_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="18dp" />
 
 
                 <!-- ==================== -->
@@ -248,7 +266,7 @@
                     android:textColor="@color/black"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    app:backgroundTint="@null"/>
+                    app:backgroundTint="@null" />
 
 
                 <!-- ==================== -->

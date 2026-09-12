@@ -1,19 +1,13 @@
 package com.example.molvigeryapp.data.api
-<<<<<<< Updated upstream
-import com.example.molvigeryapp.data.model.AplicacionMedicamento
-=======
 
->>>>>>> Stashed changes
+import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Usuario
-<<<<<<< Updated upstream
-import okhttp3.Response
-=======
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
->>>>>>> Stashed changes
+
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -24,10 +18,6 @@ import retrofit2.http.Query
 
 interface ApiService {
 
-    // =========================================================
-    // PACIENTES
-    // =========================================================
-
     @GET("pacientes/")
     suspend fun getPacientes(): List<Paciente>
 
@@ -36,21 +26,12 @@ interface ApiService {
         @Path("id") id: Int
     ): Paciente
 
-<<<<<<< Updated upstream
     @GET("api/aplicacion_medicamento/")
     suspend fun getAplicacionesPorPaciente(
-        @Query("id_Paciente") idPaciente:Int
+        @Query("id_Paciente") idPaciente: Int
     ): List<AplicacionMedicamento>
 
-    @POST("api/usuarios/registro/")
-=======
-
-    // =========================================================
-    // USUARIOS
-    // =========================================================
-
     @POST("usuarios/registro/")
->>>>>>> Stashed changes
     suspend fun registrarUsuario(
         @Body usuario: Usuario
     ): Usuario
@@ -62,11 +43,6 @@ interface ApiService {
 
     @GET("usuarios/")
     suspend fun getUsuarios(): List<Usuario>
-
-
-    // =========================================================
-    // TURNOS
-    // =========================================================
 
     @GET("turnos/")
     suspend fun getTurnos(): List<Turno>
@@ -87,11 +63,6 @@ interface ApiService {
         @Path("id") id: Int
     )
 
-
-    // =========================================================
-    // ASIGNACIÓN DE TURNO A USUARIO
-    // =========================================================
-
     @GET("asignacion_turno_usuario/")
     suspend fun getAsignacionesTurno(): List<AsignacionTurnoUsuario>
 
@@ -110,4 +81,6 @@ interface ApiService {
     suspend fun eliminarAsignacionTurno(
         @Path("id") id: Int
     )
+
+
 }
