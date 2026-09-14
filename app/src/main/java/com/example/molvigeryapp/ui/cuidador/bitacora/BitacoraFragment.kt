@@ -7,10 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Bitacora
+import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentBitacoraBinding
+import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
+import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModelFactory
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -21,18 +25,12 @@ class BitacoraFragment : Fragment() {
     private var _binding: FragmentBitacoraBinding? = null
     private val binding get() = _binding!!
 
-    // ID del paciente que se está observando
-    private var idPaciente: Int? = null
-
-    // ID de la bitácora creada por el API
-    private var idBitacora: Int? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Recibimos el ID del paciente
-        idPaciente = arguments?.getInt("ID_PACIENTE")
+    private val pacienteViewModel: PacienteViewModel by activityViewModels {
+        PacienteViewModelFactory(PacienteRepository())
     }
+
+    private var idPaciente: Int? = null
+    private var idBitacora: Int? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,12 +53,32 @@ class BitacoraFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        observarPaciente()
         configurarBotones()
     }
 
-    // =========================================================
-    // BOTONES
-    // =========================================================
+    private fun observarPaciente() {
+
+        pacienteViewModel.pacienteSeleccionado.observe(
+            viewLifecycleOwner
+        ) { paciente ->
+
+            paciente?.let {
+
+                idPaciente = it.idPaciente
+
+                android.util.Log.d(
+                    "BITACORA",
+                    "Paciente seleccionado: ${it.nombre} ${it.apellido}"
+                )
+
+                android.util.Log.d(
+                    "BITACORA",
+                    "ID Paciente: $idPaciente"
+                )
+            }
+        }
+    }
 
     private fun configurarBotones() {
 
@@ -73,27 +91,18 @@ class BitacoraFragment : Fragment() {
         }
     }
 
-    // =========================================================
-    // OBTENER ID DEL CUIDADOR
-    // =========================================================
-
     private fun obtenerIdUsuario(): Int {
 
-        val preferences =
-            requireActivity().getSharedPreferences(
-                "SESION",
-                Context.MODE_PRIVATE
-            )
+        val preferences = requireActivity().getSharedPreferences(
+            "SESION",
+            Context.MODE_PRIVATE
+        )
 
         return preferences.getInt(
             "ID_USUARIO",
             -1
         )
     }
-
-    // =========================================================
-    // OBTENER FECHA Y HORA
-    // =========================================================
 
     private fun obtenerFechaHoraActual(): String {
 
@@ -105,16 +114,9 @@ class BitacoraFragment : Fragment() {
         return formato.format(Date())
     }
 
-    // =========================================================
-    // GUARDAR BITÁCORA
-    // =========================================================
-
     private fun guardarBitacora() {
 
-        // -----------------------------------------------------
-        // OBTENER USUARIO
-        // -----------------------------------------------------
-
+        // 1. Obtener usuario de la sesión
         val idUsuario = obtenerIdUsuario()
 
         if (idUsuario == -1) {
@@ -128,27 +130,21 @@ class BitacoraFragment : Fragment() {
             return
         }
 
-        // -----------------------------------------------------
-        // OBTENER PACIENTE
-        // -----------------------------------------------------
-
+        // 2. Obtener paciente seleccionado
         val pacienteId = idPaciente
 
         if (pacienteId == null) {
 
             Toast.makeText(
                 requireContext(),
-                "No se encontró el paciente seleccionado",
+                "No hay paciente seleccionado",
                 Toast.LENGTH_SHORT
             ).show()
 
             return
         }
 
-        // -----------------------------------------------------
-        // OBTENER DATOS DEL FORMULARIO
-        // -----------------------------------------------------
-
+        // 3. Obtener información del formulario
         val tipoRegistro =
             binding.etTipoRegistro.text.toString().trim()
 
@@ -158,10 +154,7 @@ class BitacoraFragment : Fragment() {
         val estado =
             binding.switchEstado.isChecked
 
-        // -----------------------------------------------------
-        // VALIDAR TIPO DE REGISTRO
-        // -----------------------------------------------------
-
+        // 4. Validar tipo de registro
         if (tipoRegistro.isEmpty()) {
 
             binding.etTipoRegistro.error =
@@ -170,10 +163,7 @@ class BitacoraFragment : Fragment() {
             return
         }
 
-        // -----------------------------------------------------
-        // VALIDAR DESCRIPCIÓN
-        // -----------------------------------------------------
-
+        // 5. Validar descripción
         if (descripcion.isEmpty()) {
 
             binding.etDescripcion.error =
@@ -182,16 +172,10 @@ class BitacoraFragment : Fragment() {
             return
         }
 
-        // -----------------------------------------------------
-        // FECHA Y HORA
-        // -----------------------------------------------------
-
+        // 6. Obtener fecha y hora
         val fechaHora = obtenerFechaHoraActual()
 
-        // -----------------------------------------------------
-        // CREAR OBJETO BITÁCORA
-        // -----------------------------------------------------
-
+        // 7. Crear objeto Bitacora
         val bitacora = Bitacora(
 
             estado = estado,
@@ -207,45 +191,75 @@ class BitacoraFragment : Fragment() {
             idPaciente = pacienteId
         )
 
-        // -----------------------------------------------------
-        // CONSUMIR API
-        // -----------------------------------------------------
-
+        // 8. Enviar a la API
         lifecycleScope.launch {
 
             try {
 
-                val respuesta = RetrofitClient.apiService.crearBitacora(bitacora)
+                val respuesta =
+                    RetrofitClient.apiService.crearBitacora(bitacora)
+
+                // 9. Guardamos el ID que devuelve la API
+                idBitacora = respuesta.idBitacora
+
+                android.util.Log.d(
+                    "BITACORA",
+                    "Bitácora creada correctamente"
+                )
+
+                android.util.Log.d(
+                    "BITACORA",
+                    "ID Bitácora: $idBitacora"
+                )
+
+                android.util.Log.d(
+                    "BITACORA",
+                    "ID Usuario: $idUsuario"
+                )
+
+                android.util.Log.d(
+                    "BITACORA",
+                    "ID Paciente: $pacienteId"
+                )
 
                 Toast.makeText(
                     requireContext(),
-                    "Registro de bitácora exitoso",
-                    Toast.LENGTH_SHORT
+                    "Bitácora creada correctamente\nID: $idBitacora",
+                    Toast.LENGTH_LONG
                 ).show()
-
-                idBitacora = respuesta.idBitacora
 
                 limpiarFormulario()
 
             } catch (e: Exception) {
-                android.util.Log.e("BitacoraFragment", "Error guardando bitácora", e)
+
+                android.util.Log.e(
+                    "BITACORA",
+                    "Error al crear la bitácora",
+                    e
+                )
+
                 Toast.makeText(
                     requireContext(),
-                    "Error al guardar la bitácora",
-                    Toast.LENGTH_SHORT
+                    "Error al crear la bitácora",
+                    Toast.LENGTH_LONG
                 ).show()
             }
         }
     }
 
     private fun limpiarFormulario() {
-        binding.etTipoRegistro.text?.clear()
-        binding.etDescripcion.text?.clear()
+
+        binding.etTipoRegistro.text.clear()
+
+        binding.etDescripcion.text.clear()
+
         binding.switchEstado.isChecked = true
     }
 
     override fun onDestroyView() {
+
         super.onDestroyView()
+
         _binding = null
     }
 }
