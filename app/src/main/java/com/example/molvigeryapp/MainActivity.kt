@@ -6,6 +6,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.molvigeryapp.databinding.ActivityMainBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
+import com.example.molvigeryapp.ui.cuidador.bitacora.BitacoraFragment
 import com.example.molvigeryapp.ui.cuidador.bitacora.EventosAdversosFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacientesListFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
@@ -64,6 +65,14 @@ class MainActivity : AppCompatActivity() {
                 // 📋 ACTIVIDADES
                 R.id.nav_cuidador_actividades -> {
                     mostrarBottomNavigation()
+                    true
+                }
+                R.id.nav_cuidador_Bitacora -> {
+                    mostrarBottomNavigation()
+
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragmentContainer, BitacoraFragment())
+                        .commit()
                     true
                 }
                 // 👤 PERFIL
