@@ -1,33 +1,26 @@
 package com.example.molvigeryapp.data.model
 
 import com.google.gson.annotations.SerializedName
-import java.io.Serializable
 
 data class AplicacionMedicamento(
     @SerializedName("id_aplicacion")
-    val idAplicacion: Int?,
-
-    @SerializedName("id_medicamento_medicamento")
-    val idMedicamentoMedicamento: Int?,
+    val idAplicacion: Int? = null,
 
     @SerializedName("fecha_hora")
-    val fechaHora: String?,
+    val fechaHora: String? = null,
 
     @SerializedName("dosis_administrada")
-    val dosisAdministrada: String?,
+    val dosisAdministrada: String? = null,
 
     @SerializedName("via_administracion")
-    val viaAdministracion: String?,
+    val viaAdministracion: String? = null,
 
     @SerializedName("estado")
-    val estado: Boolean?,
+    var estado: Boolean = false,
 
     @SerializedName("observacion")
-    val observacion: String?,
-
-    @SerializedName("id_inventario")
-    val idInventario: Int?,
+    val observacion: String? = null,
 
     @SerializedName("id_usuario")
-    val idUsuario: Int?
-) : Serializable
+    val idUsuario: Int? = null
+)

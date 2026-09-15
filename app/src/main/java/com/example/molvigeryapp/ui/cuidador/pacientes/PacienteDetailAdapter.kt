@@ -14,8 +14,7 @@ class PacienteDetailAdapter(fragment: Fragment) : FragmentStateAdapter(fragment)
             1 -> MedicamentosFragment()
             2 -> CardexFragment()
             3 -> RecomendacionesFragment()
-            4 -> InsumosFragment()
-            5 -> EventosAdversosFragment()
+            4 -> EventosAdversosFragment()
             else -> DatosBasicosFragment()
         }
     }

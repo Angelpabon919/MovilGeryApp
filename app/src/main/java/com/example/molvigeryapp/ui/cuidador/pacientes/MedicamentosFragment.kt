@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,7 +13,7 @@ import com.example.molvigeryapp.R
 
 class MedicamentosFragment : Fragment() {
 
-    private val adapter = MedicamentoAdapter()
+    private lateinit var adapter: MedicamentoAdapter
 
     // 1. Instanciamos el ViewModel compartido
     private val pacienteViewModel: PacienteViewModel by activityViewModels()
@@ -26,6 +27,12 @@ class MedicamentosFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Inicializamos el Adapter conectando la función de guardado
+        adapter = MedicamentoAdapter { medicamentoEditado ->
+            pacienteViewModel.guardarMedicamento(medicamentoEditado)
+            Toast.makeText(requireContext(), "Guardando registro...", Toast.LENGTH_SHORT).show()
+        }
 
         val rv = view.findViewById<RecyclerView>(R.id.rvMedicamentos)
         rv?.layoutManager = LinearLayoutManager(requireContext())
@@ -46,9 +53,7 @@ class MedicamentosFragment : Fragment() {
 
         // 4. Escuchamos los datos reales de la API mediante el ViewModel
         pacienteViewModel.aplicacionesMedicamentos.observe(viewLifecycleOwner) { listaAplicaciones ->
-            if (!listaAplicaciones.isNullOrEmpty()) {
-                adapter.actualizarLista(listaAplicaciones)
-            }
+            adapter.actualizarLista(listaAplicaciones ?: emptyList())
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.molvigeryapp.ui.cuidador.pacientes
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.data.model.Paciente
@@ -12,16 +13,22 @@ class PacienteAdapter(
 ) : RecyclerView.Adapter<PacienteAdapter.PacienteViewHolder>() {
 
     private var listaOriginal: List<Paciente> = emptyList()
-    private var listaDiferida: List<Paciente> = emptyList()
+    private var listaFiltrada: List<Paciente> = emptyList()
+
+    var modoSeleccion: Boolean = false
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
 
     fun actualizarLista(nuevaLista: List<Paciente>) {
         listaOriginal = nuevaLista
-        listaDiferida = nuevaLista
+        listaFiltrada = nuevaLista
         notifyDataSetChanged()
     }
 
     fun filtrar(texto: String) {
-        listaDiferida = if (texto.trim().isEmpty()) {
+        listaFiltrada = if (texto.trim().isEmpty()) {
             listaOriginal
         } else {
             listaOriginal.filter { paciente ->
@@ -42,38 +49,40 @@ class PacienteAdapter(
     }
 
     override fun onBindViewHolder(holder: PacienteViewHolder, position: Int) {
-        val paciente = listaDiferida[position]
+        val paciente = listaFiltrada[position]
         holder.bind(paciente)
     }
 
-    override fun getItemCount(): Int = listaDiferida.size
+    override fun getItemCount(): Int = listaFiltrada.size
 
     inner class PacienteViewHolder(private val binding: ItemPacienteBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(paciente: Paciente) {
-            val nombre = paciente.nombre
-            val apellido = paciente.apellido
-            val nombreCompleto = "$nombre $apellido".trim()
+            binding.tvNombrePaciente.text = "${paciente.nombre} ${paciente.apellido}".trim()
 
-            binding.tvNombrePaciente.text = if (nombreCompleto.isNotEmpty()) {
-                nombreCompleto
+            if (modoSeleccion) {
+                binding.cbSeleccionar.visibility = View.VISIBLE
+                binding.icChevron.visibility = View.GONE
+                
+                binding.cbSeleccionar.setOnCheckedChangeListener(null)
+                binding.cbSeleccionar.isChecked = paciente.isSelected
+                
+                binding.cbSeleccionar.setOnCheckedChangeListener { _, isChecked ->
+                    onSelectionToggle(paciente)
+                }
+                
+                binding.root.setOnClickListener {
+                    binding.cbSeleccionar.isChecked = !binding.cbSeleccionar.isChecked
+                }
             } else {
-                "Sin nombre registrado"
+                binding.cbSeleccionar.visibility = View.GONE
+                binding.icChevron.visibility = View.VISIBLE
+                
+                binding.root.setOnClickListener {
+                    onItemClick(paciente)
+                }
             }
-
-            // Si tienes un CheckBox en item_paciente.xml (ej. cbSeleccionar), actualiza su estado visual
-            // binding.cbSeleccionar.isChecked = paciente.isSelected
-
-            // Listener para abrir el detalle del paciente
-            binding.root.setOnClickListener {
-                onItemClick(paciente)
-            }
-
-            // Si tienes un CheckBox o botón de selección en la tarjeta:
-            // binding.cbSeleccionar.setOnClickListener {
-            //     onSelectionToggle(paciente)
-            // }
         }
     }
 }
