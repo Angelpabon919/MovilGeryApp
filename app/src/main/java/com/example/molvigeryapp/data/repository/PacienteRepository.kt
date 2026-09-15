@@ -1,8 +1,9 @@
 package com.example.molvigeryapp.data.repository
 
 import com.example.molvigeryapp.data.api.RetrofitClient
-import com.example.molvigeryapp.data.model.AplicacionMedicamento
+import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
+import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import kotlinx.coroutines.Dispatchers
@@ -20,26 +21,6 @@ class PacienteRepository {
     suspend fun obtenerPacientePorId(id: Int): Paciente =
         withContext(Dispatchers.IO) {
             api.getPacienteById(id)
-        }
-
-    suspend fun getAplicacionesporPaciente(idPaciente: Int): List<AplicacionMedicamento>? =
-        withContext(Dispatchers.IO) {
-            try {
-                api.getAplicacionesPorPaciente(idPaciente)
-            } catch (e: Exception) {
-                null
-            }
-        }
-
-    // Nuevo método para guardar o actualizar el medicamento sin modificar lo existente
-    suspend fun guardarMedicamento(medicamento: AplicacionMedicamento): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                api.guardarAplicacionMedicamento(medicamento)
-                true
-            } catch (e: Exception) {
-                false
-            }
         }
 
     suspend fun getRecomendaciones(idPaciente: Int): List<Recomendacion>? =
@@ -60,6 +41,7 @@ class PacienteRepository {
                 false
             }
         }
+
     suspend fun guardarCuidadoEnfermeria(cuidado: CuidadoEnfermeria): Boolean =
         withContext(Dispatchers.IO) {
             try {
@@ -70,12 +52,44 @@ class PacienteRepository {
             }
         }
 
+    suspend fun guardarAsignacion(asignacion: AsignacionPacienteCuidador): Boolean {
+        return try {
+            val respuesta = api.guardarAsignacion(asignacion)
+            respuesta.isSuccessful
+        } catch (e: Exception) {
+            android.util.Log.e("API_ERROR", "Error en la petición POST", e)
+            false
+        }
+    }
+
     suspend fun getCuidadosPorPaciente(idPaciente: Int): List<CuidadoEnfermeria>? =
         withContext(Dispatchers.IO) {
             try {
                 api.getCuidadosPorPaciente(idPaciente)
             } catch (e: Exception) {
                 null
+            }
+        }
+
+    suspend fun getElementosPorPaciente(idPaciente: Int): List<ElementoPaciente>? =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = api.getElementosPorPaciente(idPaciente)
+                if (res.isSuccessful) res.body() else emptyList()
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Error al obtener elementos", e)
+                emptyList()
+            }
+        }
+
+    suspend fun guardarElementoPaciente(elemento: ElementoPaciente): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = api.guardarElementoPaciente(elemento)
+                res.isSuccessful
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Error al guardar elemento", e)
+                false
             }
         }
 }
