@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.molvigeryapp.data.model.Paciente
@@ -73,10 +74,9 @@ class DatosBasicosFragment : Fragment() {
 
     private fun cargarPacienteDesdeArgumentos() {
 
-        val pacienteArgs =
-            arguments?.getSerializable(
-                "paciente_data"
-            ) as? Paciente
+        val pacienteArgs = arguments?.let {
+            BundleCompat.getSerializable(it, "paciente_data", Paciente::class.java)
+        }
 
         pacienteArgs?.let { paciente ->
 

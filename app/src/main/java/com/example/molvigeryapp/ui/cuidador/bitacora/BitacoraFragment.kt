@@ -86,9 +86,30 @@ class BitacoraFragment : Fragment() {
             guardarBitacora()
         }
 
+        binding.btnEventoAdverso.setOnClickListener {
+            abrirEventoAdverso()
+        }
+
         binding.btnCancelar.setOnClickListener {
             limpiarFormulario()
         }
+    }
+
+    private fun abrirEventoAdverso(){
+        val idBitacoraActual = pacienteViewModel.idBitacora.value
+        if (idBitacoraActual == null){
+            Toast.makeText(requireContext(), "primero debes guardar la bitacora", Toast.LENGTH_SHORT).show()
+            return
+        }
+        requireActivity()
+            .supportFragmentManager
+            .beginTransaction()
+            .replace(
+                com.example.molvigeryapp.R.id.fragmentContainer,
+                EventosAdversosFragment()
+            )
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun obtenerIdUsuario(): Int {
@@ -151,8 +172,6 @@ class BitacoraFragment : Fragment() {
         val descripcion =
             binding.etDescripcion.text.toString().trim()
 
-        val estado =
-            binding.switchEstado.isChecked
 
         // 4. Validar tipo de registro
         if (tipoRegistro.isEmpty()) {
@@ -178,7 +197,7 @@ class BitacoraFragment : Fragment() {
         // 7. Crear objeto Bitacora
         val bitacora = Bitacora(
 
-            estado = estado,
+            estado = true,
 
             tipoRegistro = tipoRegistro,
 
@@ -201,6 +220,9 @@ class BitacoraFragment : Fragment() {
 
                 // 9. Guardamos el ID que devuelve la API
                 idBitacora = respuesta.idBitacora
+                idBitacora?.let {
+                    pacienteViewModel.guardarIdBitacora(it)
+                }
 
                 android.util.Log.d(
                     "BITACORA",
@@ -253,7 +275,6 @@ class BitacoraFragment : Fragment() {
 
         binding.etDescripcion.text.clear()
 
-        binding.switchEstado.isChecked = true
     }
 
     override fun onDestroyView() {

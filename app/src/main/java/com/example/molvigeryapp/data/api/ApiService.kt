@@ -122,7 +122,7 @@ interface ApiService {
         @Body bitacora: Bitacora
     ): Bitacora
 
-    @POST("evento_adverso/")
+    @POST("eventos_adversos/")
     suspend fun crearEventoAdverso(
         @Body evento: EventoAdverso
     ): EventoAdverso

@@ -67,14 +67,6 @@ class MainActivity : AppCompatActivity() {
                     mostrarBottomNavigation()
                     true
                 }
-                R.id.nav_cuidador_Bitacora -> {
-                    mostrarBottomNavigation()
-
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContainer, BitacoraFragment())
-                        .commit()
-                    true
-                }
                 // 👤 PERFIL
                 R.id.nav_cuidador_perfil -> {
                     mostrarBottomNavigation()
