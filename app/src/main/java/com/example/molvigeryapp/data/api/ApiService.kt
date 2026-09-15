@@ -1,9 +1,10 @@
 package com.example.molvigeryapp.data.api
 
-import com.example.molvigeryapp.data.model.AplicacionMedicamento
+import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
+import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.EventoAdverso
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
@@ -13,6 +14,7 @@ import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.data.model.TipoEmergencia
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.Usuario
+import retrofit2.Response
 
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -31,16 +33,6 @@ interface ApiService {
     suspend fun getPacienteById(
         @Path("id") id: Int
     ): Paciente
-
-    @GET("aplicacion_medicamento/")
-    suspend fun getAplicacionesPorPaciente(
-        @Query("id_Paciente") idPaciente: Int
-    ): List<AplicacionMedicamento>
-
-    @POST("aplicacion_medicamento/")
-    suspend fun guardarAplicacionMedicamento(
-        @Body aplicacion: AplicacionMedicamento
-    ): AplicacionMedicamento
 
     @GET("recomendaciones/")
     suspend fun getRecomendacionesPorPaciente(
@@ -61,6 +53,22 @@ interface ApiService {
     suspend fun getCuidadosPorPaciente(
         @Query("id_paciente") idPaciente: Int
     ): List<CuidadoEnfermeria>
+
+    @POST("asignacion_paciente_cuidador/")
+    suspend fun guardarAsignacion(
+        @Body asignacion: AsignacionPacienteCuidador
+    ): Response<AsignacionPacienteCuidador>
+
+    @GET("elementos_paciente/")
+    suspend fun getElementosPorPaciente(
+        @Query("id_paciente") idPaciente: Int
+    ): Response<List<ElementoPaciente>>
+
+    @POST("elementos_paciente/")
+    suspend fun guardarElementoPaciente(
+        @Body elemento: ElementoPaciente
+    ): Response<ElementoPaciente>
+
 
     // =========================================================
     // USUARIOS

@@ -12,7 +12,7 @@ class PacienteDetailAdapter(fragment: Fragment) : FragmentStateAdapter(fragment)
     override fun createFragment(position: Int): Fragment {
         return when (position) {
             0 -> DatosBasicosFragment()
-            1 -> MedicamentosFragment()
+            1 -> ElementosFragment()
             2 -> CardexFragment()
             3 -> RecomendacionesFragment()
             4 -> BitacoraFragment()

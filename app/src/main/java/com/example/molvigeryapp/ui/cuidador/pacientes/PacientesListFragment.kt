@@ -41,73 +41,11 @@ class PacientesListFragment : Fragment() {
         setupRecyclerView()
         setupSearch()
         observarDatos()
+        configurarMenuOpciones()
+        configurarBotones()
 
         viewModel.cargarPacientes()
-
-        // Configuración del menú de opciones
-        binding.btnMenuOpciones.setOnClickListener {
-            val popupMenu = PopupMenu(requireContext(), binding.btnMenuOpciones)
-            popupMenu.menu.add("Asignar Turno")
-            popupMenu.menu.add("Perfil")
-            popupMenu.menu.add("Cerrar Sesión")
-
-            popupMenu.setOnMenuItemClickListener { item ->
-                when (item.title.toString()) {
-                    "Asignar Turno" -> {
-                        // 1. Mostrar la lista completa para seleccionar
-                        viewModel.restaurarListaCompleta()
-
-                        // 2. Activar modo selección en el adapter
-                        adapter.modoSeleccion = true
-
-                        // 3. Mostrar botón para confirmar selección
-                        binding.btnGuardarSeleccion.visibility = View.VISIBLE
-                        Toast.makeText(requireContext(), "Selecciona tus pacientes para el turno", Toast.LENGTH_SHORT).show()
-                        true
-                    }
-                    "Perfil" -> {
-                        Toast.makeText(requireContext(), "Perfil", Toast.LENGTH_SHORT).show()
-                        true
-                    }
-                    "Cerrar Sesión" -> {
-                        (requireActivity() as MainActivity).cerrarSesion()
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popupMenu.show()
-        }
-        binding.btnAsignarTurno.setOnClickListener {
-            val enSeleccion = !adapter.modoSeleccion
-            adapter.modoSeleccion = enSeleccion
-
-            if (enSeleccion) {
-                viewModel.restaurarListaCompleta()
-                binding.btnAsignarTurno.text = "CANCELAR"
-                binding.btnGuardarSeleccion.visibility = View.VISIBLE
-            }else {
-                binding.btnAsignarTurno.text = "ASIGNAR TURNO "
-                binding.btnGuardarSeleccion.visibility = View.GONE
-                viewModel.confirmarSeleccionDelDia()
-            }
-        }
-
-        // Evento del botón para confirmar los pacientes elegidos
-        binding.btnGuardarSeleccion.setOnClickListener {
-            // Aplica el filtro en el ViewModel dejando solo los marcados con it.isSelected == true
-            viewModel.confirmarSeleccionDelDia()
-
-            // Desactiva el modo de selección y oculta el botón
-            adapter.modoSeleccion = false
-            binding.btnAsignarTurno.text = "CAMBIAR SELECCION"
-            binding.btnAsignarTurno.visibility = View.VISIBLE
-            binding.btnGuardarSeleccion.visibility = View.GONE
-
-            Toast.makeText(requireContext(), "Turno asignado guardado con éxito", Toast.LENGTH_SHORT).show()
-        }
     }
-
 
     override fun onResume() {
         super.onResume()
@@ -117,7 +55,6 @@ class PacientesListFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = PacienteAdapter(
             onItemClick = { pacienteSeleccionado ->
-                // Si estamos en modo selección, no abrimos el detalle al hacer click
                 if (!adapter.modoSeleccion) {
                     viewModel.seleccionarPaciente(pacienteSeleccionado)
 
@@ -159,6 +96,76 @@ class PacientesListFragment : Fragment() {
     private fun observarDatos() {
         viewModel.pacientes.observe(viewLifecycleOwner) { lista ->
             adapter.actualizarLista(lista)
+
+            // Si hay pacientes seleccionados activos y no estamos editando, muestra "VER TODOS"
+            if (viewModel.tienePacientesSeleccionados && !adapter.modoSeleccion) {
+                binding.btnAsignarTurno.text = "VER TODOS"
+                binding.btnAsignarTurno.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun configurarMenuOpciones() {
+        binding.btnMenuOpciones.setOnClickListener {
+            val popupMenu = PopupMenu(requireContext(), binding.btnMenuOpciones)
+            popupMenu.menu.add("Perfil")
+            popupMenu.menu.add("Cerrar Sesión")
+
+            popupMenu.setOnMenuItemClickListener { item ->
+                when (item.title.toString()) {
+                    "Perfil" -> {
+                        Toast.makeText(requireContext(), "Perfil", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    "Cerrar Sesión" -> {
+                        (requireActivity() as MainActivity).cerrarSesion()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popupMenu.show()
+        }
+    }
+
+    private fun configurarBotones() {
+        // Botón Superior: Alterna entre SELECCIONAR PACIENTES / VER TODOS / CANCELAR
+        binding.btnAsignarTurno.setOnClickListener {
+            if (viewModel.tienePacientesSeleccionados) {
+                // Si ya tenías tus pacientes guardados y tocas "VER TODOS"
+                viewModel.restaurarListaCompleta()
+                adapter.modoSeleccion = false
+                binding.btnAsignarTurno.text = "SELECCIONAR PACIENTES"
+                binding.btnGuardarSeleccion.visibility = View.GONE
+            } else {
+                // Entras a la lista completa y activas o cancelas selección
+                val enSeleccion = !adapter.modoSeleccion
+                adapter.modoSeleccion = enSeleccion
+
+                if (enSeleccion) {
+                    binding.btnAsignarTurno.text = "CANCELAR"
+                    binding.btnGuardarSeleccion.visibility = View.VISIBLE
+                } else {
+                    binding.btnAsignarTurno.text = "SELECCIONAR PACIENTES"
+                    binding.btnGuardarSeleccion.visibility = View.GONE
+                }
+            }
+        }
+
+        // Botón Inferior: "CONFIRMAR SELECCIÓN"
+        binding.btnGuardarSeleccion.setOnClickListener {
+            val preferences = requireContext().getSharedPreferences("SESION", android.content.Context.MODE_PRIVATE)
+            val idUsuarioLogueado = preferences.getInt("ID_USUARIO", -1)
+            
+            viewModel.confirmarSeleccionDelDia(idUsuarioLogueado)
+            adapter.modoSeleccion = false
+
+            // Deja fijos tus pacientes y cambia el botón a "VER TODOS"
+            binding.btnAsignarTurno.text = "VER TODOS"
+            binding.btnAsignarTurno.visibility = View.VISIBLE
+            binding.btnGuardarSeleccion.visibility = View.GONE
+
+            Toast.makeText(requireContext(), "Pacientes guardados correctamente", Toast.LENGTH_SHORT).show()
         }
     }
 
