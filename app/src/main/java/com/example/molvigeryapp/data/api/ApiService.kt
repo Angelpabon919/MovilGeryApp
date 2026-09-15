@@ -3,6 +3,7 @@ package com.example.molvigeryapp.data.api
 import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Bitacora
+import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.EventoAdverso
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
@@ -31,15 +32,39 @@ interface ApiService {
         @Path("id") id: Int
     ): Paciente
 
-    @GET("api/aplicacion_medicamento/")
+    @GET("aplicacion_medicamento/")
     suspend fun getAplicacionesPorPaciente(
         @Query("id_Paciente") idPaciente: Int
     ): List<AplicacionMedicamento>
+
+    @POST("aplicacion_medicamento/")
+    suspend fun guardarAplicacionMedicamento(
+        @Body aplicacion: AplicacionMedicamento
+    ): AplicacionMedicamento
 
     @GET("recomendaciones/")
     suspend fun getRecomendacionesPorPaciente(
         @Query("id_paciente") idPaciente: Int
     ): List<Recomendacion>
+
+    @POST("recomendaciones/")
+    suspend fun guardarRecomendacion(
+        @Body recomendacion: Recomendacion
+    ): Recomendacion
+
+    @POST("cuidados_enfermeria/")
+    suspend fun guardarCuidadoEnfermeria(
+        @Body cuidado: CuidadoEnfermeria
+    ): CuidadoEnfermeria
+
+    @GET("cuidados_enfermeria/")
+    suspend fun getCuidadosPorPaciente(
+        @Query("id_paciente") idPaciente: Int
+    ): List<CuidadoEnfermeria>
+
+    // =========================================================
+    // USUARIOS
+    // =========================================================
 
     @POST("usuarios/registro/")
     suspend fun registrarUsuario(
@@ -99,7 +124,7 @@ interface ApiService {
 
     @POST("evento_adverso/")
     suspend fun crearEventoAdverso(
-        @Body evento : EventoAdverso
+        @Body evento: EventoAdverso
     ): EventoAdverso
 
     @POST("signos_vitales/")
@@ -107,7 +132,6 @@ interface ApiService {
         @Body signos: SignosVitales
     ): SignosVitales
 
-    @GET("tipo_emergencia")
-    suspend fun getTiposEmergencia():
-            List<TipoEmergencia>
+    @GET("tipo_emergencia/")
+    suspend fun getTiposEmergencia(): List<TipoEmergencia>
 }

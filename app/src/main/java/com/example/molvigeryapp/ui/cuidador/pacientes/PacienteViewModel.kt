@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.molvigeryapp.data.model.AplicacionMedicamento
+import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.repository.PacienteRepository
@@ -25,6 +26,12 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     private val _recomendaciones = MutableLiveData<List<Recomendacion>>()
     val recomendaciones: LiveData<List<Recomendacion>> get() = _recomendaciones
+
+    private val _cuidados = MutableLiveData<List<CuidadoEnfermeria>?>()
+    val cuidados: LiveData<List<CuidadoEnfermeria>?> = _cuidados
+
+
+
 
     fun cargarPacientes() {
         viewModelScope.launch {
@@ -85,6 +92,34 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         viewModelScope.launch {
             val lista = repository.getRecomendaciones(idPaciente)
             _recomendaciones.value = lista ?: emptyList()
+        }
+    }
+
+    fun guardarRecomendacion(recomendacion: Recomendacion) {
+        viewModelScope.launch {
+            repository.guardarRecomendacion(recomendacion)
+        }
+    }
+
+    fun guardarMedicamento(medicamento: AplicacionMedicamento) {
+        viewModelScope.launch {
+            repository.guardarMedicamento(medicamento)
+        }
+    }
+
+    fun cargarCuidados(idPaciente: Int) {
+        viewModelScope.launch {
+            val lista = repository.getCuidadosPorPaciente(idPaciente)
+            _cuidados.value = lista
+        }
+    }
+
+    fun guardarCuidado(cuidado: CuidadoEnfermeria) {
+        viewModelScope.launch {
+            val exito = repository.guardarCuidadoEnfermeria(cuidado)
+            if (exito && cuidado.idPaciente != null) {
+                cargarCuidados(cuidado.idPaciente)
+            }
         }
     }
 }

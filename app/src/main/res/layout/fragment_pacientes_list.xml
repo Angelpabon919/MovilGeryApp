@@ -26,15 +26,14 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="GerIApp"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="GerIApp"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/btnMenuOpciones"
@@ -96,29 +95,48 @@
                     android:textColorHint="#94A3B8"
                     android:textSize="14sp" />
 
-
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
+    <!-- Sección Título Pacientes + Botón Asignar Turno -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/txtTituloCuidadores"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:letterSpacing="0.08"
+            android:text="PACIENTES"
+            android:textColor="#687078"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- ÚNICA ADICIÓN: Botón en la franja del título -->
+        <TextView
+            android:id="@+id/btnAsignarTurno"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="SELECCIONAR PACIENTE"
+            android:textColor="#2563EB"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
     <!-- Lista de Pacientes -->
-
-    <TextView
-        android:id="@+id/txtTituloCuidadores"
-        android:layout_width="114dp"
-        android:layout_height="22dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:letterSpacing="0.08"
-        android:text="PACIENTES"
-        android:textColor="#687078"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/header" />
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPacientes"
         android:layout_width="match_parent"
@@ -126,8 +144,16 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingVertical="12dp"
-
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
+    <Button
+        android:id="@+id/btnGuardarSeleccion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="CONFIRMAR SELECCIÓN"
+        android:visibility="gone"
+        android:backgroundTint="#2563EB"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>
