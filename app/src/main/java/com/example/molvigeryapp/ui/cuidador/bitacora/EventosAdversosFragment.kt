@@ -16,6 +16,7 @@ import com.example.molvigeryapp.databinding.FragmentEventosAdversosBinding
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModelFactory
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,10 +32,6 @@ class EventosAdversosFragment : Fragment() {
 
     private var idPaciente: Int? = null
 
-    /*
-     * ESTE ID QUEDA PREPARADO PARA RECIBIRLO
-     * CUANDO TU COMPAÑERA CREE LA BITÁCORA.
-     */
     private var idBitacora: Int? = null
 
     override fun onCreateView(
@@ -67,6 +64,7 @@ class EventosAdversosFragment : Fragment() {
 
         observarPaciente()
         configurarBotones()
+        observarBitacora()
     }
 
     // =========================================================
@@ -88,6 +86,19 @@ class EventosAdversosFragment : Fragment() {
                     "Paciente seleccionado: ${it.idPaciente}"
                 )
             }
+        }
+    }
+
+    private fun observarBitacora(){
+        pacienteViewModel.idBitacora.observe(
+            viewLifecycleOwner){
+            id ->
+            id?.let {
+                idBitacora = it
+                android.util.Log.d(
+                "EVENTO_ADVERSO",
+                "ID Bitacora recibido: $it"
+            ) }
         }
     }
 
@@ -125,16 +136,8 @@ class EventosAdversosFragment : Fragment() {
     // =========================================================
 
     private fun guardarEvento() {
-
-        /*
-         * Primero verificamos la bitácora.
-         *
-         * Por ahora tu compañera todavía no la crea,
-         * así que no podremos enviar el evento hasta
-         * tener este ID.
-         */
-        if (idBitacora == null) {
-
+        val bitacoraId = idBitacora
+        if (bitacoraId == null) {
             Toast.makeText(
                 requireContext(),
                 "Aún no se ha creado la bitácora",
@@ -167,9 +170,6 @@ class EventosAdversosFragment : Fragment() {
         val acciones =
             binding.etAccionesRealizadas.text.toString().trim()
 
-        val estado =
-            binding.etEstado.text.toString().trim()
-
         // =====================================================
         // VALIDACIONES
         // =====================================================
@@ -186,14 +186,6 @@ class EventosAdversosFragment : Fragment() {
 
             binding.etAccionesRealizadas.error =
                 "Ingrese las acciones realizadas"
-
-            return
-        }
-
-        if (estado.isEmpty()) {
-
-            binding.etEstado.error =
-                "Ingrese el estado del evento"
 
             return
         }
@@ -271,7 +263,7 @@ class EventosAdversosFragment : Fragment() {
                     fechaHora = fechaHora,
                     descripcion = descripcion,
                     accionesRealizadas = acciones,
-                    estado = estado
+                    estado = "pendiente"
                 )
                 val respuestaEvento =
                     RetrofitClient.apiService.crearEventoAdverso(
@@ -305,15 +297,37 @@ class EventosAdversosFragment : Fragment() {
                 ).show()
 
                 limpiarFormulario()
-            } catch (e: Exception) {
+            } catch (e: HttpException) {
+
+                val errorBody = e.response()?.errorBody()?.string()
+
                 android.util.Log.e(
                     "EVENTO_ADVERSO",
-                    "Error al guardar evento",
-                    e
+                    "Código HTTP: ${e.code()}"
                 )
+
+                android.util.Log.e(
+                    "EVENTO_ADVERSO",
+                    "Respuesta de la API: $errorBody"
+                )
+
                 Toast.makeText(
                     requireContext(),
-                    "Error al guardar el evento",
+                    "Error ${e.code()}: $errorBody",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } catch (e: Exception) {
+
+                android.util.Log.e(
+                    "EVENTO_ADVERSO",
+                    "Error inesperado al guardar evento",
+                    e
+                )
+
+                Toast.makeText(
+                    requireContext(),
+                    "Error inesperado: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -330,7 +344,6 @@ class EventosAdversosFragment : Fragment() {
         binding.etPeso.text.clear()
         binding.etObservaciones.text.clear()
         binding.etAccionesRealizadas.text.clear()
-        binding.etEstado.text.clear()
         binding.rgEvaluacion.clearCheck()
     }
 

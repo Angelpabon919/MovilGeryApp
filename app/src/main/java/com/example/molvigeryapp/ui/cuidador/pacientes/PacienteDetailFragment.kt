@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.molvigeryapp.MainActivity
@@ -23,8 +24,8 @@ class PacienteDetailFragment : Fragment() {
         "Medicamentos",
         "Cardex",
         "Recomendaciones",
-        "Insumos",
-        "Evento Adverso"
+        "Bitacora"
+
     )
 
     override fun onCreateView(
@@ -54,9 +55,11 @@ class PacienteDetailFragment : Fragment() {
             .ocultarBottomNavigation()
 
         // Obtener el paciente desde los argumentos
-        val paciente =
-            (parentFragment?.arguments?.getSerializable("paciente_data")
-                ?: arguments?.getSerializable("paciente_data")) as? Paciente
+        val paciente = parentFragment?.arguments?.let {
+            BundleCompat.getSerializable(it, "paciente_data", Paciente::class.java)
+        } ?: arguments?.let {
+            BundleCompat.getSerializable(it, "paciente_data", Paciente::class.java)
+        }
 
         paciente?.let {
             viewModel.seleccionarPaciente(it)

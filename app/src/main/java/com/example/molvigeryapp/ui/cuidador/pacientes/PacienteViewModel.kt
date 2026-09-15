@@ -21,6 +21,12 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _pacienteSeleccionado = MutableLiveData<Paciente?>()
     val pacienteSeleccionado: LiveData<Paciente?> get() = _pacienteSeleccionado
 
+    private val _idBitacora = MutableLiveData<Int?>()
+    val idBitacora: LiveData<Int?> get() = _idBitacora
+    fun guardarIdBitacora(id: Int){
+        _idBitacora.value = id
+    }
+
     private val _aplicacionesMedicamentos = MutableLiveData<List<AplicacionMedicamento>>()
     val aplicacionesMedicamentos: LiveData<List<AplicacionMedicamento>> get() = _aplicacionesMedicamentos
 
@@ -29,8 +35,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     private val _cuidados = MutableLiveData<List<CuidadoEnfermeria>?>()
     val cuidados: LiveData<List<CuidadoEnfermeria>?> = _cuidados
-
-
 
 
     fun cargarPacientes() {
