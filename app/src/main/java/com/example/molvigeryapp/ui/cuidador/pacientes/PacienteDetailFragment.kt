@@ -21,6 +21,7 @@ class PacienteDetailFragment : Fragment() {
 
     private val titulosTabs = arrayOf(
         "Datos Básicos",
+        "Historia Clínica",
         "elementos",
         "Cardex",
         "Recomendaciones",

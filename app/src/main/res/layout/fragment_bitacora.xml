@@ -72,6 +72,116 @@
                 android:padding="12dp"
                 android:layout_marginBottom="24dp" />
 
+            <Switch
+                android:id="@+id/switchSignosVitales"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Registrar Signos vitales"
+                android:textColor="@color/black"
+                android:textSize="16dp"
+                android:checked="false"
+                android:layout_marginBottom="20dp"/>
+
+            <LinearLayout
+                android:id="@+id/layoutSignosVitales"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Signos vitales"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etTemperatura"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Temperatura °C"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="numberDecimal"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etPresionSistolica"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Presión sistólica"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etPresionDiastolica"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Presión diastólica"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etFrecuenciaCardiaca"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Frecuencia cardíaca"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etFrecuenciaRespiratoria"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Frecuencia respiratoria"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etSaturacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Saturación de oxígeno %"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="number"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etPeso"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Peso (kg)"
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:inputType="numberDecimal"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etObservacionesVitales"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:hint="Observaciones de los signos vitales..."
+                    android:textColor="@color/black"
+                    android:textColorHint="#94A3B8"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:padding="12dp"
+                    android:layout_marginBottom="24dp" />
+
+            </LinearLayout>
+
             <Button
                 android:id="@+id/btnGuardar"
                 android:layout_width="match_parent"
@@ -80,6 +190,7 @@
                 android:textStyle="bold"
                 android:background="@drawable/bg_button_primary"
                 app:backgroundTint="@null"
+                android:textColor="@color/color_surface"
                 android:layout_marginBottom="12dp" />
 
             <Button
@@ -89,18 +200,9 @@
                 android:text="Registrar Evento Adverso"
                 android:textStyle="bold"
                 android:background="@drawable/bg_button_primary"
+                android:textColor="@color/color_surface"
                 app:backgroundTint="@null"
                 />
-
-            <Button
-                android:id="@+id/btnCancelar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Cancelar"
-                android:background="@drawable/bg_button_primary"
-                app:backgroundTint="@null"
-                android:layout_marginTop="15dp"/>
-
 
 
         </LinearLayout>
