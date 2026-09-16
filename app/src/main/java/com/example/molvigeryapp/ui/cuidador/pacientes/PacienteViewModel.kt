@@ -7,12 +7,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
+import com.example.molvigeryapp.data.model.Insumo
+import com.example.molvigeryapp.data.model.Medicamento
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
+import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import kotlinx.coroutines.launch
 
 class PacienteViewModel(private val repository: PacienteRepository) : ViewModel() {
+
     private val _pacientes = MutableLiveData<List<Paciente>>()
     val pacientes: LiveData<List<Paciente>> get() = _pacientes
 
@@ -25,7 +29,7 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _idBitacora = MutableLiveData<Int?>()
     val idBitacora: LiveData<Int?> get() = _idBitacora
 
-    fun guardarIdBitacora(id: Int){
+    fun guardarIdBitacora(id: Int) {
         _idBitacora.value = id
     }
 
@@ -35,14 +39,24 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _cuidados = MutableLiveData<List<CuidadoEnfermeria>?>()
     val cuidados: LiveData<List<CuidadoEnfermeria>?> = _cuidados
 
-    private val _elementos = MutableLiveData<List<ElementoPaciente>>()
-    // Asegúrate de que inicie con una lista vacía y no con datos de prueba
-    val elementos = MutableLiveData<List<ElementoPaciente>>(emptyList())
+    // --- ELEMENTOS DEL PACIENTE, MEDICAMENTOS E INSUMOS ---
+    private val _elementos = MutableLiveData<List<ElementoPaciente>>(emptyList())
+    val elementos: LiveData<List<ElementoPaciente>> get() = _elementos
+
+    private val _medicamentosCatalogo = MutableLiveData<List<Medicamento>?>()
+    val medicamentosCatalogo: LiveData<List<Medicamento>?> get() = _medicamentosCatalogo
+
+    // Integración de Insumos para completar el flujo requerido
+    private val _tiposInsumosCatalogo = MutableLiveData<List<TipoInsumo>?>()
+    val tiposInsumosCatalogo: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
+
+    private val _insumosCatalogo = MutableLiveData<List<Insumo>?>()
+    val insumosCatalogo: LiveData<List<Insumo>?> get() = _insumosCatalogo
+
     var tienePacientesSeleccionados: Boolean = false
         private set
 
     fun cargarPacientes() {
-        // SI YA TENEMOS PACIENTES SELECCIONADOS, NO REEMPLAZAMOS LA LISTA CON LA COMPLETA
         if (tienePacientesSeleccionados) {
             _pacientes.value = listaPacientesCompleta.filter { it.isSelected }
             return
@@ -60,7 +74,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         }
     }
 
-    // Alterna el estado isSelected de un paciente específico
     fun toggleSeleccionPaciente(idPaciente: Int) {
         listaPacientesCompleta.find { it.idPaciente == idPaciente }?.let { paciente ->
             paciente.isSelected = !paciente.isSelected
@@ -68,12 +81,10 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         }
     }
 
-    // Filtra la lista para mostrar ÚNICAMENTE los seleccionados para el día
     fun confirmarSeleccionDelDia(idUsuarioLogueado: Int) {
         _pacientes.value = listaPacientesCompleta.filter { it.isSelected }
         tienePacientesSeleccionados = true
 
-        // Enviamos a la API cada paciente seleccionado para persistirlo en la base de datos
         val fechaActual = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(java.util.Date())
 
         listaPacientesCompleta.filter { it.isSelected }.forEach { paciente ->
@@ -97,10 +108,9 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
             }
         }
     }
-    // Restaura la vista con la lista completa si necesitas volver a elegir
+
     fun restaurarListaCompleta() {
         tienePacientesSeleccionados = false
-        // Desmarcamos las selecciones
         listaPacientesCompleta.forEach { it.isSelected = false }
 
         if (listaPacientesCompleta.isNotEmpty()) {
@@ -155,6 +165,8 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         }
     }
 
+    // --- MÉTODOS DE ELEMENTOS PACIENTE (MEDICAMENTOS E INSUMOS) ---
+
     fun cargarElementosPaciente(idPaciente: Int) {
         viewModelScope.launch {
             val lista = repository.getElementosPorPaciente(idPaciente)
@@ -168,6 +180,28 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
             if (exito) {
                 cargarElementosPaciente(elemento.idPaciente)
             }
+        }
+    }
+
+    fun cargarCatalogoMedicamentos() {
+        viewModelScope.launch {
+            val lista = repository.getMedicamentos()
+            _medicamentosCatalogo.value = lista
+        }
+    }
+
+    // Funciones para soportar el módulo de Insumos
+    fun cargarTiposInsumos() {
+        viewModelScope.launch {
+            val lista = repository.getTiposInsumos()
+            _tiposInsumosCatalogo.value = lista
+        }
+    }
+
+    fun cargarInsumosPorTipo(idTipoInsumo: Int) {
+        viewModelScope.launch {
+            val lista = repository.getInsumosPorTipo(idTipoInsumo)
+            _insumosCatalogo.value = lista
         }
     }
 }
