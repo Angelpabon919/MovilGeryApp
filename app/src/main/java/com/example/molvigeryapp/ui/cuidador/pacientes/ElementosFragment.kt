@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -43,14 +44,14 @@ class ElementosFragment : Fragment() {
         rvElementos?.layoutManager = LinearLayoutManager(requireContext())
         rvElementos?.adapter = adapter
 
-        // 3. Forzar estado inicial VACÍO (evita mostrar tarjetas viejas o basura en memoria)
+        // 3. Estado inicial vacío
         actualizarEstadoVista(emptyList())
 
         // 4. Evento del botón "+ Nuevo"
         btnNuevoElemento?.setOnClickListener {
             val id = idPacienteActual
             if (id != null) {
-                mostrarDialogoNuevoElemento(id)
+                mostrarOpcionesNuevoElemento(id)
             } else {
                 Toast.makeText(requireContext(), "Seleccione un paciente primero", Toast.LENGTH_SHORT).show()
             }
@@ -58,11 +59,9 @@ class ElementosFragment : Fragment() {
 
         // 5. Observar cambio de paciente
         pacienteViewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
-            // Ajusta "idPaciente" según cómo se llame el atributo en tu modelo Paciente
             idPacienteActual = paciente?.idPaciente
 
             if (idPacienteActual != null) {
-                // Limpia la pantalla inmediatamente mientras la API responde
                 actualizarEstadoVista(emptyList())
                 pacienteViewModel.cargarElementosPaciente(idPacienteActual!!)
             } else {
@@ -70,13 +69,12 @@ class ElementosFragment : Fragment() {
             }
         }
 
-        // 6. Observar los datos reales enviados por la API
+        // 6. Observar datos reales de la API
         pacienteViewModel.elementos.observe(viewLifecycleOwner) { listaElementos ->
             actualizarEstadoVista(listaElementos ?: emptyList())
         }
     }
 
-    // Gestiona si muestra el RecyclerView o el contenedor de "Sin elementos"
     private fun actualizarEstadoVista(lista: List<ElementoPaciente>) {
         if (lista.isEmpty()) {
             rvElementos?.visibility = View.GONE
@@ -89,18 +87,40 @@ class ElementosFragment : Fragment() {
         }
     }
 
-    // Despliega el modal interactivo
-    private fun mostrarDialogoNuevoElemento(idPaciente: Int) {
-        val dialog = NuevoElementoDialogFragment(idPaciente) { nuevoElementoReal ->
-            pacienteViewModel.guardarElementoPaciente(nuevoElementoReal)
-            Toast.makeText(requireContext(), "Enviando datos a la API...", Toast.LENGTH_SHORT).show()
+    // Despliega el menú de selección (Medicamento o Insumo) y abre su respectivo diálogo
+    private fun mostrarOpcionesNuevoElemento(idPaciente: Int) {
+        val opciones = arrayOf("Medicamento", "Insumo")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Seleccione tipo de elemento")
+            .setItems(opciones) { _, position ->
+                when (position) {
+                    0 -> abrirDialogoMedicamento(idPaciente)
+                    1 -> abrirDialogoInsumo(idPaciente)
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun abrirDialogoMedicamento(idPaciente: Int) {
+        val dialog = NuevoElementoDialogFragment(idPaciente) { nuevoElemento ->
+            pacienteViewModel.guardarElementoPaciente(nuevoElemento)
+            Toast.makeText(requireContext(), "Guardando medicamento...", Toast.LENGTH_SHORT).show()
         }
-        dialog.show(parentFragmentManager, "NuevoElementoDialog")
+        dialog.show(parentFragmentManager, "NuevoMedicamentoDialog")
+    }
+
+    private fun abrirDialogoInsumo(idPaciente: Int) {
+        val dialog = NuevoInsumoDialogFragment(idPaciente) { nuevoInsumo ->
+            pacienteViewModel.guardarElementoPaciente(nuevoInsumo)
+            Toast.makeText(requireContext(), "Guardando insumo...", Toast.LENGTH_SHORT).show()
+        }
+        dialog.show(parentFragmentManager, "NuevoInsumoDialog")
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Limpiar referencias para evitar memory leaks
         rvElementos = null
         layoutSinElementos = null
     }

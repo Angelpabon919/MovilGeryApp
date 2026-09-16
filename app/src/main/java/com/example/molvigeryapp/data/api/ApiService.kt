@@ -6,12 +6,15 @@ import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.EventoAdverso
+import com.example.molvigeryapp.data.model.Insumo
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
+import com.example.molvigeryapp.data.model.Medicamento
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.data.model.TipoEmergencia
+import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.Usuario
 import retrofit2.Response
@@ -68,6 +71,20 @@ interface ApiService {
     suspend fun guardarElementoPaciente(
         @Body elemento: ElementoPaciente
     ): Response<ElementoPaciente>
+
+    // 3. Catálogo maestro de medicamentos
+    @GET("medicamentos/")
+    suspend fun getMedicamentos(): Response<List<Medicamento>>
+
+    // 4. Catálogos maestros para insumos
+    @GET("tipos-insumos/")
+    suspend fun getTiposInsumos(): Response<List<TipoInsumo>>
+
+    @GET("insumos/")
+    suspend fun getInsumosPorTipo(
+        @Query("id_tipo_insumo") idTipoInsumo: Int
+    ): Response<List<Insumo>>
+
 
 
     // =========================================================
