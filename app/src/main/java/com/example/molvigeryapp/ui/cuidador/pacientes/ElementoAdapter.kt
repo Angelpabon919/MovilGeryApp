@@ -30,10 +30,21 @@ class ElementosAdapter(
 
         val esMedicamento = elemento.idMedicamentos != null
 
-        // Asigna textos limpios sin prefijos repetidos
+        // 1. Badge / Tipo
         holder.tvTipo.text = if (esMedicamento) "Medicamento" else "Insumo"
+
+        // 2. Cantidad
         holder.tvCantidad.text = "Cantidad: ${elemento.cantidad}"
-        holder.tvObservaciones.text = elemento.observaciones ?: "Sin especificación"
+
+        // 3. Mostrar ID o detalle de referencia para verificar que sea único por paciente
+        val detalle = if (esMedicamento) {
+            "Medicamento ID: ${elemento.idMedicamentos} | ${elemento.observaciones ?: "Sin obs."}"
+        } else {
+            "Insumo ID: ${elemento.idInsumo} | ${elemento.observaciones ?: "Sin obs."}"
+        }
+        holder.tvObservaciones.text = detalle
+
+        // 4. Vencimiento
         holder.tvVencimiento.text = "Vence: ${elemento.fechaVencimiento ?: "N/A"}"
     }
 

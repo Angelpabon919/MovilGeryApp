@@ -20,7 +20,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _pacientes = MutableLiveData<List<Paciente>>()
     val pacientes: LiveData<List<Paciente>> get() = _pacientes
 
-    // Lista original completa de respaldo
     private var listaPacientesCompleta: List<Paciente> = emptyList()
 
     private val _pacienteSeleccionado = MutableLiveData<Paciente?>()
@@ -46,12 +45,14 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _medicamentosCatalogo = MutableLiveData<List<Medicamento>?>()
     val medicamentosCatalogo: LiveData<List<Medicamento>?> get() = _medicamentosCatalogo
 
-    // Integración de Insumos para completar el flujo requerido
+    // Integración de Insumos
     private val _tiposInsumosCatalogo = MutableLiveData<List<TipoInsumo>?>()
     val tiposInsumosCatalogo: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
+    val tiposInsumos: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
 
     private val _insumosCatalogo = MutableLiveData<List<Insumo>?>()
     val insumosCatalogo: LiveData<List<Insumo>?> get() = _insumosCatalogo
+    val insumosPorTipo: LiveData<List<Insumo>?> get() = _insumosCatalogo
 
     var tienePacientesSeleccionados: Boolean = false
         private set
@@ -178,7 +179,11 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         viewModelScope.launch {
             val exito = repository.guardarElementoPaciente(elemento)
             if (exito) {
+                // Al guardar con éxito, refresca automáticamente la lista del paciente en tiempo real
+                kotlinx.coroutines.delay(300)
                 cargarElementosPaciente(elemento.idPaciente)
+            } else {
+                android.util.Log.e("PACIENTE_VM", "Error al guardar el elemento en la API")
             }
         }
     }
@@ -190,7 +195,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         }
     }
 
-    // Funciones para soportar el módulo de Insumos
     fun cargarTiposInsumos() {
         viewModelScope.launch {
             val lista = repository.getTiposInsumos()

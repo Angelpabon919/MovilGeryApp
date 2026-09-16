@@ -77,12 +77,12 @@ interface ApiService {
     suspend fun getMedicamentos(): Response<List<Medicamento>>
 
     // 4. Catálogos maestros para insumos
-    @GET("tipos-insumos/")
+    @GET("tipo_insumo/")
     suspend fun getTiposInsumos(): Response<List<TipoInsumo>>
 
     @GET("insumos/")
     suspend fun getInsumosPorTipo(
-        @Query("id_tipo_insumo") idTipoInsumo: Int
+        @Query("id_tipo") idTipoInsumo: Int
     ): Response<List<Insumo>>
 
 

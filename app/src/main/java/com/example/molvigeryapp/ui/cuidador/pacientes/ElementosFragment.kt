@@ -39,15 +39,12 @@ class ElementosFragment : Fragment() {
         layoutSinElementos = view.findViewById(R.id.layoutSinElementos)
         val btnNuevoElemento = view.findViewById<Button>(R.id.btnNuevoElemento)
 
-        // 2. Configuración inicial del RecyclerView y Adaptador
+        // 2. Configuración del RecyclerView
         adapter = ElementosAdapter()
         rvElementos?.layoutManager = LinearLayoutManager(requireContext())
         rvElementos?.adapter = adapter
 
-        // 3. Estado inicial vacío
-        actualizarEstadoVista(emptyList())
-
-        // 4. Evento del botón "+ Nuevo"
+        // 3. Botón "+ Nuevo"
         btnNuevoElemento?.setOnClickListener {
             val id = idPacienteActual
             if (id != null) {
@@ -57,21 +54,28 @@ class ElementosFragment : Fragment() {
             }
         }
 
-        // 5. Observar cambio de paciente
+        // 4. Observar datos reales filtrados de la API
+        pacienteViewModel.elementos.observe(viewLifecycleOwner) { listaElementos ->
+            actualizarEstadoVista(listaElementos ?: emptyList())
+        }
+
+        // 5. Observar cambio de paciente y cargar sus elementos específicos
         pacienteViewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
             idPacienteActual = paciente?.idPaciente
+            val id = idPacienteActual
 
-            if (idPacienteActual != null) {
-                actualizarEstadoVista(emptyList())
-                pacienteViewModel.cargarElementosPaciente(idPacienteActual!!)
+            if (id != null) {
+                pacienteViewModel.cargarElementosPaciente(id)
             } else {
                 actualizarEstadoVista(emptyList())
             }
         }
+    }
 
-        // 6. Observar datos reales de la API
-        pacienteViewModel.elementos.observe(viewLifecycleOwner) { listaElementos ->
-            actualizarEstadoVista(listaElementos ?: emptyList())
+    override fun onResume() {
+        super.onResume()
+        idPacienteActual?.let { id ->
+            pacienteViewModel.cargarElementosPaciente(id)
         }
     }
 
@@ -87,7 +91,6 @@ class ElementosFragment : Fragment() {
         }
     }
 
-    // Despliega el menú de selección (Medicamento o Insumo) y abre su respectivo diálogo
     private fun mostrarOpcionesNuevoElemento(idPaciente: Int) {
         val opciones = arrayOf("Medicamento", "Insumo")
 
@@ -106,17 +109,19 @@ class ElementosFragment : Fragment() {
     private fun abrirDialogoMedicamento(idPaciente: Int) {
         val dialog = NuevoElementoDialogFragment(idPaciente) { nuevoElemento ->
             pacienteViewModel.guardarElementoPaciente(nuevoElemento)
-            Toast.makeText(requireContext(), "Guardando medicamento...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Medicamento guardado con exito...", Toast.LENGTH_SHORT).show()
         }
-        dialog.show(parentFragmentManager, "NuevoMedicamentoDialog")
+        // Usar childFragmentManager para mantener la jerarquía de ViewPager2
+        dialog.show(childFragmentManager, "NuevoMedicamentoDialog")
     }
 
     private fun abrirDialogoInsumo(idPaciente: Int) {
         val dialog = NuevoInsumoDialogFragment(idPaciente) { nuevoInsumo ->
             pacienteViewModel.guardarElementoPaciente(nuevoInsumo)
-            Toast.makeText(requireContext(), "Guardando insumo...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Insumo guardado con exito", Toast.LENGTH_SHORT).show()
         }
-        dialog.show(parentFragmentManager, "NuevoInsumoDialog")
+        // Usar childFragmentManager para mantener la jerarquía de ViewPager2
+        dialog.show(childFragmentManager, "NuevoInsumoDialog")
     }
 
     override fun onDestroyView() {

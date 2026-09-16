@@ -25,7 +25,6 @@ class PacienteDetailFragment : Fragment() {
         "Cardex",
         "Recomendaciones",
         "Bitacora"
-
     )
 
     override fun onCreateView(
@@ -33,13 +32,11 @@ class PacienteDetailFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding = FragmentPacienteDetailBinding.inflate(
             inflater,
             container,
             false
         )
-
         return binding.root
     }
 
@@ -49,38 +46,33 @@ class PacienteDetailFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Ocultar el BottomNavigation al entrar
-        // al área de detalle del paciente
-        (requireActivity() as MainActivity)
-            .ocultarBottomNavigation()
+        (requireActivity() as MainActivity).ocultarBottomNavigation()
 
-        // Obtener el paciente desde los argumentos
-        val paciente = parentFragment?.arguments?.let {
-            BundleCompat.getSerializable(it, "paciente_data", Paciente::class.java)
-        } ?: arguments?.let {
+        // 1. Obtención directa y segura de los argumentos
+        val paciente = arguments?.let {
             BundleCompat.getSerializable(it, "paciente_data", Paciente::class.java)
         }
 
-        paciente?.let {
-            viewModel.seleccionarPaciente(it)
+        // 2. Notificar al ViewModel y forzar la recarga del paciente activo
+        paciente?.let { pac ->
+            viewModel.seleccionarPaciente(pac)
+            pac.idPaciente?.let { id ->
+                viewModel.cargarElementosPaciente(id)
+            }
         }
 
         setupViewPager()
     }
 
     private fun setupViewPager() {
-
         val adapter = PacienteDetailAdapter(this)
-
         binding.viewPager.adapter = adapter
 
         TabLayoutMediator(
             binding.tabLayout,
             binding.viewPager
         ) { tab, position ->
-
             tab.text = titulosTabs[position]
-
         }.attach()
     }
 
