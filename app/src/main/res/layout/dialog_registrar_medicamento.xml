@@ -87,7 +87,8 @@
             android:layout_width="match_parent"
             android:layout_height="46dp"
             android:layout_marginTop="6dp"
-            android:background="@android:drawable/btn_dropdown" />
+            android:background="@drawable/bg_spinner_border"
+             />
 
         <!-- Sección 2: Datos del registro -->
         <TextView

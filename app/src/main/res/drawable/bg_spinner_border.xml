@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Capa 1: Caja con borde azul y esquinas redondeadas -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#2563EB" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <!-- Capa 2: Icono de flecha hacia abajo a la derecha -->
+    <item
+        android:width="16dp"
+        android:height="16dp"
+        android:gravity="end|center_vertical"
+        android:right="12dp"
+        android:drawable="@android:drawable/arrow_down_float" />
+
+</layer-list>

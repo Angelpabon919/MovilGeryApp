@@ -78,7 +78,13 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
             try {
                 val res = api.getElementosPorPaciente(idPaciente)
-                if (res.isSuccessful) res.body() else emptyList()
+                if (res.isSuccessful) {
+                    val listaCompleta = res.body() ?: emptyList()
+                    // Filtro para mostrar solo los datos del paciente actual
+                    listaCompleta.filter { it.idPaciente == idPaciente }
+                } else {
+                    emptyList()
+                }
             } catch (e: Exception) {
                 android.util.Log.e("API_ERROR", "Error al obtener elementos", e)
                 emptyList()
@@ -89,9 +95,17 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
             try {
                 val res = api.guardarElementoPaciente(elemento)
-                res.isSuccessful
+                if (res.isSuccessful) {
+                    true
+                } else {
+                    android.util.Log.e(
+                        "API_ERROR",
+                        "Error al guardar elemento ${res.code()}: ${res.errorBody()?.string()}"
+                    )
+                    false
+                }
             } catch (e: Exception) {
-                android.util.Log.e("API_ERROR", "Error al guardar elemento", e)
+                android.util.Log.e("API_ERROR", "Excepción al guardar elemento", e)
                 false
             }
         }
@@ -110,8 +124,14 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
             try {
                 val res = api.getTiposInsumos()
-                if (res.isSuccessful) res.body() else null
+                if (res.isSuccessful) {
+                    res.body()
+                } else {
+                    android.util.Log.e("INSUMOS_DEBUG", "Error Tipos HTTP ${res.code()}: ${res.errorBody()?.string()}")
+                    null
+                }
             } catch (e: Exception) {
+                android.util.Log.e("INSUMOS_DEBUG", "Excepción al cargar tipos de insumo", e)
                 null
             }
         }
@@ -120,8 +140,14 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
             try {
                 val res = api.getInsumosPorTipo(idTipo)
-                if (res.isSuccessful) res.body() else null
+                if (res.isSuccessful) {
+                    res.body()
+                } else {
+                    android.util.Log.e("INSUMOS_DEBUG", "Error Insumos HTTP ${res.code()}: ${res.errorBody()?.string()}")
+                    null
+                }
             } catch (e: Exception) {
+                android.util.Log.e("INSUMOS_DEBUG", "Excepción al cargar insumos por tipo", e)
                 null
             }
         }

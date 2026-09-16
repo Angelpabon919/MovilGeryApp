@@ -58,6 +58,10 @@ class PacientesListFragment : Fragment() {
                 if (!adapter.modoSeleccion) {
                     viewModel.seleccionarPaciente(pacienteSeleccionado)
 
+                    pacienteSeleccionado.idPaciente?.let{id ->
+                        viewModel.cargarElementosPaciente(id)
+                    }
+
                     val bundle = Bundle().apply {
                         putSerializable("paciente_data", pacienteSeleccionado)
                     }

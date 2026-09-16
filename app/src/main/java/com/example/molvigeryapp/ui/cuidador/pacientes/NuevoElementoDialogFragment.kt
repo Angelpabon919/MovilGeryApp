@@ -1,7 +1,6 @@
 package com.example.molvigeryapp.ui.cuidador.pacientes
 
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,7 +11,6 @@ import androidx.fragment.app.activityViewModels
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.Medicamento
-import java.text.SimpleDateFormat
 import java.util.*
 
 class NuevoElementoDialogFragment(
@@ -37,7 +35,6 @@ class NuevoElementoDialogFragment(
 
     override fun onResume() {
         super.onResume()
-        // Ajustar el ancho del diálogo para que ocupe el 92% de la pantalla
         dialog?.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.92).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -55,29 +52,34 @@ class NuevoElementoDialogFragment(
         val btnCancelar = view.findViewById<Button>(R.id.btnCancelar)
         val btnGuardar = view.findViewById<Button>(R.id.btnGuardar)
 
-        // 1. Cargar la lista desplegable desde la tabla maestra 'medicamentos'
+        // 1. Cargar catálogo de medicamentos
         pacienteViewModel.cargarCatalogoMedicamentos()
         pacienteViewModel.medicamentosCatalogo.observe(viewLifecycleOwner) { medicamentos ->
             listaMedicamentos = medicamentos ?: emptyList()
-            val nombres = listaMedicamentos.map { it.nombreMedicamento }
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, nombres)
-            spMedicamento.adapter = adapter
+            if (listaMedicamentos.isNotEmpty()) {
+                val nombres = listaMedicamentos.map { it.nombreMedicamento }
+                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, nombres)
+                spMedicamento.adapter = adapter
+
+                // Asignar por defecto el primer elemento para evitar nulos
+                idMedicamentoSeleccionado = listaMedicamentos[0].idMedicamento
+            }
         }
 
         spMedicamento.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (listaMedicamentos.isNotEmpty()) {
+                if (listaMedicamentos.isNotEmpty() && position < listaMedicamentos.size) {
                     idMedicamentoSeleccionado = listaMedicamentos[position].idMedicamento
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // 2. Selectores nativos de Fecha y Hora (Calendar / DatePicker)
+        // 2. Selectores de Fecha
         etFechaIngreso.setOnClickListener {
-            abrirFechaHoraPicker { fechaHoraFormat ->
-                fechaIngresoISO = fechaHoraFormat
-                etFechaIngreso.setText(fechaHoraFormat)
+            abrirFechaPicker { fechaFormat ->
+                fechaIngresoISO = fechaFormat
+                etFechaIngreso.setText(fechaFormat)
             }
         }
 
@@ -90,13 +92,17 @@ class NuevoElementoDialogFragment(
 
         btnCancelar.setOnClickListener { dismiss() }
 
-        // 3. Guardar en la tabla 'elementos_paciente'
+        // 3. Guardar elemento
         btnGuardar.setOnClickListener {
-            val cantidadStr = etCantidad.text.toString()
+            val cantidadStr = etCantidad.text.toString().trim()
             val medId = idMedicamentoSeleccionado
 
+            // Si los textos de fecha se llenaron manualmente o el picker los asignó
+            if (fechaIngresoISO.isEmpty()) fechaIngresoISO = etFechaIngreso.text.toString().trim()
+            if (fechaVencimientoISO.isEmpty()) fechaVencimientoISO = etFechaVencimiento.text.toString().trim()
+
             if (medId == null || cantidadStr.isEmpty() || fechaIngresoISO.isEmpty() || fechaVencimientoISO.isEmpty()) {
-                Toast.makeText(requireContext(), "Por favor complete los campos obligatorios (*)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Por favor complete todos los campos obligatorios", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -116,22 +122,6 @@ class NuevoElementoDialogFragment(
         }
     }
 
-    // Diálogo Selector de Fecha + Hora para Ingreso
-    private fun abrirFechaHoraPicker(onResultado: (String) -> Unit) {
-        val cal = Calendar.getInstance()
-        DatePickerDialog(requireContext(), { _, year, month, day ->
-            TimePickerDialog(requireContext(), { _, hour, minute ->
-                val fechaFormatted = String.format(
-                    Locale.getDefault(),
-                    "%04d-%02d-%02dT%02d:%02d:00Z",
-                    year, month + 1, day, hour, minute
-                )
-                onResultado(fechaFormatted)
-            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
-    }
-
-    // Diálogo Selector de Fecha para Vencimiento
     private fun abrirFechaPicker(onResultado: (String) -> Unit) {
         val cal = Calendar.getInstance()
         DatePickerDialog(requireContext(), { _, year, month, day ->
@@ -146,17 +136,8 @@ class NuevoElementoDialogFragment(
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Resetear las variables de control de fechas e IDs
         fechaIngresoISO = ""
         fechaVencimientoISO = ""
         idMedicamentoSeleccionado = null
-
-        // Limpiar los campos de texto
-        view?.let { view ->
-            view.findViewById<EditText>(R.id.etCantidad)?.text?.clear()
-            view.findViewById<EditText>(R.id.etFechaIngreso)?.text?.clear()
-            view.findViewById<EditText>(R.id.etFechaVencimiento)?.text?.clear()
-            view.findViewById<EditText>(R.id.etObservaciones)?.text?.clear()
-        }
     }
 }
