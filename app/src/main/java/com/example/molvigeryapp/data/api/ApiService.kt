@@ -6,6 +6,7 @@ import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.EventoAdverso
+import com.example.molvigeryapp.data.model.HistoriaClinica
 import com.example.molvigeryapp.data.model.Insumo
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.data.model.LoginResponse
@@ -159,4 +160,9 @@ interface ApiService {
 
     @GET("tipo_emergencia/")
     suspend fun getTiposEmergencia(): List<TipoEmergencia>
+
+    @POST("historia_clinicas/")
+    suspend fun crearHistoriaClinica(
+        @Body historia : HistoriaClinica
+    ): HistoriaClinica
 }

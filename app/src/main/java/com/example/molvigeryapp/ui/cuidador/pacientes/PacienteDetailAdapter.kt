@@ -7,15 +7,16 @@ import com.example.molvigeryapp.ui.cuidador.bitacora.EventosAdversosFragment
 
 class PacienteDetailAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
-    override fun getItemCount(): Int = 5
+    override fun getItemCount(): Int = 6
 
     override fun createFragment(position: Int): Fragment {
         return when (position) {
             0 -> DatosBasicosFragment()
-            1 -> ElementosFragment()
-            2 -> CardexFragment()
-            3 -> RecomendacionesFragment()
-            4 -> BitacoraFragment()
+            1 -> HistoriaClinicaFragment()
+            2 -> ElementosFragment()
+            3 -> CardexFragment()
+            4 -> RecomendacionesFragment()
+            5 -> BitacoraFragment()
             else -> DatosBasicosFragment()
         }
     }

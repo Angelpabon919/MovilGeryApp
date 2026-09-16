@@ -11,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Bitacora
+import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentBitacoraBinding
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
@@ -55,6 +56,17 @@ class BitacoraFragment : Fragment() {
 
         observarPaciente()
         configurarBotones()
+        configurarSignosVitales()
+    }
+
+    private fun configurarSignosVitales(){
+        binding.switchSignosVitales.setOnCheckedChangeListener{_, activado ->
+            if (activado){
+                binding.layoutSignosVitales.visibility = View.VISIBLE
+            } else {
+                binding.layoutSignosVitales.visibility = View.GONE
+            }
+        }
     }
 
     private fun observarPaciente() {
@@ -88,10 +100,7 @@ class BitacoraFragment : Fragment() {
 
         binding.btnEventoAdverso.setOnClickListener {
             abrirEventoAdverso()
-        }
 
-        binding.btnCancelar.setOnClickListener {
-            limpiarFormulario()
         }
     }
 
@@ -222,6 +231,41 @@ class BitacoraFragment : Fragment() {
                 idBitacora = respuesta.idBitacora
                 idBitacora?.let {
                     pacienteViewModel.guardarIdBitacora(it)
+                    if (binding.switchSignosVitales.isChecked) {
+
+                        val idBitacoraActual = idBitacora
+
+                        if (idBitacoraActual == null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "No se obtuvo el ID de la bitácora",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@launch
+                        }
+
+                        val signosVitales = SignosVitales(
+                            idBitacora = idBitacoraActual,
+                            temperatura = binding.etTemperatura.text.toString().trim(),
+                            presionSistolica = binding.etPresionSistolica.text.toString().trim(),
+                            presionDiastolica = binding.etPresionDiastolica.text.toString().trim(),
+                            frecuenciaCardiaca = binding.etFrecuenciaCardiaca.text.toString().trim(),
+                            frecuenciaRespiratoria = binding.etFrecuenciaRespiratoria.text.toString()
+                                .trim(),
+                            saturacionOxigeno = binding.etSaturacion.text.toString().trim(),
+                            peso = binding.etPeso.text.toString().trim(),
+                            fechaHora = fechaHora,
+                            observaciones = binding.etObservacionesVitales.text.toString().trim()
+                        )
+
+                        val respuestaSignos =
+                            RetrofitClient.apiService.crearSignosVitales(signosVitales)
+
+                        android.util.Log.d(
+                            "SIGNOS_VITALES",
+                            "Signos vitales creados: ${respuestaSignos.idSignosVitales}"
+                        )
+                    }
                 }
 
                 android.util.Log.d(
