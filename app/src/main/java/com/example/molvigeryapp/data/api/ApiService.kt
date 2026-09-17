@@ -46,7 +46,7 @@ interface ApiService {
     @POST("recomendaciones/")
     suspend fun guardarRecomendacion(
         @Body recomendacion: Recomendacion
-    ): Recomendacion
+    ): Response< Recomendacion>
 
     @POST("cuidados_enfermeria/")
     suspend fun guardarCuidadoEnfermeria(
