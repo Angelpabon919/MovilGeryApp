@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.molvigeryapp.R
+import com.example.molvigeryapp.ui.encargado.pacientes.PacientesCuidadorEncargadoFragment
 import com.example.molvigeryapp.databinding.FragmentDetalleCuidadorEncBinding
+import com.example.molvigeryapp.ui.encargado.bitacora.BitacoraEncargadoFragment
 
 
 class DetalleCuidadorEncargadoFragment : Fragment() {
@@ -50,6 +52,7 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
         view: View,
         savedInstanceState: Bundle?
     ) {
+
         super.onViewCreated(
             view,
             savedInstanceState
@@ -142,7 +145,7 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
 
 
         // =================================================
-        // ASIGNAR TURNO
+        // TURNOS
         // =================================================
 
         binding.moduloTurnos.setOnClickListener {
@@ -161,6 +164,18 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
 
             abrirPantalla(
                 PacientesCuidadorEncargadoFragment()
+            )
+        }
+
+
+        // =================================================
+        // BITÁCORA
+        // =================================================
+
+        binding.moduloBitacora.setOnClickListener {
+
+            abrirPantalla(
+                BitacoraEncargadoFragment()
             )
         }
 
@@ -189,10 +204,20 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
         val datos =
             Bundle().apply {
 
+                // -------------------------------------------------
+                // ID DEL USUARIO / CUIDADOR
+                // -------------------------------------------------
+
                 putInt(
                     "id_usuario",
-                    arguments?.getInt("id_usuario") ?: 0
+                    arguments?.getInt("id_usuario")
+                        ?: 0
                 )
+
+
+                // -------------------------------------------------
+                // NOMBRE
+                // -------------------------------------------------
 
                 putString(
                     "nombre",
@@ -200,17 +225,32 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
                         ?: ""
                 )
 
+
+                // -------------------------------------------------
+                // CARGO
+                // -------------------------------------------------
+
                 putString(
                     "cargo",
                     arguments?.getString("cargo")
                         ?: ""
                 )
 
+
+                // -------------------------------------------------
+                // ESTADO
+                // -------------------------------------------------
+
                 putString(
                     "estado",
                     arguments?.getString("estado")
                         ?: ""
                 )
+
+
+                // -------------------------------------------------
+                // CANTIDAD DE PACIENTES
+                // -------------------------------------------------
 
                 putInt(
                     "pacientes",
@@ -223,6 +263,10 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
         fragment.arguments =
             datos
 
+
+        // -----------------------------------------------------
+        // CAMBIAR FRAGMENT
+        // -----------------------------------------------------
 
         parentFragmentManager
             .beginTransaction()

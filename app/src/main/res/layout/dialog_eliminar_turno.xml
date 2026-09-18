@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="26dp"
+    android:background="@drawable/bg_dialog">
+
+    <!-- ICONO -->
+
+    <ImageView
+        android:id="@+id/iconoEliminar"
+        android:layout_width="58dp"
+        android:layout_height="58dp"
+        android:padding="14dp"
+        android:background="@drawable/bg_eliminar_dialog"
+        android:src="@drawable/ic_delete"
+        android:contentDescription="Eliminar turno"
+        app:tint="#DC3545" />
+
+    <!-- TITULO -->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Eliminar turno"
+        android:textColor="#1F2937"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- MENSAJE -->
+
+    <TextView
+        android:id="@+id/txtMensajeEliminar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:text="¿Está seguro de eliminar este turno?"
+        android:textColor="#6B7280"
+        android:textSize="14sp"
+        android:lineSpacingExtra="3dp" />
+
+    <!-- INFORMACIÓN DEL TURNO -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:background="@drawable/bg_info_dialog">
+
+        <TextView
+            android:id="@+id/txtTipoEliminar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Turno Diurno"
+            android:textColor="#1F2937"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtFechaEliminar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="16/09/2026 - 19/09/2026"
+            android:textColor="#6B7280"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+    <!-- ADVERTENCIA -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="center"
+        android:text="Esta acción eliminará las asignaciones de este turno."
+        android:textColor="#DC3545"
+        android:textSize="12sp" />
+
+    <!-- BOTONES -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelarEliminar"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:text="Cancelar"
+            android:textAllCaps="false"
+            android:textColor="#374151"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="#E9ECEF"
+            app:cornerRadius="12dp"
+            app:strokeWidth="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirmarEliminar"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="Eliminar"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="#DC3545"
+            app:cornerRadius="12dp"
+            app:strokeWidth="0dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

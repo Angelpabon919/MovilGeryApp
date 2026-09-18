@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- NOMBRE DEL PACIENTE -->
+
+        <TextView
+            android:id="@+id/txtNombrePaciente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Carlos Rodríguez"
+            android:textColor="#1F2937"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <!-- HABITACIÓN -->
+
+        <TextView
+            android:id="@+id/txtHabitacionPaciente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Habitación 12"
+            android:textColor="#667085"
+            android:textSize="14sp" />
+
+        <!-- CAMA -->
+
+        <TextView
+            android:id="@+id/txtCamaPaciente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Cama 2"
+            android:textColor="#667085"
+            android:textSize="14sp" />
+
+        <!-- EPS -->
+
+        <TextView
+            android:id="@+id/txtEpsPaciente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="EPS Sura"
+            android:textColor="#667085"
+            android:textSize="14sp" />
+
+        <!-- ESTADO -->
+
+        <TextView
+            android:id="@+id/txtEstadoPaciente"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_estado_activo"
+            android:paddingStart="12dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="5dp"
+            android:text="Activo"
+            android:textColor="#3B5BDB"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

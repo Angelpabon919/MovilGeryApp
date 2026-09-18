@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@android:color/white"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp">
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#E9ECEF"
+    app:strokeWidth="1dp">
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="18dp">
 
 
-        <!-- ================================================= -->
-        <!-- TIPO DE REGISTRO -->
-        <!-- ================================================= -->
+        <!-- ================================================== -->
+        <!-- ENCABEZADO DEL REGISTRO -->
+        <!-- ================================================== -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,123 +31,108 @@
             android:orientation="horizontal">
 
 
-            <!-- INDICADOR -->
+            <!-- ICONO -->
+            <ImageView
+                android:id="@+id/iconoEventoBitacora"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:padding="9dp"
+                android:src="@drawable/menu_book"
+                android:background="@drawable/bg_icono_modulo"
+                app:tint="#3B5BDB"
+                android:contentDescription="Tipo de registro" />
 
-            <View
-                android:id="@+id/viewIndicadorEvento"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_status_activo" />
 
-
+            <!-- TÍTULO -->
             <TextView
-                android:id="@+id/txtTipoEvento"
+                android:id="@+id/txtTipoEventoBitacora"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="EVENTO ADVERSO"
-                android:textColor="@color/text_status"
-                android:textSize="11sp"
+                android:layout_marginStart="12dp"
+                android:text="Registro de actividad"
+                android:textColor="#212529"
+                android:textSize="15sp"
                 android:textStyle="bold" />
-
-
-            <TextView
-                android:id="@+id/txtHoraEvento"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="08:35 AM"
-                android:textColor="#98A2B3"
-                android:textSize="11sp" />
 
         </LinearLayout>
 
 
-        <!-- ================================================= -->
-        <!-- PACIENTE -->
-        <!-- ================================================= -->
+        <!-- ================================================== -->
+        <!-- DESCRIPCIÓN -->
+        <!-- ================================================== -->
 
         <TextView
-            android:id="@+id/txtNombrePacienteEvento"
+            android:id="@+id/txtDescripcionEventoBitacora"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="María González"
-            android:textColor="#212529"
-            android:textSize="16sp"
+            android:layout_marginStart="54dp"
+            android:layout_marginTop="12dp"
+            android:text="Cuidado del paciente"
+            android:textColor="#343A40"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
 
-        <!-- ================================================= -->
-        <!-- DESCRIPCIÓN -->
-        <!-- ================================================= -->
+        <!-- ================================================== -->
+        <!-- PACIENTE -->
+        <!-- ================================================== -->
 
         <TextView
-            android:id="@+id/txtDescripcionEvento"
+            android:id="@+id/txtPacienteEventoBitacora"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:text="Caída durante traslado"
+            android:layout_marginStart="54dp"
+            android:layout_marginTop="5dp"
+            android:text="Paciente: Carlos Rodríguez"
             android:textColor="#687078"
-            android:textSize="14sp" />
+            android:textSize="13sp" />
 
 
-        <!-- ================================================= -->
-        <!-- CUIDADOR -->
-        <!-- ================================================= -->
+        <!-- ================================================== -->
+        <!-- FECHA Y HORA -->
+        <!-- ================================================== -->
 
         <TextView
-            android:id="@+id/txtCuidadorEvento"
+            android:id="@+id/txtFechaEventoBitacora"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Cuidador: Carlos Rodríguez"
-            android:textColor="#8A8F98"
+            android:layout_marginStart="54dp"
+            android:layout_marginTop="12dp"
+            android:text="10/09/2026 · 08:30 AM"
+            android:textColor="#687078"
             android:textSize="12sp" />
 
 
-        <!-- ================================================= -->
-        <!-- PARTE INFERIOR -->
-        <!-- ================================================= -->
+        <!-- ================================================== -->
+        <!-- ESTADO -->
+        <!-- ================================================== -->
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/contenedorEstadoBitacora"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginStart="54dp"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
 
-            <TextView
-                android:id="@+id/txtEstadoEvento"
-                android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="PENDIENTE"
-                android:textColor="@color/text_status"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:background="@drawable/bg_status_activo" />
-
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+            <ImageView
+                android:id="@+id/iconoEstadoBitacora"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/check_circle"
+                app:tint="#3B5BDB"
+                android:contentDescription="Estado" />
 
 
             <TextView
-                android:id="@+id/txtVerEvento"
+                android:id="@+id/txtEstadoEventoBitacora"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:gravity="center"
-                android:paddingStart="10dp"
-                android:paddingEnd="4dp"
-                android:text="Ver detalle  ›"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="Actividad registrada"
                 android:textColor="#3B5BDB"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -153,4 +141,4 @@
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

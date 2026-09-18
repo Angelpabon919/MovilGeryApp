@@ -1,10 +1,10 @@
 package com.example.molvigeryapp.data.api
 
-import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
+import com.example.molvigeryapp.data.model.Actividad
 import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
-import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.EventoAdverso
 import com.example.molvigeryapp.data.model.HistoriaClinica
 import com.example.molvigeryapp.data.model.Insumo
@@ -17,8 +17,12 @@ import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.data.model.TipoEmergencia
 import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Turno
+import com.example.molvigeryapp.data.model.ElementoPaciente
+import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.Usuario
+
 import retrofit2.Response
+import retrofit2.http.PATCH
 
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -30,6 +34,10 @@ import retrofit2.http.Query
 
 interface ApiService {
 
+    // =========================================================
+    // PACIENTES
+    // =========================================================
+
     @GET("pacientes/")
     suspend fun getPacientes(): List<Paciente>
 
@@ -37,6 +45,26 @@ interface ApiService {
     suspend fun getPacienteById(
         @Path("id") id: Int
     ): Paciente
+
+
+    // =========================================================
+    // APLICACIÓN DE MEDICAMENTOS
+    // =========================================================
+
+    @GET("aplicacion_medicamento/")
+    suspend fun getAplicacionesPorPaciente(
+        @Query("id_Paciente") idPaciente: Int
+    ): List<AplicacionMedicamento>
+
+    @POST("aplicacion_medicamento/")
+    suspend fun guardarAplicacionMedicamento(
+        @Body aplicacion: AplicacionMedicamento
+    ): AplicacionMedicamento
+
+
+    // =========================================================
+    // RECOMENDACIONES
+    // =========================================================
 
     @GET("recomendaciones/")
     suspend fun getRecomendacionesPorPaciente(
@@ -48,6 +76,11 @@ interface ApiService {
         @Body recomendacion: Recomendacion
     ): Response< Recomendacion>
 
+
+    // =========================================================
+    // CUIDADOS DE ENFERMERÍA
+    // =========================================================
+
     @POST("cuidados_enfermeria/")
     suspend fun guardarCuidadoEnfermeria(
         @Body cuidado: CuidadoEnfermeria
@@ -58,10 +91,18 @@ interface ApiService {
         @Query("id_paciente") idPaciente: Int
     ): List<CuidadoEnfermeria>
 
+
+    // =========================================================
+    // ASIGNACIÓN DE PACIENTES A CUIDADORES
+    // =========================================================
+
     @POST("asignacion_paciente_cuidador/")
     suspend fun guardarAsignacion(
         @Body asignacion: AsignacionPacienteCuidador
     ): Response<AsignacionPacienteCuidador>
+    @GET("asignacion_paciente_cuidador/")
+    suspend fun getAsignacionesPacienteCuidador():
+            Response<List<AsignacionPacienteCuidador>>
 
     @GET("elementos_paciente/")
     suspend fun getElementosPorPaciente(
@@ -105,6 +146,27 @@ interface ApiService {
     @GET("usuarios/")
     suspend fun getUsuarios(): List<Usuario>
 
+    @GET("usuarios/{id}/")
+    suspend fun getUsuarioById(
+        @Path("id") id: Int
+    ): Usuario
+
+    @POST("usuarios/cambiar-contrasena/")
+    suspend fun cambiarContrasena(
+        @Body datos: Map<String, Any>
+    ): Response<Map<String, String>>
+
+    @PATCH("usuarios/{id}/")
+    suspend fun actualizarUsuario(
+        @Path("id") id: Int,
+        @Body datos: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Usuario>
+
+
+    // =========================================================
+    // TURNOS
+    // =========================================================
+
     @GET("turnos/")
     suspend fun getTurnos(): List<Turno>
 
@@ -123,6 +185,10 @@ interface ApiService {
     suspend fun eliminarTurno(
         @Path("id") id: Int
     )
+
+    // =========================================================
+    // ASIGNACIONES DE TURNOS
+    // =========================================================
 
     @GET("asignacion_turno_usuario/")
     suspend fun getAsignacionesTurno(): List<AsignacionTurnoUsuario>
@@ -143,20 +209,51 @@ interface ApiService {
         @Path("id") id: Int
     )
 
+
+    // =========================================================
+    // BITÁCORA
+    // =========================================================
+
+    @GET("bitacora/")
+    suspend fun getBitacoras(): List<Bitacora>
+
     @POST("bitacora/")
     suspend fun crearBitacora(
         @Body bitacora: Bitacora
     ): Bitacora
+
+
+    // =========================================================
+    // ACTIVIDADES
+    // =========================================================
+
+    @GET("actividades/")
+    suspend fun getActividades(): List<Actividad>
+
+
+    // =========================================================
+    // EVENTOS ADVERSOS
+    // =========================================================
 
     @POST("eventos_adversos/")
     suspend fun crearEventoAdverso(
         @Body evento: EventoAdverso
     ): EventoAdverso
 
+
+    // =========================================================
+    // SIGNOS VITALES
+    // =========================================================
+
     @POST("signos_vitales/")
     suspend fun crearSignosVitales(
         @Body signos: SignosVitales
     ): SignosVitales
+
+
+    // =========================================================
+    // TIPOS DE EMERGENCIA
+    // =========================================================
 
     @GET("tipo_emergencia/")
     suspend fun getTiposEmergencia(): List<TipoEmergencia>

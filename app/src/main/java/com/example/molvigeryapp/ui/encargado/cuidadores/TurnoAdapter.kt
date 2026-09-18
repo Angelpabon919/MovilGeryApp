@@ -14,19 +14,12 @@ class TurnoAdapter(
     private val onEliminar: (TurnoUI) -> Unit
 ) : RecyclerView.Adapter<TurnoAdapter.TurnoViewHolder>() {
 
-    // =========================================================
-    // ESTADO DEL ADAPTER
-    // =========================================================
 
     /*
      * false = Turnos asignados
-     * true  = Turnos pasados / historial
+     *  true  = Turnos pasados / historial
      */
     private var esHistorial = false
-
-    // =========================================================
-    // VIEW HOLDER
-    // =========================================================
 
     inner class TurnoViewHolder(
         private val binding: ItemTurnoEncargadoBinding
@@ -39,7 +32,7 @@ class TurnoAdapter(
             // -------------------------------------------------
 
             binding.txtTipoTurno.text =
-                "Turno ${turno.tipo}"
+                "${turno.tipo}"
 
             // -------------------------------------------------
             // ESTADO
@@ -97,10 +90,7 @@ class TurnoAdapter(
 
             if (esHistorial) {
 
-                /*
-                 * Los turnos pasados son solamente
-                 * para consulta.
-                 */
+                /* Los turnos pasados son solamente para consulta */
 
                 binding.btnEditarTurno.visibility =
                     View.GONE
@@ -122,10 +112,7 @@ class TurnoAdapter(
 
             if (esHistorial) {
 
-                /*
-                 * No permitimos eliminar turnos
-                 * que ya forman parte del historial.
-                 */
+                /* no permite eliminar turno que estan en parte del historial */
 
                 binding.btnEliminarTurno.visibility =
                     View.GONE
@@ -197,9 +184,6 @@ class TurnoAdapter(
         notifyDataSetChanged()
     }
 
-    // =========================================================
-    // CAMBIAR MODO
-    // =========================================================
 
     fun establecerModoHistorial(
         historial: Boolean
