@@ -33,14 +33,17 @@ class AsignarTurnoEncargadoFragment : Fragment() {
     // =========================================================
 
     private var _binding: FragmentAsignarTurnoEncargadoBinding? = null
-    private val binding get() = _binding!!
+
+    private val binding
+        get() = _binding!!
 
 
     // =========================================================
     // CALENDARIO
     // =========================================================
 
-    private val meses = mutableListOf<Calendar>()
+    private val meses =
+        mutableListOf<Calendar>()
 
     private var mesMostrado: Calendar =
         Calendar.getInstance()
@@ -51,14 +54,30 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
 
     // =========================================================
-    // TIPO DE TURNO
+    // TURNOS
     // =========================================================
 
-    private var tipoTurnoSeleccionado: String? = null
+    /*
+     * Aquí guardamos los turnos que vienen de la
+     * tabla Turnos.
+     *
+     * Esta tabla funciona como catálogo:
+     *
+     * Diurno
+     * Nocturno
+     */
 
-    private var horaInicioSeleccionada: String = ""
+    private var turnosDisponibles: List<Turno> =
+        emptyList()
 
-    private var horaFinSeleccionada: String = ""
+
+    /*
+     * Este es el turno que seleccionó el Encargado
+     * desde el selector.
+     */
+
+    private var turnoSeleccionado: Turno? =
+        null
 
 
     // =========================================================
@@ -134,6 +153,8 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         configurarBotonAsignar()
 
+        cargarTurnos()
+
         cargarCuidadores()
     }
 
@@ -158,6 +179,10 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         NavegacionEncargado.configurar(
 
+            // =================================================
+            // INICIO
+            // =================================================
+
             navInicio =
                 binding.navInicioAsignarTurno,
 
@@ -167,6 +192,10 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             textInicio =
                 binding.textInicioAsignarTurno,
 
+
+            // =================================================
+            // ASIGNAR TURNO
+            // =================================================
 
             navAsignarTurno =
                 binding.navAsignarTurnoAsignarTurno,
@@ -178,6 +207,10 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                 binding.textAsignarTurnoAsignarTurno,
 
 
+            // =================================================
+            // CITAS
+            // =================================================
+
             navCitas =
                 binding.navCitasAsignarTurno,
 
@@ -187,6 +220,10 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             textCitas =
                 binding.textCitasAsignarTurno,
 
+
+            // =================================================
+            // PERFIL
+            // =================================================
 
             navPerfil =
                 binding.navPerfilAsignarTurno,
@@ -198,9 +235,17 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                 binding.textPerfilAsignarTurno,
 
 
+            // =================================================
+            // PANTALLA ACTUAL
+            // =================================================
+
             pantallaActual =
                 NavegacionEncargado.Pantalla.ASIGNAR_TURNO,
 
+
+            // =================================================
+            // IR A INICIO
+            // =================================================
 
             onInicio = {
 
@@ -214,10 +259,18 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             },
 
 
+            // =================================================
+            // YA ESTAMOS EN ASIGNAR TURNO
+            // =================================================
+
             onAsignarTurno = {
                 // Ya estamos en esta pantalla
             },
 
+
+            // =================================================
+            // IR A CITAS
+            // =================================================
 
             onCitas = {
 
@@ -230,6 +283,10 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                     .commit()
             },
 
+
+            // =================================================
+            // IR A PERFIL
+            // =================================================
 
             onPerfil = {
 
@@ -251,93 +308,169 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
     private fun configurarSelectorTurno() {
 
-        val tiposTurno =
-            listOf(
-                "Diurno",
-                "Nocturno"
-            )
+        /*
+         * El selector inicialmente queda vacío.
+         *
+         * Los datos serán cargados desde la tabla
+         * Turnos mediante cargarTurnos().
+         */
 
-
-        val adapter =
-            ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                tiposTurno
-            )
-
-
-        binding.selectorTipoTurno
-            .setAdapter(adapter)
+        binding.selectorTipoTurno.setText(
+            "",
+            false
+        )
 
 
         binding.selectorTipoTurno
             .setOnItemClickListener { _, _, position, _ ->
 
-                seleccionarTipoTurno(
-                    tiposTurno[position]
-                )
+                if (
+                    position >= 0 &&
+                    position < turnosDisponibles.size
+                ) {
+
+                    seleccionarTurno(
+                        turnosDisponibles[position]
+                    )
+                }
             }
     }
 
 
     // =========================================================
-    // SELECCIONAR TIPO DE TURNO
+    // CARGAR TURNOS DESDE LA API
     // =========================================================
 
-    private fun seleccionarTipoTurno(
-        tipo: String
-    ) {
+    private fun cargarTurnos() {
 
-        tipoTurnoSeleccionado =
-            tipo
+        lifecycleScope.launch {
 
+            try {
 
-        when (tipo) {
+                /*
+                 * CONSULTAMOS LA TABLA TURNOS.
+                 *
+                 * GET /api/turnos/
+                 */
 
-            "Diurno" -> {
-
-                horaInicioSeleccionada =
-                    "07:00:00"
-
-                horaFinSeleccionada =
-                    "19:00:00"
-            }
+                val turnos =
+                    RetrofitClient.apiService
+                        .getTurnos()
 
 
-            "Nocturno" -> {
+                /*
+                 * Solamente mostramos turnos activos.
+                 */
 
-                horaInicioSeleccionada =
-                    "19:00:00"
+                turnosDisponibles =
+                    turnos.filter {
+                        it.estado
+                    }
 
-                horaFinSeleccionada =
-                    "07:00:00"
+
+                /*
+                 * Si no existen turnos,
+                 * mostramos un mensaje.
+                 */
+
+                if (
+                    turnosDisponibles.isEmpty()
+                ) {
+
+                    Toast.makeText(
+                        requireContext(),
+                        "No hay turnos disponibles en el sistema.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    return@launch
+                }
+
+
+                // =================================================
+                // NOMBRES PARA EL SELECTOR
+                // =================================================
+
+                val nombresTurnos =
+                    turnosDisponibles.map { turno ->
+
+                        turno.nombre
+                            .ifBlank {
+                                "Turno ${turno.id_turno}"
+                            }
+                    }
+
+
+                // =================================================
+                // ADAPTER DEL SELECTOR
+                // =================================================
+
+                val adapter =
+                    ArrayAdapter(
+                        requireContext(),
+                        android.R.layout.simple_dropdown_item_1line,
+                        nombresTurnos
+                    )
+
+
+                binding.selectorTipoTurno
+                    .setAdapter(adapter)
+
+
+            } catch (e: Exception) {
+
+                android.util.Log.e(
+                    "ASIGNAR_TURNO",
+                    "Error al cargar los turnos",
+                    e
+                )
+
+                Toast.makeText(
+                    requireContext(),
+                    "No se pudieron cargar los turnos",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
+    }
+
+
+    // =========================================================
+    // SELECCIONAR TURNO
+    // =========================================================
+
+    private fun seleccionarTurno(
+        turno: Turno
+    ) {
+
+        /*
+         * Guardamos el registro real proveniente
+         * de la tabla Turnos.
+         */
+
+        turnoSeleccionado =
+            turno
 
 
         // =====================================================
-        // INFORMACIÓN DEL TURNO
+        // MOSTRAR INFORMACIÓN
         // =====================================================
 
         binding.txtNombreTurnoSeleccionado.text =
-            "Turno $tipo"
+            turno.nombre
 
 
         binding.txtHorarioTurnoSeleccionado.text =
-            "$horaInicioSeleccionada - $horaFinSeleccionada"
+            "${turno.hora_inicio} - ${turno.hora_fin ?: "Sin hora final"}"
 
 
         binding.cardInformacionTurno.visibility =
             View.VISIBLE
 
 
-        /*
-         * IMPORTANTE:
-         *
-         * Volvemos a comprobar las fechas porque
-         * el usuario puede haberlas seleccionado
-         * antes de elegir el tipo de turno.
-         */
+        // =====================================================
+        // ACTUALIZAR RESUMEN
+        // =====================================================
 
         actualizarResumenFechas()
 
@@ -354,7 +487,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         mesMostrado =
             Calendar.getInstance()
-
 
         generarMeses()
 
@@ -374,16 +506,13 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         meses.clear()
 
-
         val hoy =
             Calendar.getInstance()
-
 
         hoy.set(
             Calendar.DAY_OF_MONTH,
             1
         )
-
 
         /*
          * Mes actual + próximos 11 meses.
@@ -394,12 +523,10 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             val mes =
                 hoy.clone() as Calendar
 
-
             mes.add(
                 Calendar.MONTH,
                 i
             )
-
 
             meses.add(mes)
         }
@@ -419,7 +546,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                 false
             )
 
-
         binding.recyclerMeses.layoutManager =
             layoutManager
 
@@ -437,11 +563,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
         binding.recyclerMeses.adapter =
             adapter
 
-
-        /*
-         * Centramos el mes actual solamente
-         * cuando se carga la pantalla.
-         */
 
         binding.recyclerMeses.post {
 
@@ -471,10 +592,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             mesMostrado
         )
 
-
-        /*
-         * Cargamos los días del nuevo mes.
-         */
 
         mostrarMes(
             mesMostrado
@@ -525,14 +642,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             adapter
 
 
-        /*
-         * El centrado solamente se hace cuando
-         * cargamos el mes.
-         *
-         * Al seleccionar un día NO se vuelve
-         * a ejecutar.
-         */
-
         binding.recyclerDias.post {
 
             centrarFechaEnCalendario(
@@ -544,7 +653,7 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
 
     // =========================================================
-    // GENERAR TODOS LOS DÍAS DEL MES
+    // GENERAR DÍAS DEL MES
     // =========================================================
 
     private fun generarDiasDelMes(
@@ -583,21 +692,9 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             )
 
 
-            dias.add(
-                fecha
-            )
+            dias.add(fecha)
         }
 
-
-        /*
-         * NO eliminamos los días pasados.
-         *
-         * Todos los días del mes se muestran.
-         *
-         * DiaCalendarioAdapter se encarga de
-         * mostrar los días pasados como
-         * no disponibles.
-         */
 
         return dias
     }
@@ -634,11 +731,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         else if (fechaFin == null) {
 
-            /*
-             * Si toca nuevamente el día de inicio,
-             * lo deseleccionamos.
-             */
-
             if (
                 esMismaFecha(
                     fechaSeleccionada,
@@ -651,11 +743,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                 fechaFin = null
 
             } else {
-
-                /*
-                 * Si selecciona una fecha anterior
-                 * al inicio, intercambiamos las fechas.
-                 */
 
                 if (
                     fechaSeleccionada
@@ -683,12 +770,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         else {
 
-            /*
-             * Al seleccionar otra fecha cuando
-             * ya existe un rango, comenzamos
-             * una nueva selección.
-             */
-
             fechaInicio =
                 fechaSeleccionada
 
@@ -696,17 +777,9 @@ class AsignarTurnoEncargadoFragment : Fragment() {
         }
 
 
-        /*
-         * SOLAMENTE actualizamos la apariencia.
-         *
-         * NO centramos el RecyclerView.
-         */
-
         actualizarSeleccionVisual()
 
-
         actualizarResumenFechas()
-
 
         actualizarEstadoBotonAsignar()
     }
@@ -732,21 +805,13 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
 
     // =========================================================
-    // CENTRAR FECHA AL CARGAR EL MES
+    // CENTRAR FECHA
     // =========================================================
 
     private fun centrarFechaEnCalendario(
         mes: Calendar,
         layoutManager: LinearLayoutManager
     ) {
-
-        /*
-         * Si existe una fecha de inicio y pertenece
-         * al mes actual, centramos esa fecha.
-         *
-         * Si estamos en el mes actual y todavía
-         * no hay selección, centramos el día actual.
-         */
 
         val fechaObjetivo =
             when {
@@ -778,19 +843,11 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             }
 
 
-        // =====================================================
-        // POSICIÓN
-        // =====================================================
-
         val posicion =
             fechaObjetivo.get(
                 Calendar.DAY_OF_MONTH
             ) - 1
 
-
-        // =====================================================
-        // ANCHO DEL DÍA
-        // =====================================================
 
         val anchoDia =
             dpApx(66)
@@ -807,10 +864,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             }
 
 
-            // =================================================
-            // PADDING LATERAL
-            // =================================================
-
             val paddingLateral =
                 (
                         (anchoRecycler - anchoDia) / 2
@@ -825,17 +878,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             )
 
 
-            // =================================================
-            // CENTRAR
-            // =================================================
-
-            /*
-             * El padding ya permite que el elemento
-             * quede centrado.
-             *
-             * Por eso el offset es 0.
-             */
-
             layoutManager.scrollToPositionWithOffset(
                 posicion,
                 0
@@ -845,7 +887,7 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
 
     // =========================================================
-    // CENTRAR MES SELECCIONADO
+    // CENTRAR MES
     // =========================================================
 
     private fun centrarMesSeleccionado() {
@@ -956,27 +998,17 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
     private fun actualizarResumenFechas() {
 
-        // =====================================================
-        // NO EXISTE FECHA DE INICIO
-        // =====================================================
-
         if (fechaInicio == null) {
 
             binding.cardResumenFechas.visibility =
                 View.GONE
 
-
             binding.seccionCuidadoresAsignar.visibility =
                 View.GONE
-
 
             return
         }
 
-
-        // =====================================================
-        // MOSTRAR RESUMEN
-        // =====================================================
 
         binding.cardResumenFechas.visibility =
             View.VISIBLE
@@ -988,10 +1020,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             )
 
 
-        // =====================================================
-        // FALTA FECHA FINAL
-        // =====================================================
-
         if (fechaFin == null) {
 
             binding.txtFechaFinSeleccionada.text =
@@ -1002,32 +1030,18 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                 "Pendiente"
 
 
-            /*
-             * No mostramos cuidadores porque
-             * todavía falta la fecha final.
-             */
-
             binding.seccionCuidadoresAsignar.visibility =
                 View.GONE
-
 
             return
         }
 
-
-        // =====================================================
-        // MOSTRAR FECHA FINAL
-        // =====================================================
 
         binding.txtFechaFinSeleccionada.text =
             formatoFechaVisible.format(
                 fechaFin!!.time
             )
 
-
-        // =====================================================
-        // CALCULAR DURACIÓN
-        // =====================================================
 
         val diferencia =
             fechaFin!!.timeInMillis -
@@ -1050,12 +1064,8 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             }
 
 
-        // =====================================================
-        // COMPROBAR SI YA ESTÁ TODO COMPLETO
-        // =====================================================
-
         val datosCompletos =
-            tipoTurnoSeleccionado != null &&
+            turnoSeleccionado != null &&
                     fechaInicio != null &&
                     fechaFin != null
 
@@ -1086,7 +1096,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
                 cuidadoresSeleccionados =
                     seleccionados
-
 
                 actualizarEstadoBotonAsignar()
             }
@@ -1133,6 +1142,12 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
             } catch (e: Exception) {
 
+                android.util.Log.e(
+                    "ASIGNAR_TURNO",
+                    "Error al cargar cuidadores",
+                    e
+                )
+
                 Toast.makeText(
                     requireContext(),
                     "No se pudieron cargar los cuidadores",
@@ -1167,7 +1182,7 @@ class AsignarTurnoEncargadoFragment : Fragment() {
     private fun actualizarEstadoBotonAsignar() {
 
         val puedeAsignar =
-            tipoTurnoSeleccionado != null &&
+            turnoSeleccionado != null &&
                     fechaInicio != null &&
                     fechaFin != null &&
                     cuidadoresSeleccionados.isNotEmpty()
@@ -1195,8 +1210,16 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
     private fun asignarTurno() {
 
+        // =====================================================
+        // VALIDAR INFORMACIÓN
+        // =====================================================
+
+        val turno =
+            turnoSeleccionado
+
+
         if (
-            tipoTurnoSeleccionado == null ||
+            turno == null ||
             fechaInicio == null ||
             fechaFin == null ||
             cuidadoresSeleccionados.isEmpty()
@@ -1206,6 +1229,28 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                 requireContext(),
                 "Completa todos los datos del turno",
                 Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+
+        /*
+         * El turno debe tener un ID porque este ID
+         * viene de la tabla Turnos y será utilizado
+         * como FK en AsignacionTurnoUsuario.
+         */
+
+        val idTurno =
+            turno.id_turno
+
+
+        if (idTurno == null) {
+
+            Toast.makeText(
+                requireContext(),
+                "El turno seleccionado no tiene un ID válido.",
+                Toast.LENGTH_LONG
             ).show()
 
             return
@@ -1235,7 +1280,7 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
 
                 // =================================================
-                // CREAR TURNOS POR CADA DÍA
+                // CREAR ASIGNACIÓN POR CADA DÍA
                 // =================================================
 
                 while (
@@ -1246,48 +1291,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                         formatoFecha.format(
                             calendario.time
                         )
-
-
-                    val turno =
-                        Turno(
-
-                            fecha = fecha,
-
-                            hora_inicio =
-                                horaInicioSeleccionada,
-
-                            hora_fin =
-                                horaFinSeleccionada,
-
-                            estado = true,
-
-                            nombre =
-                                "Turno $tipoTurnoSeleccionado",
-
-                            descripcion =
-                                "Turno asignado desde GerIApp"
-                        )
-
-
-                    // =================================================
-                    // CREAR TURNO
-                    // =================================================
-
-                    val turnoCreado =
-                        RetrofitClient.apiService
-                            .crearTurno(turno)
-
-
-                    val idTurno =
-                        turnoCreado.id_turno
-
-
-                    if (idTurno == null) {
-
-                        throw Exception(
-                            "La API no devolvió el ID del turno"
-                        )
-                    }
 
 
                     // =================================================
@@ -1308,6 +1311,15 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                         }
 
 
+                        /*
+                         * IMPORTANTE:
+                         *
+                         * Aquí NO creamos un Turno.
+                         *
+                         * Solamente creamos una
+                         * AsignacionTurnoUsuario.
+                         */
+
                         val asignacion =
                             AsignacionTurnoUsuario(
 
@@ -1324,6 +1336,12 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                                     "Asignado"
                             )
 
+
+                        /*
+                         * POST:
+                         *
+                         * /api/asignacion_turno_usuario/
+                         */
 
                         RetrofitClient.apiService
                             .crearAsignacionTurno(
@@ -1355,6 +1373,12 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
             } catch (e: Exception) {
 
+                android.util.Log.e(
+                    "ASIGNAR_TURNO",
+                    "Error al asignar turno",
+                    e
+                )
+
                 Toast.makeText(
                     requireContext(),
                     "Error al asignar el turno: ${e.message}",
@@ -1374,11 +1398,7 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
     private fun limpiarFormulario() {
 
-        tipoTurnoSeleccionado = null
-
-        horaInicioSeleccionada = ""
-
-        horaFinSeleccionada = ""
+        turnoSeleccionado = null
 
         fechaInicio = null
 
@@ -1412,7 +1432,6 @@ class AsignarTurnoEncargadoFragment : Fragment() {
 
         actualizarSeleccionVisual()
 
-
         actualizarEstadoBotonAsignar()
     }
 
@@ -1434,18 +1453,15 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             0
         )
 
-
         resultado.set(
             Calendar.MINUTE,
             0
         )
 
-
         resultado.set(
             Calendar.SECOND,
             0
         )
-
 
         resultado.set(
             Calendar.MILLISECOND,

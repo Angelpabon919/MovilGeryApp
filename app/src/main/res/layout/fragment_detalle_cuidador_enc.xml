@@ -329,7 +329,7 @@
                         android:id="@+id/textTurnos"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Asignar turno"
+                        android:text="Ver turnos"
                         android:textColor="#212529"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -338,7 +338,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Programar sus días y horarios de trabajo"
+                        android:text="Edita y elimina los turnos asignados"
                         android:textColor="#8A8F98"
                         android:textSize="12sp" />
 
@@ -463,6 +463,67 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
                         android:text="Revisar situaciones reportadas"
+                        android:textColor="#8A8F98"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="28dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="›"
+                    android:textColor="#3B5BDB"
+                    android:textSize="27sp" />
+
+            </LinearLayout>
+
+            <!-- ================================================= -->
+            <!-- BITÁCORA -->
+            <!-- ================================================= -->
+
+            <LinearLayout
+                android:id="@+id/moduloBitacora"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="15dp"
+                android:background="@drawable/bg_modulo_cuidador"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:src="@drawable/menu_book"
+                    android:background="@drawable/bg_icono_modulo"
+                    app:tint="@color/colo_boton"
+                    android:contentDescription="Bitácora" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="13dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/textBitacora"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bitácora"
+                        android:textColor="#212529"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="Consultar el registro de actividades"
                         android:textColor="#8A8F98"
                         android:textSize="12sp" />
 
