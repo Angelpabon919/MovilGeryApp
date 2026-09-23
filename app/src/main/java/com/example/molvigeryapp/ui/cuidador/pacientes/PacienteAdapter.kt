@@ -3,86 +3,74 @@ package com.example.molvigeryapp.ui.cuidador.pacientes
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Paciente
-import com.example.molvigeryapp.databinding.ItemPacienteBinding
 
 class PacienteAdapter(
-    private val onItemClick: (Paciente) -> Unit,
-    private val onSelectionToggle: (Paciente) -> Unit
+    private var listaPacientes: List<Paciente> = emptyList(),
+    private val mostrarCheckbox: Boolean = true,
+    private val onSeleccionCambiada: ((totalSeleccionados: Int) -> Unit)? = null
 ) : RecyclerView.Adapter<PacienteAdapter.PacienteViewHolder>() {
 
-    private var listaOriginal: List<Paciente> = emptyList()
-    private var listaFiltrada: List<Paciente> = emptyList()
+    inner class PacienteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val tvNombre: TextView = itemView.findViewById(R.id.tvNombrePaciente)
+        val tvDetalles: TextView = itemView.findViewById(R.id.tvDetallesPaciente)
+        val cbSeleccionado: CheckBox = itemView.findViewById(R.id.cbSeleccionado)
 
-    var modoSeleccion: Boolean = false
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
+        fun bind(paciente: Paciente) {
+            val nombreCompleto = "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}".trim()
+            tvNombre.text = if (nombreCompleto.isNotEmpty()) nombreCompleto else "Paciente sin nombre"
 
-    fun actualizarLista(nuevaLista: List<Paciente>) {
-        listaOriginal = nuevaLista
-        listaFiltrada = nuevaLista
-        notifyDataSetChanged()
-    }
+            val hab = paciente.habitacion?.toString() ?: "--"
+            val doc = paciente.numeroDocumento ?: "--"
+            tvDetalles.text = "Habitación $hab • Doc: $doc"
 
-    fun filtrar(texto: String) {
-        listaFiltrada = if (texto.trim().isEmpty()) {
-            listaOriginal
-        } else {
-            listaOriginal.filter { paciente ->
-                val nombreCompleto = "${paciente.nombre} ${paciente.apellido}".lowercase()
-                nombreCompleto.contains(texto.lowercase().trim())
+            if (mostrarCheckbox) {
+                cbSeleccionado.visibility = View.VISIBLE
+
+                // Desvincular listener temporal para evitar disparo involuntario
+                cbSeleccionado.setOnCheckedChangeListener(null)
+                cbSeleccionado.isChecked = paciente.isSelected
+
+                // Modificar la propiedad directamente en el objeto de la lista
+                val clickAccion = View.OnClickListener {
+                    paciente.isSelected = !paciente.isSelected
+                    cbSeleccionado.isChecked = paciente.isSelected
+
+                    // Notificar al Fragment solo el número de seleccionados para el TextView
+                    onSeleccionCambiada?.invoke(obtenerCantidadSeleccionados())
+                }
+
+                itemView.setOnClickListener(clickAccion)
+                cbSeleccionado.setOnClickListener(clickAccion)
+            } else {
+                cbSeleccionado.visibility = View.GONE
+                itemView.setOnClickListener(null)
+                cbSeleccionado.setOnClickListener(null)
             }
         }
-        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PacienteViewHolder {
-        val binding = ItemPacienteBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return PacienteViewHolder(binding)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_paciente, parent, false)
+        return PacienteViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: PacienteViewHolder, position: Int) {
-        val paciente = listaFiltrada[position]
-        holder.bind(paciente)
+        holder.bind(listaPacientes[position])
     }
 
-    override fun getItemCount(): Int = listaFiltrada.size
+    override fun getItemCount(): Int = listaPacientes.size
 
-    inner class PacienteViewHolder(private val binding: ItemPacienteBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    fun actualizarLista(nuevaLista: List<Paciente>) {
+        listaPacientes = nuevaLista
+        notifyDataSetChanged()
+    }
 
-        fun bind(paciente: Paciente) {
-            binding.tvNombrePaciente.text = "${paciente.nombre} ${paciente.apellido}".trim()
-
-            if (modoSeleccion) {
-                binding.cbSeleccionar.visibility = View.VISIBLE
-                binding.icChevron.visibility = View.GONE
-                
-                binding.cbSeleccionar.setOnCheckedChangeListener(null)
-                binding.cbSeleccionar.isChecked = paciente.isSelected
-                
-                binding.cbSeleccionar.setOnCheckedChangeListener { _, isChecked ->
-                    onSelectionToggle(paciente)
-                }
-                
-                binding.root.setOnClickListener {
-                    binding.cbSeleccionar.isChecked = !binding.cbSeleccionar.isChecked
-                }
-            } else {
-                binding.cbSeleccionar.visibility = View.GONE
-                binding.icChevron.visibility = View.VISIBLE
-                
-                binding.root.setOnClickListener {
-                    onItemClick(paciente)
-                }
-            }
-        }
+    fun obtenerCantidadSeleccionados(): Int {
+        return listaPacientes.count { it.isSelected }
     }
 }

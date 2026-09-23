@@ -42,6 +42,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("androidx.fragment:fragment-ktx:1.8.9")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
