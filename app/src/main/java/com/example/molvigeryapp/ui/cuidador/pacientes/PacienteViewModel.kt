@@ -20,6 +20,10 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _pacientes = MutableLiveData<List<Paciente>>()
     val pacientes: LiveData<List<Paciente>> get() = _pacientes
 
+    // NUEVO: Variable para enviarle ÚNICAMENTE los seleccionados al Home
+    private val _pacientesSeleccionadosHome = MutableLiveData<List<Paciente>>()
+    val pacientesSeleccionadosHome: LiveData<List<Paciente>> get() = _pacientesSeleccionadosHome
+
     private var listaPacientesCompleta: List<Paciente> = emptyList()
 
     private val _pacienteSeleccionado = MutableLiveData<Paciente?>()
@@ -58,37 +62,39 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         private set
 
     fun cargarPacientes() {
-        if (tienePacientesSeleccionados) {
-            _pacientes.value = listaPacientesCompleta.filter { it.isSelected }
-            return
-        }
-
         viewModelScope.launch {
             try {
-                val resultado = repository.obtenerPacientes()
-                listaPacientesCompleta = resultado
-                _pacientes.value = resultado
+                // Consultar la API solo si la lista no existe en memoria
+                if (listaPacientesCompleta.isEmpty()) {
+                    listaPacientesCompleta = repository.obtenerPacientes()
+                }
+
+                _pacientes.value = listaPacientesCompleta
+
+                // Si ya había seleccionados, actualizar el LiveData del Home
+                if (tienePacientesSeleccionados) {
+                    _pacientesSeleccionadosHome.value = listaPacientesCompleta.filter { it.isSelected }
+                }
+
             } catch (e: Exception) {
                 android.util.Log.e("API_ERROR_REAL", "Error al cargar", e)
                 _pacientes.value = emptyList()
+                _pacientesSeleccionadosHome.value = emptyList()
             }
         }
     }
-
-    fun toggleSeleccionPaciente(idPaciente: Int) {
-        listaPacientesCompleta.find { it.idPaciente == idPaciente }?.let { paciente ->
-            paciente.isSelected = !paciente.isSelected
-            _pacientes.value = ArrayList(listaPacientesCompleta)
-        }
-    }
-
     fun confirmarSeleccionDelDia(idUsuarioLogueado: Int) {
-        _pacientes.value = listaPacientesCompleta.filter { it.isSelected }
         tienePacientesSeleccionados = true
+
+        val seleccionados = listaPacientesCompleta.filter { it.isSelected }
+
+        // FIX: No sobreescribimos _pacientes. Mantenemos _pacientes intacto con todos los datos
+        // y pasamos la lista recortada únicamente a la nueva variable del Home.
+        _pacientesSeleccionadosHome.value = seleccionados
 
         val fechaActual = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(java.util.Date())
 
-        listaPacientesCompleta.filter { it.isSelected }.forEach { paciente ->
+        seleccionados.forEach { paciente ->
             paciente.idPaciente?.let { idPaciente ->
                 val asignacion = AsignacionPacienteCuidador(
                     idUsuario = idUsuarioLogueado,
@@ -113,12 +119,8 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     fun restaurarListaCompleta() {
         tienePacientesSeleccionados = false
         listaPacientesCompleta.forEach { it.isSelected = false }
-
-        if (listaPacientesCompleta.isNotEmpty()) {
-            _pacientes.value = listaPacientesCompleta
-        } else {
-            cargarPacientes()
-        }
+        _pacientes.value = listaPacientesCompleta
+        _pacientesSeleccionadosHome.value = emptyList()
     }
 
     fun cargarPacientePorId(id: Int) {
@@ -179,7 +181,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         viewModelScope.launch {
             val exito = repository.guardarElementoPaciente(elemento)
             if (exito) {
-                // Al guardar con éxito, refresca automáticamente la lista del paciente en tiempo real
                 kotlinx.coroutines.delay(300)
                 cargarElementosPaciente(elemento.idPaciente)
             } else {
@@ -201,6 +202,7 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
             _tiposInsumosCatalogo.value = lista
         }
     }
+
 
     fun cargarInsumosPorTipo(idTipoInsumo: Int) {
         viewModelScope.launch {

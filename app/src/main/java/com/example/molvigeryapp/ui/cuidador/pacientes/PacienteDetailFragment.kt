@@ -4,76 +4,78 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.example.molvigeryapp.MainActivity
-import com.example.molvigeryapp.data.model.Paciente
+import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacienteDetailBinding
 import com.google.android.material.tabs.TabLayoutMediator
 
-class PacienteDetailFragment : Fragment() {
+class DetallePacienteFragment : Fragment() {
 
     private var _binding: FragmentPacienteDetailBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: PacienteViewModel by activityViewModels()
-
-    private val titulosTabs = arrayOf(
-        "Datos Básicos",
-        "Historia Clínica",
-        "elementos",
-        "Cardex",
-        "Recomendaciones",
-        "Bitacora"
-    )
+    // Usamos activityViewModels con la fábrica del repositorio para evitar fallos de inicialización
+    private val viewModel: PacienteViewModel by activityViewModels {
+        PacienteViewModelFactory(PacienteRepository())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentPacienteDetailBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+        _binding = FragmentPacienteDetailBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        (requireActivity() as MainActivity).ocultarBottomNavigation()
-
-        // 1. Obtención directa y segura de los argumentos
-        val paciente = arguments?.let {
-            BundleCompat.getSerializable(it, "paciente_data", Paciente::class.java)
-        }
-
-        // 2. Notificar al ViewModel y forzar la recarga del paciente activo
-        paciente?.let { pac ->
-            viewModel.seleccionarPaciente(pac)
-            pac.idPaciente?.let { id ->
-                viewModel.cargarElementosPaciente(id)
+        // Si se pasa un ID por argumentos al navegar, lo cargamos en el ViewModel
+        arguments?.getInt("ID_PACIENTE", -1)?.let { id ->
+            if (id != -1) {
+                viewModel.cargarPacientePorId(id)
             }
         }
 
-        setupViewPager()
+        setupHeader()
+        setupViewPagerAndTabs()
+        observarPaciente()
     }
 
-    private fun setupViewPager() {
-        val adapter = PacienteDetailAdapter(this)
-        binding.viewPager.adapter = adapter
+    private fun setupHeader() {
+        binding.btnVolver.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
 
-        TabLayoutMediator(
-            binding.tabLayout,
-            binding.viewPager
-        ) { tab, position ->
-            tab.text = titulosTabs[position]
+        binding.btnHistoriaClinica.setOnClickListener {
+            // Acción para abrir la Historia Clínica cuando la integres
+        }
+    }
+
+    private fun observarPaciente() {
+        viewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
+            paciente?.let {
+                val nombreCompleto = "${it.nombre ?: ""} ${it.apellido ?: ""}".trim()
+                binding.tvNombrePacientePerfil.text =
+                    if (nombreCompleto.isNotEmpty()) nombreCompleto else "Paciente sin nombre"
+            }
+        }
+    }
+
+    private fun setupViewPagerAndTabs() {
+        val pagerAdapter = PacientePagerAdapter(this)
+        binding.viewPagerPaciente.adapter = pagerAdapter
+
+        // Nombres de los 3 Tabs
+        TabLayoutMediator(binding.tabLayoutPaciente, binding.viewPagerPaciente) { tab, position ->
+            tab.text = when (position) {
+                0 -> "Aplicación de medicamentos"
+                1 -> "Bitácora"
+                2 -> "Recomendaciones"
+                else -> ""
+            }
         }.attach()
     }
 
