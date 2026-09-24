@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 
 class PacienteViewModel(private val repository: PacienteRepository) : ViewModel() {
 
+
     private val _pacientes = MutableLiveData<List<Paciente>>()
     val pacientes: LiveData<List<Paciente>> get() = _pacientes
 
@@ -45,6 +46,12 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     // --- ELEMENTOS DEL PACIENTE, MEDICAMENTOS E INSUMOS ---
     private val _elementos = MutableLiveData<List<ElementoPaciente>>(emptyList())
     val elementos: LiveData<List<ElementoPaciente>> get() = _elementos
+
+    val elementosPaciente: LiveData<List<ElementoPaciente>> get() = _elementos
+
+    fun cargarElementosDelPaciente(idPaciente: Int) {
+        cargarElementosPaciente(idPaciente)
+    }
 
     private val _medicamentosCatalogo = MutableLiveData<List<Medicamento>?>()
     val medicamentosCatalogo: LiveData<List<Medicamento>?> get() = _medicamentosCatalogo
@@ -83,6 +90,7 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
             }
         }
     }
+
     fun confirmarSeleccionDelDia(idUsuarioLogueado: Int) {
         tienePacientesSeleccionados = true
 
@@ -203,11 +211,51 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         }
     }
 
-
     fun cargarInsumosPorTipo(idTipoInsumo: Int) {
         viewModelScope.launch {
             val lista = repository.getInsumosPorTipo(idTipoInsumo)
             _insumosCatalogo.value = lista
+        }
+    }
+
+    // --- LÓGICA DE APLICACIÓN DE MEDICAMENTO ---
+
+    private val _registroAplicacionState = MutableLiveData<Result<String>>()
+    val registroAplicacionState: LiveData<Result<String>> get() = _registroAplicacionState
+
+    fun registrarAplicacionMedicamento(
+        idPaciente: Int,
+        idMedicamento: Int,
+        idUsuario: Int,
+        dosis: String,
+        via: String,
+        observacion: String
+    ) {
+        viewModelScope.launch {
+            try {
+                val fechaActual = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(java.util.Date())
+
+                val request = com.example.molvigeryapp.data.model.AplicacionRequest(
+                    idPaciente = idPaciente,
+                    idMedicamento = idMedicamento,
+                    idUsuario = idUsuario,
+                    dosisAdministrada = dosis,
+                    viaAdministracion = via,
+                    observacion = observacion,
+                    fechaHora = fechaActual,
+                    estado = true
+                )
+
+                val result = repository.registrarAplicacionMedicamento(request)
+                if (result.isSuccess) {
+                    _registroAplicacionState.value = Result.success("Aplicación registrada con éxito")
+                    cargarElementosPaciente(idPaciente)
+                } else {
+                    _registroAplicacionState.value = Result.failure(result.exceptionOrNull() ?: Exception("Error al registrar"))
+                }
+            } catch (e: Exception) {
+                _registroAplicacionState.value = Result.failure(e)
+            }
         }
     }
 }

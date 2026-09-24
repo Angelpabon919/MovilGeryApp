@@ -1,0 +1,27 @@
+ .idea/deploymentTargetSelector.xml                 |   4 [32m+[m[31m-[m
+ .idea/misc.xml                                     |   7 [32m+[m
+ app/build.gradle.kts                               |   2 [32m+[m
+ .../example/molvigeryapp/data/api/ApiService.kt    |  15 [32m+[m[31m-[m
+ .../molvigeryapp/data/model/AplicacionRequest.kt   |  19 [32m++[m
+ .../data/repository/MedicamentosRepository.kt      |  22 [32m++[m
+ .../data/repository/PacienteRepository.kt          |  55 [32m+++[m[31m--[m
+ .../medicamentos/AplicacionMedicamentosFragment.kt | 133 [32m++++++++++[m
+ .../molvigeryapp/ui/cuidador/medicamentos/bo.java  |   4 [31m-[m
+ .../ui/cuidador/pacientes/HomeAdapter.kt           |  55 [32m+++++[m
+ .../ui/cuidador/pacientes/HomeFragment.kt          | 121 [32m+++++++++[m
+ .../ui/cuidador/pacientes/PacienteAdapter.kt       | 110 [32m++++[m[31m-----[m
+ .../cuidador/pacientes/PacienteDetailFragment.kt   |  86 [32m+++[m[31m----[m
+ .../ui/cuidador/pacientes/PacientePagerAdapter.kt  |  19 [32m++[m
+ .../ui/cuidador/pacientes/PacienteViewModel.kt     |  98 [32m++++++[m[31m--[m
+ .../ui/cuidador/pacientes/PacientesListFragment.kt | 144 [32m+++[m[31m--------[m
+ app/src/main/res/drawable/ic_arrow_down.xml        |   9 [32m+[m
+ app/src/main/res/drawable/ic_arrow_up.xml          |   9 [32m+[m
+ .../drawable/shape_header_blue_bottom_rounded.xml  |  14 [32m++[m
+ app/src/main/res/drawable/shape_rounded_avatar.xml |   5 [32m+[m
+ .../layout/fragment_aplicacion_medicamentos.xml    | 188 [32m++++++++++++++[m
+ app/src/main/res/layout/fragment_home_cuidador.xml | 222 [32m++++++++++++++++[m[31m-[m
+ .../main/res/layout/fragment_paciente_detail.xml   |  84 [32m++++++[m[31m-[m
+ .../main/res/layout/fragment_pacientes_list.xml    | 274 [32m++++++++++[m[31m-----------[m
+ app/src/main/res/layout/item_paciente.xml          |  99 [32m++++[m[31m----[m
+ gradle/libs.versions.toml                          |   3 [32m+[m
+ 26 files changed, 1330 insertions(+), 471 deletions(-)

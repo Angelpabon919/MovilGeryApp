@@ -1,6 +1,8 @@
 package com.example.molvigeryapp.data.repository
 
 import com.example.molvigeryapp.data.api.RetrofitClient
+import com.example.molvigeryapp.data.model.AplicacionRequest
+import com.example.molvigeryapp.data.model.AplicacionResponse
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
@@ -136,44 +138,24 @@ class PacienteRepository {
             emptyList()
         }
     }
-
     suspend fun getElementosPorPaciente(
         idPaciente: Int
     ): List<ElementoPaciente>? =
         withContext(Dispatchers.IO) {
-
             try {
-                val respuesta =
-                    api.getElementosPorPaciente(idPaciente)
-
+                val respuesta = api.getElementosPorPaciente(idPaciente)
                 if (respuesta.isSuccessful) {
-
-                    val listaCompleta =
-                        respuesta.body() ?: emptyList()
-
+                    val listaCompleta = respuesta.body() ?: emptyList()
                     listaCompleta.filter {
                         it.idPaciente == idPaciente
                     }
-
                 } else {
-
-                    android.util.Log.e(
-                        "API_ERROR",
-                        "Error HTTP ${respuesta.code()} al obtener elementos"
-                    )
-
-                    emptyList()
+                    android.util.Log.e("API_ERROR", "Error HTTP ${respuesta.code()} al obtener elementos")
+                    emptyList() // <--- OJO AQUÍ
                 }
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al obtener elementos",
-                    e
-                )
-
-                emptyList()
+                android.util.Log.e("API_ERROR", "Error al obtener elementos", e)
+                emptyList() // <--- OJO AQUÍ
             }
         }
 
@@ -406,4 +388,23 @@ class PacienteRepository {
                 )
             }
         }
-}
+    suspend fun registrarAplicacionMedicamento(
+        request: AplicacionRequest
+    ): Result<AplicacionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val respuesta = api.registrarAplicacion(request)
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    Result.success(respuesta.body()!!)
+                } else {
+                    val errorMsg = respuesta.errorBody()?.string() ?: "Error al registrar aplicación"
+                    android.util.Log.e("API_ERROR", "Error HTTP ${respuesta.code()}: $errorMsg")
+                    Result.failure(Exception(errorMsg))
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Excepción al registrar aplicación", e)
+                Result.failure(e)
+            }
+        }
+} // <--- Esta es la última llave del PacienteRepository
+
