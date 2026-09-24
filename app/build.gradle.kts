@@ -44,6 +44,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("androidx.fragment:fragment-ktx:1.8.9")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

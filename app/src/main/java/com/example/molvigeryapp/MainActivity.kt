@@ -8,6 +8,7 @@ import com.example.molvigeryapp.databinding.ActivityMainBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.bitacora.BitacoraFragment
 import com.example.molvigeryapp.ui.cuidador.bitacora.EventosAdversosFragment
+import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacientesListFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 
@@ -35,14 +36,13 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 5 -> {
-                    mostrarBottomNavigation()
+                    binding.bottomNavigation.visibility = View.GONE
                     supportFragmentManager.beginTransaction()
                         .replace(
                             R.id.fragmentContainer,
-                            PacientesListFragment()
+                            VerificacionLlegadaFragment()
                         )
                         .commit()
-                    configurarNavegacionCuidador()
                 }
             }
         }

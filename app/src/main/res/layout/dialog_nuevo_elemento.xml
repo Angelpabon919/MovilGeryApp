@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/white"
@@ -15,8 +16,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nuevo elemento"
-            android:textColor="#1E293B"
+            android:text="@string/nuevo_elemento"
+            android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -41,7 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="16dp"
-                    android:text="Medicamento"
+                    android:text="@string/medicamento"
                     android:textStyle="bold" />
             </com.google.android.material.card.MaterialCardView>
 
@@ -58,7 +59,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="16dp"
-                    android:text="Insumo"
+                    android:text="@string/insumo"
                     android:textStyle="bold" />
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
@@ -76,27 +77,37 @@
                 android:id="@+id/etIdReferencia"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="ID Medicamento/Insumo"
-                android:inputType="number" />
+                android:hint="@string/hint_id_medicamento_insumo"
+                android:inputType="number"
+                android:importantForAutofill="no"
+                tools:ignore="Autofill" />
 
             <EditText
                 android:id="@+id/etCantidad"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Cantidad"
-                android:inputType="number" />
+                android:hint="@string/hint_cantidad"
+                android:inputType="number"
+                android:importantForAutofill="no"
+                tools:ignore="Autofill" />
 
             <EditText
                 android:id="@+id/etObservaciones"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Observaciones" />
+                android:hint="@string/hint_observaciones"
+                android:inputType="textMultiLine"
+                android:importantForAutofill="no"
+                tools:ignore="Autofill" />
 
             <EditText
                 android:id="@+id/etFechaVencimiento"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Fecha Vencimiento (YYYY-MM-DD)" />
+                android:hint="@string/hint_fecha_vencimiento"
+                android:inputType="date"
+                android:importantForAutofill="no"
+                tools:ignore="Autofill" />
         </LinearLayout>
 
         <LinearLayout
@@ -111,14 +122,14 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cancelar" />
+                android:text="@string/cancelar" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnContinuarDialog"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Continuar" />
+                android:text="@string/continuar" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
