@@ -89,6 +89,7 @@ interface ApiService {
     ): List<CuidadoEnfermeria>
 
 
+
     // =========================================================
     // ASIGNACIÓN DE PACIENTES A CUIDADORES
     // =========================================================
@@ -255,8 +256,7 @@ interface ApiService {
     @GET("tipo_emergencia/")
     suspend fun getTiposEmergencia(): List<TipoEmergencia>
 
-    @POST("historia_clinicas/")
-    suspend fun crearHistoriaClinica(
-        @Body historia : HistoriaClinica
-    ): HistoriaClinica
+    @GET("historia_clinicas/")
+    suspend fun getHistoriasClinicas(): List<HistoriaClinica>
+
 }

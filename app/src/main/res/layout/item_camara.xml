@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="20dp"
+    android:layout_marginTop="12dp"
+    android:layout_marginEnd="20dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Espacio donde irá el video -->
+        <FrameLayout
+            android:id="@+id/contenedorVideo"
+            android:layout_width="match_parent"
+            android:layout_height="190dp"
+            android:background="@color/black">
+
+            <ImageView
+                android:id="@+id/ivCamara"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Vista de la cámara"
+                android:scaleType="centerInside"
+                android:src="@drawable/outline_camera_video_24" />
+
+        </FrameLayout>
+
+        <!-- Información de la cámara -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvNombreCamara"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cámara - Habitación 1"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvEstadoCamara"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="● En línea"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
