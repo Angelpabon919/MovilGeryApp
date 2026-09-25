@@ -3,6 +3,8 @@ package com.example.molvigeryapp.data.api
 import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Actividad
+import com.example.molvigeryapp.data.model.AplicacionRequest
+import com.example.molvigeryapp.data.model.AplicacionResponse
 import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.EventoAdverso
@@ -50,16 +52,11 @@ interface ApiService {
     // =========================================================
     // APLICACIÓN DE MEDICAMENTOS
     // =========================================================
-
-    @GET("aplicacion_medicamento/")
-    suspend fun getAplicacionesPorPaciente(
-        @Query("id_Paciente") idPaciente: Int
-    ): List<AplicacionMedicamento>
-
     @POST("aplicacion_medicamento/")
-    suspend fun guardarAplicacionMedicamento(
-        @Body aplicacion: AplicacionMedicamento
-    ): AplicacionMedicamento
+        suspend fun registrarAplicacion(
+            @Body request: AplicacionRequest
+        ): Response<AplicacionResponse>
+
 
 
     // =========================================================
