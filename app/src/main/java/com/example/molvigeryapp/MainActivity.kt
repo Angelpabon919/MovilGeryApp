@@ -8,6 +8,7 @@ import com.example.molvigeryapp.databinding.ActivityMainBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.bitacora.BitacoraFragment
 import com.example.molvigeryapp.ui.cuidador.bitacora.EventosAdversosFragment
+import com.example.molvigeryapp.ui.cuidador.camara.CamarasFragment
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacientesListFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
@@ -46,6 +47,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        if ( idRol == 5){
+            configurarNavegacionCuidador()
+        }
     }
 
     private fun configurarNavegacionCuidador() {
@@ -73,6 +77,16 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
 
+                R.id.nav_cuidador_camaras -> {
+                    mostrarBottomNavigation()
+                    supportFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.fragmentContainer,
+                            CamarasFragment()
+                        )
+                        .commit()
+                    true
+                }
                 else -> false
             }
         }

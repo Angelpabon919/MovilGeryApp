@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacienteDetailBinding
 import com.google.android.material.tabs.TabLayoutMediator
@@ -33,10 +34,9 @@ class DetallePacienteFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Si se pasa un ID por argumentos al navegar, lo cargamos en el ViewModel
-        arguments?.getInt("ID_PACIENTE", -1)?.let { id ->
-            if (id != -1) {
-                viewModel.cargarPacientePorId(id)
-            }
+        val idPaciente = arguments?.getInt("ID_PACIENTE", -1) ?: -1
+        if (idPaciente != -1) {
+            viewModel.cargarPacientePorId(idPaciente)
         }
 
         setupHeader()
@@ -50,7 +50,14 @@ class DetallePacienteFragment : Fragment() {
         }
 
         binding.btnHistoriaClinica.setOnClickListener {
-            // Acción para abrir la Historia Clínica cuando la integres
+
+            parentFragmentManager.beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    HistoriaClinicaFragment()
+                )
+                .addToBackStack(null)
+                .commit()
         }
     }
 

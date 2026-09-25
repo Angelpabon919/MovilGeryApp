@@ -11,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Bitacora
+import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentBitacoraBinding
@@ -57,17 +58,52 @@ class BitacoraFragment : Fragment() {
         observarPaciente()
         configurarBotones()
         configurarSignosVitales()
+        configurarCuidadosDiarios()
     }
 
-    private fun configurarSignosVitales(){
-        binding.switchSignosVitales.setOnCheckedChangeListener{_, activado ->
-            if (activado){
+    // ==========================================
+    // SWITCH SIGNOS VITALES
+    // ==========================================
+
+    private fun configurarSignosVitales() {
+
+        binding.switchSignosVitales.setOnCheckedChangeListener { _, activado ->
+
+            if (activado) {
+
                 binding.layoutSignosVitales.visibility = View.VISIBLE
+
             } else {
+
                 binding.layoutSignosVitales.visibility = View.GONE
+
             }
         }
     }
+
+    // ==========================================
+    // SWITCH CUIDADOS DIARIOS
+    // ==========================================
+
+    private fun configurarCuidadosDiarios() {
+
+        binding.switchCuidadosDiarios.setOnCheckedChangeListener { _, activado ->
+
+            if (activado) {
+
+                binding.layoutCuidadosDiarios.visibility = View.VISIBLE
+
+            } else {
+
+                binding.layoutCuidadosDiarios.visibility = View.GONE
+
+            }
+        }
+    }
+
+    // ==========================================
+    // OBSERVAR PACIENTE
+    // ==========================================
 
     private fun observarPaciente() {
 
@@ -92,6 +128,10 @@ class BitacoraFragment : Fragment() {
         }
     }
 
+    // ==========================================
+    // BOTONES
+    // ==========================================
+
     private fun configurarBotones() {
 
         binding.btnGuardar.setOnClickListener {
@@ -100,16 +140,28 @@ class BitacoraFragment : Fragment() {
 
         binding.btnEventoAdverso.setOnClickListener {
             abrirEventoAdverso()
-
         }
     }
 
-    private fun abrirEventoAdverso(){
+    // ==========================================
+    // ABRIR EVENTO ADVERSO
+    // ==========================================
+
+    private fun abrirEventoAdverso() {
+
         val idBitacoraActual = pacienteViewModel.idBitacora.value
-        if (idBitacoraActual == null){
-            Toast.makeText(requireContext(), "primero debes guardar la bitacora", Toast.LENGTH_SHORT).show()
+
+        if (idBitacoraActual == null) {
+
+            Toast.makeText(
+                requireContext(),
+                "Primero debes guardar la bitácora",
+                Toast.LENGTH_SHORT
+            ).show()
+
             return
         }
+
         requireActivity()
             .supportFragmentManager
             .beginTransaction()
@@ -120,6 +172,10 @@ class BitacoraFragment : Fragment() {
             .addToBackStack(null)
             .commit()
     }
+
+    // ==========================================
+    // OBTENER ID USUARIO
+    // ==========================================
 
     private fun obtenerIdUsuario(): Int {
 
@@ -134,6 +190,10 @@ class BitacoraFragment : Fragment() {
         )
     }
 
+    // ==========================================
+    // FECHA Y HORA
+    // ==========================================
+
     private fun obtenerFechaHoraActual(): String {
 
         val formato = SimpleDateFormat(
@@ -144,9 +204,14 @@ class BitacoraFragment : Fragment() {
         return formato.format(Date())
     }
 
+    // ==========================================
+    // GUARDAR BITÁCORA
+    // ==========================================
+
     private fun guardarBitacora() {
 
         // 1. Obtener usuario de la sesión
+
         val idUsuario = obtenerIdUsuario()
 
         if (idUsuario == -1) {
@@ -161,6 +226,7 @@ class BitacoraFragment : Fragment() {
         }
 
         // 2. Obtener paciente seleccionado
+
         val pacienteId = idPaciente
 
         if (pacienteId == null) {
@@ -175,14 +241,15 @@ class BitacoraFragment : Fragment() {
         }
 
         // 3. Obtener información del formulario
+
         val tipoRegistro =
             binding.etTipoRegistro.text.toString().trim()
 
         val descripcion =
             binding.etDescripcion.text.toString().trim()
 
-
         // 4. Validar tipo de registro
+
         if (tipoRegistro.isEmpty()) {
 
             binding.etTipoRegistro.error =
@@ -192,6 +259,7 @@ class BitacoraFragment : Fragment() {
         }
 
         // 5. Validar descripción
+
         if (descripcion.isEmpty()) {
 
             binding.etDescripcion.error =
@@ -201,9 +269,11 @@ class BitacoraFragment : Fragment() {
         }
 
         // 6. Obtener fecha y hora
+
         val fechaHora = obtenerFechaHoraActual()
 
-        // 7. Crear objeto Bitacora
+        // 7. Crear objeto Bitácora
+
         val bitacora = Bitacora(
 
             estado = true,
@@ -219,7 +289,8 @@ class BitacoraFragment : Fragment() {
             idPaciente = pacienteId
         )
 
-        // 8. Enviar a la API
+        // 8. Enviar Bitácora a la API
+
         lifecycleScope.launch {
 
             try {
@@ -227,46 +298,213 @@ class BitacoraFragment : Fragment() {
                 val respuesta =
                     RetrofitClient.apiService.crearBitacora(bitacora)
 
-                // 9. Guardamos el ID que devuelve la API
+                // 9. Guardamos el ID de la bitácora
+
                 idBitacora = respuesta.idBitacora
-                idBitacora?.let {
-                    pacienteViewModel.guardarIdBitacora(it)
+
+                idBitacora?.let { idBitacoraActual ->
+
+                    pacienteViewModel.guardarIdBitacora(
+                        idBitacoraActual
+                    )
+
+
+                    // ==========================================
+                    // SIGNOS VITALES
+                    // ==========================================
+
                     if (binding.switchSignosVitales.isChecked) {
 
-                        val idBitacoraActual = idBitacora
-
-                        if (idBitacoraActual == null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "No se obtuvo el ID de la bitácora",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@launch
-                        }
-
                         val signosVitales = SignosVitales(
+
                             idBitacora = idBitacoraActual,
-                            temperatura = binding.etTemperatura.text.toString().trim(),
-                            presionSistolica = binding.etPresionSistolica.text.toString().trim(),
-                            presionDiastolica = binding.etPresionDiastolica.text.toString().trim(),
-                            frecuenciaCardiaca = binding.etFrecuenciaCardiaca.text.toString().trim(),
-                            frecuenciaRespiratoria = binding.etFrecuenciaRespiratoria.text.toString()
-                                .trim(),
-                            saturacionOxigeno = binding.etSaturacion.text.toString().trim(),
-                            peso = binding.etPeso.text.toString().trim(),
+
+                            temperatura =
+                                binding.etTemperatura.text
+                                    .toString()
+                                    .trim(),
+
+                            presionSistolica =
+                                binding.etPresionSistolica.text
+                                    .toString()
+                                    .trim(),
+
+                            presionDiastolica =
+                                binding.etPresionDiastolica.text
+                                    .toString()
+                                    .trim(),
+
+                            frecuenciaCardiaca =
+                                binding.etFrecuenciaCardiaca.text
+                                    .toString()
+                                    .trim(),
+
+                            frecuenciaRespiratoria =
+                                binding.etFrecuenciaRespiratoria.text
+                                    .toString()
+                                    .trim(),
+
+                            saturacionOxigeno =
+                                binding.etSaturacion.text
+                                    .toString()
+                                    .trim(),
+
+                            peso =
+                                binding.etPeso.text
+                                    .toString()
+                                    .trim(),
+
                             fechaHora = fechaHora,
-                            observaciones = binding.etObservacionesVitales.text.toString().trim()
+
+                            observaciones =
+                                binding.etObservacionesVitales.text
+                                    .toString()
+                                    .trim()
                         )
 
                         val respuestaSignos =
-                            RetrofitClient.apiService.crearSignosVitales(signosVitales)
+                            RetrofitClient.apiService
+                                .crearSignosVitales(signosVitales)
 
                         android.util.Log.d(
                             "SIGNOS_VITALES",
                             "Signos vitales creados: ${respuestaSignos.idSignosVitales}"
                         )
                     }
+
+
+                    // ==========================================
+                    // CUIDADOS DE ENFERMERÍA
+                    // ==========================================
+
+                    if (binding.switchCuidadosDiarios.isChecked) {
+
+                        // Baño del paciente
+
+                        val banoPaciente = when {
+
+                            binding.rbBanoCama.isChecked ->
+                                "En cama"
+
+                            binding.rbBanoSilla.isChecked ->
+                                "En silla"
+
+                            binding.rbBanoDucha.isChecked ->
+                                "En ducha"
+
+                            else ->
+                                ""
+                        }
+
+
+                        // Peso y talla
+
+                        val pesoDiario =
+                            binding.etPesoDiario.text
+                                .toString()
+                                .trim()
+
+                        val talla =
+                            binding.etTalla.text
+                                .toString()
+                                .trim()
+
+                        val pesoTalla =
+                            "$pesoDiario kg - $talla cm"
+
+
+                        // Control de glucemia
+
+                        val glucemia =
+                            binding.etGlicemia.text
+                                .toString()
+                                .trim()
+
+
+                        // Curaciones
+
+                        val curaciones =
+                            if (binding.switchCuraciones.isChecked) {
+                                "Sí"
+                            } else {
+                                "No"
+                            }
+
+
+                        // Líquidos
+
+                        val liquidosAdministrados =
+                            binding.etLiquidosAdministrados.text
+                                .toString()
+                                .trim()
+
+                        val liquidosEliminados =
+                            binding.etLiquidosEliminados.text
+                                .toString()
+                                .trim()
+
+                        val liquidos =
+                            "$liquidosAdministrados ml administrados - " +
+                                    "$liquidosEliminados ml eliminados"
+
+
+                        // Control de deposición
+
+                        val controlDeposicion = when {
+
+                            binding.rbDeposicionManana.isChecked ->
+                                "Mañana"
+
+                            binding.rbDeposicionTarde.isChecked ->
+                                "Tarde"
+
+                            binding.rbDeposicionNoche.isChecked ->
+                                "Noche"
+
+                            else ->
+                                ""
+                        }
+
+
+                        // Crear objeto de cuidados
+
+                        val cuidados = CuidadoEnfermeria(
+
+                            banoPaciente = banoPaciente,
+
+                            pesoTalla = pesoTalla,
+
+                            controlGlucemia = glucemia,
+
+                            curaciones = curaciones,
+
+                            liquidosAdministradosEliminados =
+                                liquidos,
+
+                            controlDeposicion =
+                                controlDeposicion,
+
+                            idPaciente = pacienteId
+                        )
+
+
+                        // Enviar cuidados a la API
+
+                        val respuestaCuidados =
+                            RetrofitClient.apiService
+                                .guardarCuidadoEnfermeria(cuidados)
+
+                        android.util.Log.d(
+                            "CUIDADOS_ENFERMERIA",
+                            "Cuidados creados: ${respuestaCuidados.idCuidado}"
+                        )
+                    }
                 }
+
+
+                // ==========================================
+                // LOGS
+                // ==========================================
 
                 android.util.Log.d(
                     "BITACORA",
@@ -288,11 +526,17 @@ class BitacoraFragment : Fragment() {
                     "ID Paciente: $pacienteId"
                 )
 
+
+                // ==========================================
+                // MENSAJE
+                // ==========================================
+
                 Toast.makeText(
                     requireContext(),
                     "Bitácora creada correctamente\nID: $idBitacora",
                     Toast.LENGTH_LONG
                 ).show()
+
 
                 limpiarFormulario()
 
@@ -313,13 +557,20 @@ class BitacoraFragment : Fragment() {
         }
     }
 
+    // ==========================================
+    // LIMPIAR FORMULARIO
+    // ==========================================
+
     private fun limpiarFormulario() {
 
-        binding.etTipoRegistro.text.clear()
-
-        binding.etDescripcion.text.clear()
+        binding.etTipoRegistro.setText("")
+        binding.etDescripcion.setText("")
 
     }
+
+    // ==========================================
+    // DESTRUIR BINDING
+    // ==========================================
 
     override fun onDestroyView() {
 

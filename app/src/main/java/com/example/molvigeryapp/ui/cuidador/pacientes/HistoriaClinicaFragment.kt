@@ -9,12 +9,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.api.RetrofitClient
-import com.example.molvigeryapp.data.model.HistoriaClinica
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentHistoriaClinicaBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class HistoriaClinicaFragment : Fragment() {
@@ -22,6 +20,7 @@ class HistoriaClinicaFragment : Fragment() {
     private var _binding: FragmentHistoriaClinicaBinding? = null
     private val binding get() = _binding!!
 
+    // Usamos el mismo ViewModel que guarda el paciente seleccionado
     private val pacienteViewModel: PacienteViewModel by activityViewModels {
         PacienteViewModelFactory(PacienteRepository())
     }
@@ -49,8 +48,17 @@ class HistoriaClinicaFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        configurarBotonVolver()
         observarPaciente()
-        configurarBotones()
+    }
+
+    private fun configurarBotonVolver() {
+
+        binding.btnVolver.setOnClickListener {
+            requireActivity()
+                .onBackPressedDispatcher
+                .onBackPressed()
+        }
     }
 
     private fun observarPaciente() {
@@ -63,46 +71,26 @@ class HistoriaClinicaFragment : Fragment() {
 
                 idPaciente = it.idPaciente
 
-                android.util.Log.d(
-                    "HISTORIA_CLINICA",
-                    "Paciente: ${it.nombre} ${it.apellido}"
-                )
+                val nombreCompleto =
+                    "${it.nombre ?: ""} ${it.apellido ?: ""}".trim()
 
-                android.util.Log.d(
-                    "HISTORIA_CLINICA",
-                    "ID Paciente: $idPaciente"
-                )
+                binding.tvNombrePaciente.text =
+                    if (nombreCompleto.isNotEmpty()) {
+                        nombreCompleto
+                    } else {
+                        "Paciente sin nombre"
+                    }
+
+                cargarHistoriaClinica()
             }
         }
     }
 
-    private fun configurarBotones() {
-
-        binding.btnGuardar.setOnClickListener {
-            guardarHistoriaClinica()
-        }
-
-        binding.btnCancelar.setOnClickListener {
-            limpiarFormulario()
-        }
-    }
-
-    private fun obtenerFechaActual(): String {
-
-        val formato = SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ssXXX",
-            Locale.getDefault()
-        )
-
-        return formato.format(Date())
-    }
-
-    private fun guardarHistoriaClinica() {
+    private fun cargarHistoriaClinica() {
 
         val pacienteId = idPaciente
 
         if (pacienteId == null) {
-
             Toast.makeText(
                 requireContext(),
                 "No se encontró el paciente seleccionado",
@@ -112,114 +100,106 @@ class HistoriaClinicaFragment : Fragment() {
             return
         }
 
-        val antecedentes =
-            binding.etAntecedentes.text.toString().trim()
-
-        val alergias =
-            binding.etAlergias.text.toString().trim()
-
-        val observaciones =
-            binding.etObservaciones.text.toString().trim()
-
-        if (antecedentes.isEmpty()) {
-
-            binding.etAntecedentes.error =
-                "Ingrese los antecedentes"
-
-            return
-        }
-
-        if (alergias.isEmpty()) {
-
-            binding.etAlergias.error =
-                "Ingrese las alergias"
-
-            return
-        }
-
-        if (observaciones.isEmpty()) {
-
-            binding.etObservaciones.error =
-                "Ingrese las observaciones"
-
-            return
-        }
-
-        val historia = HistoriaClinica(
-
-            fechaApertura = obtenerFechaActual(),
-
-            antecedentes = antecedentes,
-
-            alergias = alergias,
-
-            observaciones = observaciones,
-
-            estado = true,
-
-            idPaciente = pacienteId
-        )
-
         lifecycleScope.launch {
 
             try {
 
-                val respuesta =
-                    RetrofitClient.apiService.crearHistoriaClinica(
-                        historia
-                    )
+                val historias =
+                    RetrofitClient.apiService.getHistoriasClinicas()
 
-                android.util.Log.d(
-                    "HISTORIA_CLINICA",
-                    "Historia creada correctamente"
-                )
+                // Buscamos la historia que pertenece al paciente seleccionado
+                val historia = historias.find {
+                    it.idPaciente == pacienteId
+                }
 
-                android.util.Log.d(
-                    "HISTORIA_CLINICA",
-                    "ID Historia: ${respuesta.idHistoriaClinica}"
-                )
+                if (historia != null) {
 
-                android.util.Log.d(
-                    "HISTORIA_CLINICA",
-                    "ID Paciente: $pacienteId"
-                )
+                    mostrarHistoriaClinica(historia)
 
-                Toast.makeText(
-                    requireContext(),
-                    "Historia clínica guardada correctamente",
-                    Toast.LENGTH_LONG
-                ).show()
+                } else {
 
-                limpiarFormulario()
+                    Toast.makeText(
+                        requireContext(),
+                        "Este paciente no tiene historia clínica registrada",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
 
             } catch (e: Exception) {
 
                 android.util.Log.e(
                     "HISTORIA_CLINICA",
-                    "Error al crear historia clínica",
+                    "Error al cargar la historia clínica",
                     e
                 )
 
                 Toast.makeText(
                     requireContext(),
-                    "Error al guardar la historia clínica",
+                    "Error al cargar la historia clínica",
                     Toast.LENGTH_LONG
                 ).show()
             }
         }
     }
 
-    private fun limpiarFormulario() {
+    private fun mostrarHistoriaClinica(
+        historia: com.example.molvigeryapp.data.model.HistoriaClinica
+    ) {
 
-        binding.etAntecedentes.text.clear()
-        binding.etAlergias.text.clear()
-        binding.etObservaciones.text.clear()
+        // Número de historia clínica
+        binding.tvNumeroHistoria.text =
+            "Historia clínica #${historia.idHistoriaClinica ?: "-"}"
+
+        // Fecha de apertura
+        binding.tvFechaApertura.text =
+            formatearFecha(historia.fechaApertura)
+
+        // Antecedentes
+        binding.tvAntecedentes.text =
+            historia.antecedentes.ifBlank { "Ninguna" }
+
+        // Alergias
+        binding.tvAlergias.text =
+            historia.alergias.ifBlank { "Ninguna" }
+
+        // Observaciones
+        binding.tvObservaciones.text =
+            historia.observaciones.ifBlank { "Ninguna" }
+    }
+
+    private fun formatearFecha(
+        fecha: String
+    ): String {
+
+        return try {
+
+            val formatoEntrada = SimpleDateFormat(
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                Locale.US
+            )
+
+            val formatoSalida = SimpleDateFormat(
+                "d 'de' MMMM 'de' yyyy",
+                Locale("es", "ES")
+            )
+
+            val fechaConvertida =
+                formatoEntrada.parse(fecha)
+
+            if (fechaConvertida != null) {
+                formatoSalida.format(fechaConvertida)
+            } else {
+                fecha
+            }
+
+        } catch (e: Exception) {
+
+            fecha
+        }
     }
 
     override fun onDestroyView() {
-
         super.onDestroyView()
-
         _binding = null
     }
 }
