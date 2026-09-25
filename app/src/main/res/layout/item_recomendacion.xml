@@ -51,6 +51,8 @@
                 android:id="@+id/cbHidratarM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="M" />
 
             <CheckBox
@@ -58,6 +60,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="T" />
 
             <CheckBox
@@ -65,6 +69,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="N" />
         </LinearLayout>
 
@@ -85,6 +91,8 @@
                 android:id="@+id/cbAlimM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="M" />
 
             <CheckBox
@@ -92,6 +100,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="T" />
 
             <CheckBox
@@ -99,6 +109,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="N" />
         </LinearLayout>
 
@@ -112,6 +124,10 @@
                 android:id="@+id/etViaAlimentacion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:enabled="false"
+                android:focusable="false"
+                android:textColor="@color/black"
                 android:textSize="14sp"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -126,6 +142,10 @@
                 android:id="@+id/etPrevencionCaidas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:enabled="false"
+                android:focusable="false"
+                android:textColor="@color/black"
                 android:textSize="14sp"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -147,6 +167,8 @@
                 android:id="@+id/cbTerFisM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="M" />
 
             <CheckBox
@@ -154,6 +176,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="T" />
 
             <CheckBox
@@ -161,6 +185,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="Según necesidad" />
         </LinearLayout>
 
@@ -182,6 +208,8 @@
                 android:id="@+id/cbTerRespM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="M" />
 
             <CheckBox
@@ -189,6 +217,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="T" />
 
             <CheckBox
@@ -196,6 +226,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="Según necesidad" />
         </LinearLayout>
 
@@ -210,6 +242,10 @@
                 android:id="@+id/etActividadOcupacional"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:enabled="false"
+                android:focusable="false"
+                android:textColor="@color/black"
                 android:textSize="14sp"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -232,6 +268,8 @@
                 android:id="@+id/rbUnasQuincenal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="Quincenal" />
 
             <RadioButton
@@ -239,6 +277,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="Semanal" />
         </RadioGroup>
 
@@ -261,6 +301,8 @@
                 android:id="@+id/rbCabelloQuincenal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="Quincenal" />
 
             <RadioButton
@@ -268,6 +310,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="Mensual" />
         </RadioGroup>
 
@@ -289,6 +333,8 @@
                 android:id="@+id/cbOralM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="M" />
 
             <CheckBox
@@ -296,6 +342,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="T" />
 
             <CheckBox
@@ -303,16 +351,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:clickable="false"
+                android:focusable="false"
                 android:text="N" />
         </LinearLayout>
-
-        <!-- BOTÓN GUARDAR -->
-        <Button
-            android:id="@+id/btnGuardarRecomendacion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Guardar Recomendaciones"
-            android:backgroundTint="@color/color_primary" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

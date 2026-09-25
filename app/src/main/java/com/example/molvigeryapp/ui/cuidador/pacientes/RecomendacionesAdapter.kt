@@ -3,19 +3,16 @@ package com.example.molvigeryapp.ui.cuidador.pacientes
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.RadioGroup
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Recomendacion
 
 class RecomendacionesAdapter(
-    private var lista: List<Recomendacion> = emptyList(),
-    private val onGuardarClick: ((Recomendacion) -> Unit)? = null
+    private var lista: List<Recomendacion> = emptyList()
 ) : RecyclerView.Adapter<RecomendacionesAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -51,8 +48,6 @@ class RecomendacionesAdapter(
         val cbOralM: CheckBox = view.findViewById(R.id.cbOralM)
         val cbOralT: CheckBox = view.findViewById(R.id.cbOralT)
         val cbOralN: CheckBox = view.findViewById(R.id.cbOralN)
-
-        val btnGuardar: Button = view.findViewById(R.id.btnGuardarRecomendacion)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -110,77 +105,6 @@ class RecomendacionesAdapter(
         holder.cbOralM.isChecked = ho.contains("M")
         holder.cbOralT.isChecked = ho.contains("T")
         holder.cbOralN.isChecked = ho.contains("N")
-
-        holder.btnGuardar.setOnClickListener {
-            // Helpers para construir los strings a guardar
-            fun buildMTN(m: Boolean, t: Boolean, n: Boolean): String {
-                val list = mutableListOf<String>()
-                if (m) list.add("M")
-                if (t) list.add("T")
-                if (n) list.add("N")
-                return list.joinToString(", ")
-            }
-
-            fun buildSegun(m: Boolean, t: Boolean, segun: Boolean): String {
-                val list = mutableListOf<String>()
-                if (m) list.add("M")
-                if (t) list.add("T")
-                if (segun) list.add("SEGÚN NECESIDAD")
-                return list.joinToString(", ")
-            }
-
-            // Crear el objeto con lo que seleccionó el usuario
-            val recomendacionEditada = item.copy(
-                hidratarPiel = buildMTN(holder.cbHidratarM.isChecked, holder.cbHidratarT.isChecked, holder.cbHidratarN.isChecked),
-                asistirAlimentacion = buildMTN(holder.cbAlimM.isChecked, holder.cbAlimT.isChecked, holder.cbAlimN.isChecked),
-                viaAlimentacion = holder.etViaAlimentacion.text.toString(),
-                prevencionCaidas = holder.etPrevencionCaidas.text.toString(),
-                terapiasFisicas = buildSegun(holder.cbTerFisM.isChecked, holder.cbTerFisT.isChecked, holder.cbTerFisSegun.isChecked),
-                terapiaRespiratoria = buildSegun(holder.cbTerRespM.isChecked, holder.cbTerRespT.isChecked, holder.cbTerRespSegun.isChecked),
-                actividadOcupacional = holder.etActividadOcupacional.text.toString(),
-                corteUnas = if (holder.rbUnasQuincenal.isChecked) "Quincenal" else if (holder.rbUnasSemanal.isChecked) "Semanal" else null,
-                corteCabello = if (holder.rbCabelloQuincenal.isChecked) "Quincenal" else if (holder.rbCabelloMensual.isChecked) "Mensual" else null,
-                higieneOral = buildMTN(holder.cbOralM.isChecked, holder.cbOralT.isChecked, holder.cbOralN.isChecked)
-            )
-
-            // 1. Notificar callback para guardar en BD/Backend
-            onGuardarClick?.invoke(recomendacionEditada)
-
-            // 2. Limpiar todos los elementos visuales inmediatamente
-            limpiarCampos(holder)
-
-            Toast.makeText(holder.itemView.context, "Recomendación guardada exitosamente", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun limpiarCampos(holder: ViewHolder) {
-        holder.cbHidratarM.isChecked = false
-        holder.cbHidratarT.isChecked = false
-        holder.cbHidratarN.isChecked = false
-
-        holder.cbAlimM.isChecked = false
-        holder.cbAlimT.isChecked = false
-        holder.cbAlimN.isChecked = false
-        holder.etViaAlimentacion.setText("")
-
-        holder.etPrevencionCaidas.setText("")
-
-        holder.cbTerFisM.isChecked = false
-        holder.cbTerFisT.isChecked = false
-        holder.cbTerFisSegun.isChecked = false
-
-        holder.cbTerRespM.isChecked = false
-        holder.cbTerRespT.isChecked = false
-        holder.cbTerRespSegun.isChecked = false
-
-        holder.etActividadOcupacional.setText("")
-
-        holder.rgCorteUnas.clearCheck()
-        holder.rgCorteCabello.clearCheck()
-
-        holder.cbOralM.isChecked = false
-        holder.cbOralT.isChecked = false
-        holder.cbOralN.isChecked = false
     }
 
     override fun getItemCount(): Int = lista.size

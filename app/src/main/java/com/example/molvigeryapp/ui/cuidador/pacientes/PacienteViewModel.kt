@@ -149,6 +149,7 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     fun cargarRecomendaciones(idPaciente: Int) {
         viewModelScope.launch {
+            _recomendaciones.value=emptyList()
             val lista = repository.getRecomendaciones(idPaciente)
             _recomendaciones.value = lista ?: emptyList()
         }

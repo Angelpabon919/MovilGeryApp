@@ -35,7 +35,8 @@ class PacienteRepository {
     ): List<Recomendacion>? =
         withContext(Dispatchers.IO) {
             try {
-                api.getRecomendacionesPorPaciente(idPaciente)
+                val lista = api.getRecomendacionesPorPaciente(idPaciente)
+                lista?.filter { it.idPaciente==idPaciente }
             } catch (e: Exception) {
                 android.util.Log.e(
                     "API_ERROR",

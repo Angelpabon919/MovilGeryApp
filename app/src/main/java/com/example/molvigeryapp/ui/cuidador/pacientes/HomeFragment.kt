@@ -35,7 +35,21 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         setupDespliegueMedicamentos()
         setupRecyclerViewPacientes()
         setupBuscador()
+        setupBotonEditar()
         observarDatos()
+    }
+
+    private fun setupBotonEditar() {
+        binding.btnEditPacientes.setOnClickListener {
+            // Regresa a la pantalla previa en la pila o reemplaza al fragmento de selección general
+            if (parentFragmentManager.backStackEntryCount > 0) {
+                parentFragmentManager.popBackStack()
+            } else {
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, PacientesListFragment())
+                    .commit()
+            }
+        }
     }
 
     private fun setupDespliegueMedicamentos() {
