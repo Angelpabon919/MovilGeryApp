@@ -51,7 +51,6 @@ class MainActivity : AppCompatActivity() {
             configurarNavegacionCuidador()
         }
     }
-
     private fun configurarNavegacionCuidador() {
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
