@@ -33,7 +33,7 @@
                 android:layout_height="wrap_content"
                 android:text="Bitácora diaria"
                 android:textColor="@color/black"
-                android:textSize="30sp"
+                android:textSize="25sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -70,7 +70,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="18dp"
-                        android:text="📝 Información del registro"
+                        android:text="Información del registro"
                         android:textColor="@color/black"
                         android:textSize="19sp"
                         android:textStyle="bold" />
@@ -144,7 +144,7 @@
                         android:id="@+id/switchSignosVitales"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="❤️ Registrar signos vitales"
+                        android:text="Registrar signos vitales"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -393,7 +393,7 @@
                         android:id="@+id/switchCuidadosDiarios"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="🧼 Registrar cuidados diarios"
+                        android:text="Registrar cuidados diarios"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -525,7 +525,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="🩹 Se realizaron curaciones"
+                            android:text="Se realizaron curaciones"
                             android:textColor="@color/black"
                             android:textSize="16sp" />
 
@@ -643,7 +643,7 @@
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/bg_button_primary"
-                android:text="🚨 Registrar evento adverso"
+                android:text="Registrar evento adverso"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="16sp"

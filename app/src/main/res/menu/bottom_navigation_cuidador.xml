@@ -14,13 +14,13 @@
         android:title="Actividades" />
 
     <item
-        android:id="@+id/nav_cuidador_perfil"
-        android:icon="@drawable/outline_inventory_2_24"
-        android:title="Inv-Medic" />
+        android:id="@+id/nav_cuidador_camaras"
+        android:icon="@drawable/outline_camera_video_24"
+        android:title="Cámaras" />
 
     <item
-    android:id="@+id/nav_cuidador_camaras"
-    android:icon="@drawable/outline_camera_video_24"
-    android:title="Cámaras" />
+        android:id="@+id/nav_cuidador_perfil"
+        android:icon="@drawable/ic_avatar_placeholder"
+        android:title="Perfil" />
 
 </menu>

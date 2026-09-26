@@ -259,4 +259,5 @@ interface ApiService {
     @GET("historia_clinicas/")
     suspend fun getHistoriasClinicas(): List<HistoriaClinica>
 
+
 }
