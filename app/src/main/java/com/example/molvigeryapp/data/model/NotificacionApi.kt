@@ -28,5 +28,5 @@ data class NotificacionApi(
     val idPaciente: Int? = null,
 
     @SerializedName("id_usuario")
-    val idUsuario: Int
+    val idUsuario: Int? = null
 )

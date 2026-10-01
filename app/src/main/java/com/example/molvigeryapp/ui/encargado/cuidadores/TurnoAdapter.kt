@@ -7,6 +7,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.TurnoUI
 import com.example.molvigeryapp.databinding.ItemTurnoEncargadoBinding
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class TurnoAdapter(
     private var listaTurnos: List<TurnoUI>,
@@ -14,12 +17,70 @@ class TurnoAdapter(
     private val onEliminar: (TurnoUI) -> Unit
 ) : RecyclerView.Adapter<TurnoAdapter.TurnoViewHolder>() {
 
-
     /*
      * false = Turnos asignados
-     *  true  = Turnos pasados / historial
+     * true  = Turnos pasados / historial
      */
     private var esHistorial = false
+
+    private fun tiempoDesdeFinalizacion(
+        fechaFin: String
+    ): String {
+
+        return try {
+
+            val formato = SimpleDateFormat(
+                "dd/MM/yyyy",
+                Locale.getDefault()
+            )
+
+            val fechaFinalizacion =
+                formato.parse(fechaFin)
+                    ?: return "Finalización no disponible"
+
+            val calendarioFinal =
+                Calendar.getInstance().apply {
+                    time = fechaFinalizacion
+
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+            val calendarioAhora =
+                Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+            val diferencia =
+                calendarioAhora.timeInMillis -
+                        calendarioFinal.timeInMillis
+
+            val dias =
+                diferencia /
+                        (1000L * 60L * 60L * 24L)
+
+            when {
+
+                dias <= 0L ->
+                    "Finalizó hoy"
+
+                dias == 1L ->
+                    "Finalizó hace 1 día"
+
+                else ->
+                    "Finalizó hace $dias días"
+            }
+
+        } catch (e: Exception) {
+
+            "Finalización no disponible"
+        }
+    }
 
     inner class TurnoViewHolder(
         private val binding: ItemTurnoEncargadoBinding
@@ -27,16 +88,12 @@ class TurnoAdapter(
 
         fun bind(turno: TurnoUI) {
 
-            // -------------------------------------------------
             // TIPO DE TURNO
-            // -------------------------------------------------
 
             binding.txtTipoTurno.text =
-                "${turno.tipo}"
+                turno.tipo
 
-            // -------------------------------------------------
             // ESTADO
-            // -------------------------------------------------
 
             binding.txtEstadoTurno.text =
                 if (esHistorial) {
@@ -45,55 +102,48 @@ class TurnoAdapter(
                     turno.estado
                 }
 
-            // -------------------------------------------------
             // FECHA
-            // -------------------------------------------------
 
             binding.txtFechaTurno.text =
-                if (
-                    turno.fechaInicio ==
-                    turno.fechaFin
-                ) {
+                if (esHistorial) {
 
-                    turno.fechaInicio
+                    tiempoDesdeFinalizacion(
+                        turno.fechaFin
+                    )
 
                 } else {
 
-                    "${turno.fechaInicio} - ${turno.fechaFin}"
+                    if (turno.fechaInicio == turno.fechaFin) {
+                        turno.fechaInicio
+                    } else {
+                        "${turno.fechaInicio} - ${turno.fechaFin}"
+                    }
                 }
 
-            // -------------------------------------------------
             // HORARIO
-            // -------------------------------------------------
 
             binding.txtHorarioTurno.text =
                 "${turno.horaInicio} - ${turno.horaFin}"
 
-            // -------------------------------------------------
             // DURACIÓN
-            // -------------------------------------------------
 
             binding.txtDuracionTurno.text =
                 "Duración: ${turno.duracion}"
 
-            // -------------------------------------------------
             // ICONO DE ESTADO
-            // -------------------------------------------------
 
             binding.iconoEstadoTurno.setImageResource(
                 R.drawable.check_circle
             )
 
-            // -------------------------------------------------
             // EDITAR
-            // -------------------------------------------------
 
             if (esHistorial) {
 
-                /* Los turnos pasados son solamente para consulta */
-
                 binding.btnEditarTurno.visibility =
                     View.GONE
+
+                binding.btnEditarTurno.setOnClickListener(null)
 
             } else {
 
@@ -101,21 +151,18 @@ class TurnoAdapter(
                     View.VISIBLE
 
                 binding.btnEditarTurno.setOnClickListener {
-
                     onEditar(turno)
                 }
             }
 
-            // -------------------------------------------------
             // ELIMINAR
-            // -------------------------------------------------
 
             if (esHistorial) {
 
-                /* no permite eliminar turno que estan en parte del historial */
-
                 binding.btnEliminarTurno.visibility =
                     View.GONE
+
+                binding.btnEliminarTurno.setOnClickListener(null)
 
             } else {
 
@@ -123,16 +170,11 @@ class TurnoAdapter(
                     View.VISIBLE
 
                 binding.btnEliminarTurno.setOnClickListener {
-
                     onEliminar(turno)
                 }
             }
         }
     }
-
-    // =========================================================
-    // CREAR VIEW HOLDER
-    // =========================================================
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -149,48 +191,30 @@ class TurnoAdapter(
         return TurnoViewHolder(binding)
     }
 
-    // =========================================================
-    // VINCULAR DATOS
-    // =========================================================
-
     override fun onBindViewHolder(
         holder: TurnoViewHolder,
         position: Int
     ) {
-
-        holder.bind(
-            listaTurnos[position]
-        )
+        holder.bind(listaTurnos[position])
     }
-
-    // =========================================================
-    // CANTIDAD
-    // =========================================================
 
     override fun getItemCount(): Int =
         listaTurnos.size
-
-    // =========================================================
-    // ACTUALIZAR LISTA
-    // =========================================================
 
     fun actualizarLista(
         nuevaLista: List<TurnoUI>
     ) {
 
-        listaTurnos =
-            nuevaLista
+        listaTurnos = nuevaLista
 
         notifyDataSetChanged()
     }
-
 
     fun establecerModoHistorial(
         historial: Boolean
     ) {
 
-        esHistorial =
-            historial
+        esHistorial = historial
 
         notifyDataSetChanged()
     }

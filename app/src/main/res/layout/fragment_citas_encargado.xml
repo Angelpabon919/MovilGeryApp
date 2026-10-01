@@ -16,7 +16,7 @@
     <LinearLayout
         android:id="@+id/headerCitas"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="225dp"
         android:orientation="vertical"
         android:paddingStart="28dp"
         android:paddingEnd="22dp"
@@ -41,14 +41,30 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="GerIApp"
-                    android:textColor="@android:color/white"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginEnd="10dp"
+                        android:contentDescription="logo geriapp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/logo_geriapp1"
+                        />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GerIApp"
+                        android:textColor="@android:color/white"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -83,7 +99,8 @@
                     android:layout_height="22dp"
                     android:layout_gravity="top|end"
                     android:gravity="center"
-                    android:text="3"
+                    android:text=""
+                    android:visibility="gone"
                     android:textColor="@android:color/white"
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -191,7 +208,7 @@
                         android:id="@+id/iconTabPacientesCitas"
                         android:layout_width="21dp"
                         android:layout_height="21dp"
-                        android:src="@drawable/person"
+                        android:src="@drawable/persona_encargado"
                         app:tint="#FFFFFF"
                         android:contentDescription="Pacientes" />
 
@@ -339,16 +356,20 @@
     <!-- MENÚ INFERIOR -->
     <!-- ====================================================== -->
 
+    <!-- ========================= -->
+    <!-- MENÚ INFERIOR -->
+    <!-- ========================= -->
+
     <androidx.cardview.widget.CardView
         android:id="@+id/bottomNavigationCitas"
         android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="55dp"
-        app:cardBackgroundColor="#E9ECEF"
-        app:cardCornerRadius="32dp"
-        app:cardElevation="8dp"
+        android:layout_height="68dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#F7F9FC"
+        app:cardCornerRadius="34dp"
+        app:cardElevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -359,29 +380,30 @@
             android:orientation="horizontal"
             android:gravity="center">
 
-
-            <!-- ================================================== -->
-            <!-- 1. INICIO -->
-            <!-- ================================================== -->
+            <!-- ================= -->
+            <!-- INICIO -->
+            <!-- ================= -->
 
             <LinearLayout
                 android:id="@+id/navInicioCitas"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/iconInicioCitas"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:src="@drawable/home"
                     android:contentDescription="Inicio"
-                    app:tint="#98A2B3" />
+                    app:tint="#7F8A9A" />
 
                 <TextView
                     android:id="@+id/textInicioCitas"
@@ -389,34 +411,36 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Inicio"
-                    android:textColor="#98A2B3"
+                    android:textColor="#7F8A9A"
                     android:textSize="10sp" />
 
             </LinearLayout>
 
 
-            <!-- ================================================== -->
-            <!-- 2. ASIGNAR TURNO -->
-            <!-- ================================================== -->
+            <!-- ================= -->
+            <!-- ASIGNAR TURNO -->
+            <!-- ================= -->
 
             <LinearLayout
                 android:id="@+id/navAsignarTurnoCitas"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/iconAsignarTurnoCitas"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:src="@drawable/calendar_dia"
                     android:contentDescription="Asignar turno"
-                    app:tint="#98A2B3" />
+                    app:tint="#7F8A9A" />
 
                 <TextView
                     android:id="@+id/textAsignarTurnoCitas"
@@ -424,31 +448,34 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Asignar turno"
-                    android:textColor="#98A2B3"
+                    android:textColor="#7F8A9A"
                     android:textSize="10sp" />
 
             </LinearLayout>
 
 
-            <!-- ================================================== -->
-            <!-- 3. CITAS - SELECCIONADO -->
-            <!-- ================================================== -->
+            <!-- ================= -->
+            <!-- CITAS -->
+            <!-- ================= -->
 
             <LinearLayout
                 android:id="@+id/navCitasCitas"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingTop="7dp">
+                android:background="@drawable/bg_nav_selected">
 
                 <ImageView
                     android:id="@+id/iconCitasCitas"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:src="@drawable/calendario"
                     android:contentDescription="Citas"
                     app:tint="#3B5BDB" />
@@ -466,28 +493,30 @@
             </LinearLayout>
 
 
-            <!-- ================================================== -->
-            <!-- 4. MI PERFIL -->
-            <!-- ================================================== -->
+            <!-- ================= -->
+            <!-- MI PERFIL -->
+            <!-- ================= -->
 
             <LinearLayout
                 android:id="@+id/navPerfilCitas"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="4dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/iconPerfilCitas"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:src="@drawable/person"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/persona_encargado"
                     android:contentDescription="Mi perfil"
-                    app:tint="#98A2B3" />
+                    app:tint="#7F8A9A" />
 
                 <TextView
                     android:id="@+id/textPerfilCitas"
@@ -495,7 +524,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Mi perfil"
-                    android:textColor="#98A2B3"
+                    android:textColor="#7F8A9A"
                     android:textSize="10sp" />
 
             </LinearLayout>
@@ -503,5 +532,4 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

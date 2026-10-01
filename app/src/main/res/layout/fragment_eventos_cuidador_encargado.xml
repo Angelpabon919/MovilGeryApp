@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="María Fernández"
+            android:text=""
             android:textColor="#FFFFFF"
             android:textSize="21sp"
             android:textStyle="bold" />
@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="Auxiliar de Enfermería"
+            android:text=""
             android:textColor="#E8EDFF"
             android:textSize="14sp" />
 
@@ -138,6 +138,19 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
 
+    <!-- CARGANDO -->
+
+    <ProgressBar
+        android:id="@+id/progressBarEventosCuidador"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/txtTituloEventos"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
     <!-- LISTA -->
 
     <androidx.recyclerview.widget.RecyclerView
@@ -167,7 +180,7 @@
         android:text="No hay eventos adversos reportados."
         android:textColor="#98A2B3"
         android:textSize="14sp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintTop_toTopOf="@id/recyclerEventosCuidador"
         app:layout_constraintBottom_toBottomOf="@id/recyclerEventosCuidador"
         app:layout_constraintStart_toStartOf="parent"

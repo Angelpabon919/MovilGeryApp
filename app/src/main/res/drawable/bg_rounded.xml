@@ -1,14 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
+<vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="225dp"
+    android:viewportWidth="360"
+    android:viewportHeight="225">
 
-    <solid android:color="#3B5BDB" />
+    <!-- Fondo principal -->
+    <path
+        android:fillColor="#3B5BDB"
+        android:pathData="
+            M0,0
+            H360
+            V190
+            C360,210 345,225 325,225
+            H35
+            C15,225 0,210 0,190
+            Z" />
 
-    <corners
-        android:topLeftRadius="0dp"
-        android:topRightRadius="0dp"
-        android:bottomLeftRadius="28dp"
-        android:bottomRightRadius="28dp" />
+    <!-- Curva azul clara -->
+    <path
+        android:fillColor="#304DABF7"
+        android:pathData="
+            M265,0
+            H360
+            V198
+            C359,159 330,129 279 ,99
+            C268,90 217,69 200,0
+            Z" />
 
-</shape>
+    <!-- Segunda curva -->
+    <path
+        android:fillColor="#2E6CB8F7"
+        android:pathData="
+            M0,105
+            A120, 120 0,0 1 120, 225
+            H0
+            " />
+
+
+
+</vector>

@@ -8,27 +8,24 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <!-- ========================= -->
-    <!-- ENCABEZADO -->
-    <!-- ========================= -->
+
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
 
     <LinearLayout
         android:id="@+id/headerPerfil"
         android:layout_width="0dp"
-        android:layout_height="260dp"
+        android:layout_height="285dp"
         android:orientation="vertical"
         android:paddingStart="28dp"
         android:paddingEnd="22dp"
         android:paddingTop="35dp"
-        android:paddingBottom="24dp"
+        android:paddingBottom="22dp"
         android:background="@drawable/bg_rounded"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- ========================= -->
-        <!-- TÍTULO + NOTIFICACIÓN -->
-        <!-- ========================= -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,27 +39,39 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="GerIApp"
-                    android:textColor="@android:color/white"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginEnd="10dp"
+                        android:contentDescription="logo geriapp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/logo_geriapp1"
+                        />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GerIApp"
+                        android:textColor="@android:color/white"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Mi perfil"
-                    android:textColor="#DDE5FF"
+                    android:textColor="#E5ECFF"
                     android:textSize="16sp" />
 
             </LinearLayout>
-
-            <!-- ========================= -->
-            <!-- CAMPANA -->
-            <!-- ========================= -->
 
             <FrameLayout
                 android:layout_width="52dp"
@@ -83,9 +92,10 @@
                     android:layout_height="22dp"
                     android:layout_gravity="top|end"
                     android:gravity="center"
-                    android:text="3"
+                    android:text=""
+                    android:visibility="gone"
                     android:textColor="@android:color/white"
-                    android:textSize="11sp"
+                    android:textSize="10sp"
                     android:textStyle="bold"
                     android:background="@drawable/bg_badge" />
 
@@ -93,80 +103,51 @@
 
         </LinearLayout>
 
-
-        <!-- ========================= -->
-        <!-- FOTO DEL ENCARGADO -->
-        <!-- ========================= -->
-
         <ImageView
             android:id="@+id/imgPerfilEncargado"
-            android:layout_width="78dp"
-            android:layout_height="78dp"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="10dp"
-            android:padding="10dp"
-            android:src="@drawable/person"
+            android:layout_marginTop="8dp"
+            android:padding="12dp"
+            android:src="@drawable/persona_encargado"
             android:background="@drawable/bg_estado_perfil"
             android:contentDescription="Foto del encargado" />
-
-
-        <!-- ========================= -->
-        <!-- NOMBRE -->
-        <!-- ========================= -->
 
         <TextView
             android:id="@+id/txtNombrePerfil"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="5dp"
-            android:text="David"
+            android:layout_marginTop="9dp"
+            android:text="David Luna"
             android:textColor="@android:color/white"
-            android:textSize="20sp"
+            android:textSize="23sp"
             android:textStyle="bold" />
-
-
-        <!-- ========================= -->
-        <!-- CARGO -->
-        <!-- ========================= -->
 
         <TextView
             android:id="@+id/txtCargoPerfil"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="1dp"
+            android:layout_marginTop="2dp"
             android:text="Encargado"
-            android:textColor="#DDE5FF"
-            android:textSize="13sp" />
-
-
-        <!-- ========================= -->
-        <!-- ESTADO -->
-        <!-- ========================= -->
+            android:textColor="#E5ECFF"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/txtEstadoPerfil"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_estado_perfil"
-            android:paddingStart="11dp"
-            android:paddingTop="3dp"
-            android:paddingEnd="11dp"
-            android:paddingBottom="3dp"
-            android:text="ACTIVO"
-            android:textColor="#2E7D32"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+            android:visibility="gone"
+            android:text="ACTIVO" />
 
     </LinearLayout>
 
 
-    <!-- ========================= -->
-    <!-- CONTENIDO DEL PERFIL -->
-    <!-- ========================= -->
+    <!-- ================================================= -->
+    <!-- CONTENIDO -->
+    <!-- ================================================= -->
 
     <ScrollView
         android:id="@+id/scrollPerfil"
@@ -188,46 +169,41 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ========================= -->
             <!-- INFORMACIÓN PERSONAL -->
-            <!-- ========================= -->
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="INFORMACIÓN PERSONAL"
-                android:textColor="#687078"
+                android:textColor="#344054"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
-            <!-- ========================= -->
-            <!-- TARJETA INFORMACIÓN -->
-            <!-- ========================= -->
+                android:letterSpacing="0.06" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:orientation="vertical"
-                android:padding="18dp"
-                android:background="@drawable/redondeado_card">
-
-                <!-- NOMBRE COMPLETO -->
+                android:paddingStart="16dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="14dp"
+                android:background="@drawable/bg_card_perfil">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Nombre completo"
                     android:textColor="#98A2B3"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
 
                 <TextView
                     android:id="@+id/txtNombreCompletoPerfil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="David"
+                    android:layout_marginTop="3dp"
+                    android:text="David Luna"
                     android:textColor="#1D2939"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -235,24 +211,22 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginTop="14dp"
-                    android:layout_marginBottom="14dp"
-                    android:background="#E9ECEF" />
-
-                <!-- DOCUMENTO -->
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="#EEF1F4" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Documento"
                     android:textColor="#98A2B3"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
 
                 <TextView
                     android:id="@+id/txtDocumentoPerfil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="3dp"
                     android:text="CC 1.000.000.000"
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
@@ -260,24 +234,22 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginTop="14dp"
-                    android:layout_marginBottom="14dp"
-                    android:background="#E9ECEF" />
-
-                <!-- CORREO -->
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="#EEF1F4" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Correo electrónico"
                     android:textColor="#98A2B3"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
 
                 <TextView
                     android:id="@+id/txtCorreoPerfil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="3dp"
                     android:text="correo@ejemplo.com"
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
@@ -285,24 +257,22 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginTop="14dp"
-                    android:layout_marginBottom="14dp"
-                    android:background="#E9ECEF" />
-
-                <!-- TELÉFONO -->
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="#EEF1F4" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Teléfono"
                     android:textColor="#98A2B3"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
 
                 <TextView
                     android:id="@+id/txtTelefonoPerfil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="3dp"
                     android:text="300 000 0000"
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
@@ -310,56 +280,59 @@
             </LinearLayout>
 
 
-            <!-- ========================= -->
             <!-- EDITAR INFORMACIÓN -->
-            <!-- ========================= -->
 
             <TextView
                 android:id="@+id/btnEditarPerfil"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="54dp"
                 android:layout_marginTop="14dp"
                 android:gravity="center"
                 android:text="Editar información"
                 android:textColor="@android:color/white"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_boton_azul"
                 android:clickable="true"
                 android:focusable="true" />
 
 
-            <!-- ========================= -->
             <!-- CONFIGURACIÓN -->
-            <!-- ========================= -->
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="25dp"
+                android:layout_marginTop="24dp"
                 android:text="CONFIGURACIÓN"
-                android:textColor="#687078"
+                android:textColor="#344054"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
+                android:letterSpacing="0.06" />
 
 
-            <!-- ========================= -->
             <!-- NOTIFICACIONES -->
-            <!-- ========================= -->
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="68dp"
                 android:layout_marginTop="10dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp"
-                android:background="@drawable/redondeado_card">
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/bg_card_perfil">
+
+                <ImageView
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:src="@drawable/notifications"
+                    android:backgroundTint="@color/secondary"
+                    android:background="@drawable/bg_nav_selected" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -374,7 +347,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
+                        android:layout_marginTop="2dp"
                         android:text="Recibir alertas y novedades"
                         android:textColor="#98A2B3"
                         android:textSize="12sp" />
@@ -390,25 +363,32 @@
             </LinearLayout>
 
 
-            <!-- ========================= -->
             <!-- CAMBIAR CONTRASEÑA -->
-            <!-- ========================= -->
 
             <LinearLayout
                 android:id="@+id/cardCambiarContrasena"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="68dp"
                 android:layout_marginTop="10dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp"
-                android:background="@drawable/redondeado_card"
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/bg_card_perfil"
                 android:clickable="true"
                 android:focusable="true">
+
+                <ImageView
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:src="@drawable/password"
+                    android:backgroundTint="@color/secondary"
+                    android:background="@drawable/bg_nav_selected" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -423,7 +403,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
+                        android:layout_marginTop="2dp"
                         android:text="Actualiza tu contraseña de acceso"
                         android:textColor="#98A2B3"
                         android:textSize="12sp" />
@@ -435,25 +415,23 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="›"
-                    android:textColor="#98A2B3"
+                    android:textColor="#667085"
                     android:textSize="28sp" />
 
             </LinearLayout>
 
 
-            <!-- ========================= -->
             <!-- CERRAR SESIÓN -->
-            <!-- ========================= -->
 
             <TextView
                 android:id="@+id/btnCerrarSesion"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:layout_marginBottom="15dp"
                 android:gravity="center"
                 android:text="Cerrar sesión"
-                android:textColor="@color/text_status"
+                android:textColor="#B42318"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_status_activo"
@@ -465,20 +443,20 @@
     </ScrollView>
 
 
-    <!-- ========================= -->
-    <!-- MENÚ INFERIOR -->
-    <!-- ========================= -->
+    <!-- ================================================= -->
+    <!-- MENU INFERIOR -->
+    <!-- ================================================= -->
 
     <androidx.cardview.widget.CardView
         android:id="@+id/bottomNavigationPerfil"
         android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="55dp"
-        app:cardBackgroundColor="#E9ECEF"
-        app:cardCornerRadius="32dp"
-        app:cardElevation="8dp"
+        android:layout_height="68dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#F7F9FC"
+        app:cardCornerRadius="34dp"
+        app:cardElevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -489,29 +467,26 @@
             android:orientation="horizontal"
             android:gravity="center">
 
-
-            <!-- ================= -->
-            <!-- 1. INICIO -->
-            <!-- ================= -->
-
             <LinearLayout
                 android:id="@+id/navInicioPerfil"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/iconInicioPerfil"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:src="@drawable/home"
                     android:contentDescription="Inicio"
-                    app:tint="#98A2B3" />
+                    app:tint="#7F8A9A" />
 
                 <TextView
                     android:id="@+id/textInicioPerfil"
@@ -519,34 +494,31 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Inicio"
-                    android:textColor="#98A2B3"
+                    android:textColor="#7F8A9A"
                     android:textSize="10sp" />
 
             </LinearLayout>
 
-
-            <!-- ================= -->
-            <!-- 2. ASIGNAR TURNO -->
-            <!-- ================= -->
-
             <LinearLayout
                 android:id="@+id/navAsignarTurnoPerfil"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/iconAsignarTurnoPerfil"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:src="@drawable/calendar_dia"
                     android:contentDescription="Asignar turno"
-                    app:tint="#98A2B3" />
+                    app:tint="#7F8A9A" />
 
                 <TextView
                     android:id="@+id/textAsignarTurnoPerfil"
@@ -554,34 +526,31 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Asignar turno"
-                    android:textColor="#98A2B3"
+                    android:textColor="#7F8A9A"
                     android:textSize="10sp" />
 
             </LinearLayout>
 
-
-            <!-- ================= -->
-            <!-- 3. CITAS -->
-            <!-- ================= -->
-
             <LinearLayout
                 android:id="@+id/navCitasPerfil"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
-                android:focusable="true"
-                android:paddingTop="7dp">
+                android:focusable="true">
 
                 <ImageView
                     android:id="@+id/iconCitasPerfil"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:src="@drawable/calendario"
                     android:contentDescription="Citas"
-                    app:tint="#98A2B3" />
+                    app:tint="#7F8A9A" />
 
                 <TextView
                     android:id="@+id/textCitasPerfil"
@@ -589,32 +558,30 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Citas"
-                    android:textColor="#98A2B3"
+                    android:textColor="#7F8A9A"
                     android:textSize="10sp" />
 
             </LinearLayout>
 
-
-            <!-- ================= -->
-            <!-- 4. MI PERFIL -->
-            <!-- ================= -->
-
             <LinearLayout
                 android:id="@+id/navPerfilPerfil"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="4dp"
+                android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingTop="7dp">
+                android:background="@drawable/bg_nav_selected">
 
                 <ImageView
                     android:id="@+id/iconPerfilPerfil"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:src="@drawable/person"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/persona_encargado"
                     android:contentDescription="Mi perfil"
                     app:tint="#3B5BDB" />
 

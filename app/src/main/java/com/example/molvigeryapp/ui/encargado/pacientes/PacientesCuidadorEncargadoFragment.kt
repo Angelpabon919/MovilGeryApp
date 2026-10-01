@@ -7,33 +7,104 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesCuidadorEncargadoBinding
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 
 class PacientesCuidadorEncargadoFragment : Fragment() {
 
-    private var _binding: FragmentPacientesCuidadorEncargadoBinding? = null
-    private val binding get() = _binding!!
+    // =========================================================
+    // VIEW BINDING
+    // =========================================================
 
-    private val repository = PacienteRepository()
+    private var _binding: FragmentPacientesCuidadorEncargadoBinding? =
+        null
+
+    private val binding
+        get() = _binding!!
+
+
+    // =========================================================
+    // REPOSITORY
+    // =========================================================
+
+    private val repository =
+        PacienteRepository()
+
+
+    // =========================================================
+    // ADAPTER
+    // =========================================================
 
     private lateinit var adapter: PacientesAsignadosAdapter
 
-    // ID del cuidador que seleccionó el Encargado
+
+    // =========================================================
+    // DATOS DEL CUIDADOR
+    // =========================================================
+
     private var idUsuarioCuidador: Int = 0
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
 
-        // Recibimos el ID del cuidador desde
-        // DetalleCuidadorEncargadoFragment
-        idUsuarioCuidador =
-            arguments?.getInt("id_usuario", 0) ?: 0
+    // =========================================================
+    // CONTROL DE CARGA
+    // =========================================================
+
+    private var cargandoPacientes = false
+
+    private var primeraCarga = true
+
+
+    // =========================================================
+    // CONSTANTES
+    // =========================================================
+
+    companion object {
+
+        private const val TAG =
+            "PACIENTES_ENCARGADO"
+
+        private const val INTERVALO_ACTUALIZACION =
+            2_000L
     }
+
+
+    // =========================================================
+    // ON CREATE
+    // =========================================================
+
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onCreate(
+            savedInstanceState
+        )
+
+
+        // ID del cuidador seleccionado
+        // por el Encargado.
+
+        idUsuarioCuidador =
+            arguments?.getInt(
+                "id_usuario",
+                0
+            ) ?: 0
+    }
+
+
+    // =========================================================
+    // CREAR VISTA
+    // =========================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,70 +122,200 @@ class PacientesCuidadorEncargadoFragment : Fragment() {
         return binding.root
     }
 
+
+    // =========================================================
+    // VISTA CREADA
+    // =========================================================
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+
+        // Reiniciar estado de carga cada vez
+        // que se crea nuevamente la vista.
+
+        primeraCarga = true
+        cargandoPacientes = false
+
 
         configurarInformacionCuidador()
+
         configurarRecyclerView()
+
         configurarBotonVolver()
 
-        cargarPacientesAsignados()
+        iniciarActualizacionAutomatica()
     }
 
-    /**
-     * Muestra el nombre y cargo del cuidador
-     * que estamos consultando.
-     */
+
+    // =========================================================
+    // INFORMACIÓN DEL CUIDADOR
+    // =========================================================
+
     private fun configurarInformacionCuidador() {
 
         val nombre =
-            arguments?.getString("nombre") ?: ""
+            arguments?.getString(
+                "nombre"
+            ).orEmpty()
+
 
         val cargo =
-            arguments?.getString("cargo") ?: ""
+            arguments?.getString(
+                "cargo"
+            ).orEmpty()
 
-        binding.txtNombreCuidadorPacientes.text = nombre
-        binding.txtCargoCuidadorPacientes.text = cargo
+
+        binding
+            .txtNombreCuidadorPacientes
+            .text =
+            nombre
+
+
+        binding
+            .txtCargoCuidadorPacientes
+            .text =
+            cargo
     }
 
-    /**
-     * Configura el RecyclerView.
-     */
+
+    // =========================================================
+    // RECYCLERVIEW
+    // =========================================================
+
     private fun configurarRecyclerView() {
 
-        adapter = PacientesAsignadosAdapter()
+        adapter =
+            PacientesAsignadosAdapter { paciente ->
 
-        binding.recyclerPacientesCuidador.apply {
+                abrirPerfilPaciente(
+                    paciente
+                )
+            }
 
-            layoutManager =
-                LinearLayoutManager(requireContext())
 
-            adapter =
-                this@PacientesCuidadorEncargadoFragment.adapter
-        }
+        binding
+            .recyclerPacientesCuidador
+            .apply {
+
+                layoutManager =
+                    LinearLayoutManager(
+                        requireContext()
+                    )
+
+                adapter =
+                    this@PacientesCuidadorEncargadoFragment
+                        .adapter
+            }
     }
 
-    /**
-     * Regresa a la pantalla anterior.
-     */
+
+    // =========================================================
+    // ABRIR PERFIL DEL PACIENTE
+    // =========================================================
+
+    private fun abrirPerfilPaciente(
+        paciente: Paciente
+    ) {
+
+        val datos = Bundle().apply {
+            putInt(
+                "idPaciente",
+                paciente.idPaciente ?: 0
+            )
+        }
+
+        val fragment =
+            PerfilPacienteEncargadoFragment()
+
+        fragment.arguments =
+            datos
+
+        parentFragmentManager
+            .beginTransaction()
+            .replace(
+                R.id.fragmentContainer,
+                fragment
+            )
+            .addToBackStack(null)
+            .commit()
+    }
+
+
+    // =========================================================
+    // BOTÓN VOLVER
+    // =========================================================
+
     private fun configurarBotonVolver() {
 
-        binding.btnVolverPacientes.setOnClickListener {
+        binding
+            .btnVolverPacientes
+            .setOnClickListener {
 
-            parentFragmentManager.popBackStack()
+                parentFragmentManager
+                    .popBackStack()
+            }
+    }
+
+
+    // =========================================================
+    // ACTUALIZACIÓN AUTOMÁTICA
+    // =========================================================
+
+    private fun iniciarActualizacionAutomatica() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                while (true) {
+
+                    cargarPacientesAsignados(
+                        mostrarCargaInicial =
+                            primeraCarga
+                    )
+
+                    primeraCarga = false
+
+                    delay(
+                        INTERVALO_ACTUALIZACION
+                    )
+                }
+            }
         }
     }
 
-    /**
-     * Obtiene los pacientes asignados al cuidador.
-     */
-    private fun cargarPacientesAsignados() {
 
-        // Si no recibimos el ID del cuidador,
-        // no podemos consultar sus asignaciones.
+    // =========================================================
+    // CARGAR PACIENTES
+    // =========================================================
+
+    private suspend fun cargarPacientesAsignados(
+        mostrarCargaInicial: Boolean
+    ) {
+
+        // -----------------------------------------------------
+        // EVITAR SOLICITUDES SIMULTÁNEAS
+        // -----------------------------------------------------
+
+        if (cargandoPacientes) {
+            return
+        }
+
+
+        // -----------------------------------------------------
+        // VALIDAR ID DEL CUIDADOR
+        // -----------------------------------------------------
+
         if (idUsuarioCuidador == 0) {
 
             mostrarSinPacientes()
@@ -122,104 +323,234 @@ class PacientesCuidadorEncargadoFragment : Fragment() {
             return
         }
 
-        lifecycleScope.launch {
 
-            try {
-
-                // =====================================================
-                // 1. OBTENER TODAS LAS ASIGNACIONES
-                // =====================================================
-
-                val asignaciones =
-                    repository.obtenerAsignacionesPacienteCuidador()
+        cargandoPacientes = true
 
 
-                // =====================================================
-                // 2. FILTRAR LAS ASIGNACIONES DEL CUIDADOR
-                // =====================================================
+        if (mostrarCargaInicial) {
 
-                val asignacionesCuidador =
-                    asignaciones.filter { asignacion ->
-
-                        asignacion.idUsuario == idUsuarioCuidador &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
-                                )
-                    }
+            mostrarCargando()
+        }
 
 
-                // =====================================================
-                // 3. OBTENER LOS ID DE LOS PACIENTES
-                // =====================================================
+        try {
 
-                val idsPacientes =
-                    asignacionesCuidador
-                        .map { asignacion ->
-                            asignacion.idPaciente
-                        }
-                        .distinct()
+            // =================================================
+            // 1. OBTENER TODAS LAS ASIGNACIONES
+            // =================================================
+
+            val asignaciones =
+                repository
+                    .obtenerAsignacionesPacienteCuidador()
 
 
-                // Si el cuidador no tiene pacientes asignados
-                if (idsPacientes.isEmpty()) {
+            // =================================================
+            // 2. FILTRAR ASIGNACIONES DEL CUIDADOR
+            // =================================================
 
-                    mostrarSinPacientes()
+            val asignacionesCuidador =
+                asignaciones.filter { asignacion ->
 
-                    return@launch
+                    asignacion.idUsuario ==
+                            idUsuarioCuidador &&
+
+                            asignacion.estado.equals(
+                                "Activo",
+                                ignoreCase = true
+                            )
                 }
 
 
-                // =====================================================
-                // 4. OBTENER TODOS LOS PACIENTES
-                // =====================================================
+            // =================================================
+            // 3. OBTENER IDS DE PACIENTES
+            // =================================================
 
-                val todosLosPacientes =
-                    repository.obtenerPacientes()
+            val idsPacientes =
+                asignacionesCuidador
+                    .map { asignacion ->
 
-
-                // =====================================================
-                // 5. FILTRAR LOS PACIENTES ASIGNADOS
-                // =====================================================
-
-                val pacientesAsignados =
-                    todosLosPacientes.filter { paciente ->
-
-                        paciente.idPaciente in idsPacientes
+                        asignacion.idPaciente
                     }
+                    .distinct()
 
 
-                // =====================================================
-                // 6. MOSTRAR LOS PACIENTES
-                // =====================================================
+            // =================================================
+            // 4. SIN PACIENTES ASIGNADOS
+            // =================================================
 
-                mostrarPacientes(pacientesAsignados)
+            if (idsPacientes.isEmpty()) {
 
-            } catch (e: Exception) {
+                if (_binding != null) {
 
-                Log.e(
-                    "PACIENTES_ENCARGADO",
-                    "Error al cargar pacientes asignados",
-                    e
+                    mostrarSinPacientes()
+                }
+
+                return
+            }
+
+
+            // =================================================
+            // 5. OBTENER TODOS LOS PACIENTES
+            // =================================================
+
+            val todosLosPacientes =
+                repository
+                    .obtenerPacientes()
+
+
+            // =================================================
+            // 6. FILTRAR PACIENTES ASIGNADOS
+            // =================================================
+
+            val pacientesAsignados =
+                todosLosPacientes.filter { paciente ->
+
+                    paciente.idPaciente in idsPacientes
+                }
+
+
+            // =================================================
+            // 7. ACTUALIZAR INTERFAZ
+            // =================================================
+
+            if (_binding != null) {
+
+                mostrarPacientes(
+                    pacientesAsignados
                 )
+            }
+
+
+        } catch (
+            e: CancellationException
+        ) {
+
+            // -------------------------------------------------
+            // CANCELACIÓN NORMAL
+            // -------------------------------------------------
+            //
+            // Puede ocurrir cuando el usuario abandona
+            // rápidamente la pantalla.
+            //
+            // No debemos tratarla como error.
+
+            throw e
+
+
+        } catch (
+            e: Exception
+        ) {
+
+            Log.e(
+                TAG,
+                "Error al cargar pacientes asignados",
+                e
+            )
+
+
+            // -------------------------------------------------
+            // MOSTRAR ERROR SOLO EN LA CARGA INICIAL
+            // -------------------------------------------------
+            //
+            // Durante las actualizaciones cada 2 segundos
+            // no mostramos Toast continuamente.
+
+            if (
+                mostrarCargaInicial &&
+                _binding != null
+            ) {
 
                 mostrarSinPacientes()
 
-                Toast.makeText(
-                    requireContext(),
-                    "Error al cargar los pacientes asignados",
-                    Toast.LENGTH_SHORT
-                ).show()
+
+                val contexto =
+                    context
+
+
+                if (contexto != null) {
+
+                    Toast.makeText(
+                        contexto,
+                        "Error al cargar los pacientes asignados",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+
+        } finally {
+
+            cargandoPacientes = false
+
+
+            if (
+                mostrarCargaInicial &&
+                _binding != null
+            ) {
+
+                ocultarCargando()
             }
         }
     }
 
-    /**
-     * Muestra la lista de pacientes asignados.
-     */
+
+    // =========================================================
+    // MOSTRAR CARGANDO
+    // =========================================================
+
+    private fun mostrarCargando() {
+
+        val bindingActual =
+            _binding ?: return
+
+
+        bindingActual
+            .progressBarPacientes
+            .visibility =
+            View.VISIBLE
+
+
+        bindingActual
+            .recyclerPacientesCuidador
+            .visibility =
+            View.GONE
+
+
+        bindingActual
+            .txtSinPacientesCuidador
+            .visibility =
+            View.GONE
+    }
+
+
+    // =========================================================
+    // OCULTAR CARGANDO
+    // =========================================================
+
+    private fun ocultarCargando() {
+
+        val bindingActual =
+            _binding ?: return
+
+
+        bindingActual
+            .progressBarPacientes
+            .visibility =
+            View.GONE
+    }
+
+
+    // =========================================================
+    // MOSTRAR PACIENTES
+    // =========================================================
+
     private fun mostrarPacientes(
         pacientes: List<Paciente>
     ) {
+
+        val bindingActual =
+            _binding ?: return
+
 
         if (pacientes.isEmpty()) {
 
@@ -228,46 +559,108 @@ class PacientesCuidadorEncargadoFragment : Fragment() {
             return
         }
 
-        // Enviar pacientes al adapter
-        adapter.actualizarLista(pacientes)
 
-        // Actualizar contador
-        binding.txtCantidadPacientesAsignados.text =
+        // -----------------------------------------------------
+        // ACTUALIZAR ADAPTER
+        // -----------------------------------------------------
+
+        adapter.actualizarLista(
+            pacientes
+        )
+
+
+        // -----------------------------------------------------
+        // ACTUALIZAR CONTADOR
+        // -----------------------------------------------------
+
+        bindingActual
+            .txtCantidadPacientesAsignados
+            .text =
             pacientes.size.toString()
 
-        // Mostrar RecyclerView
-        binding.recyclerPacientesCuidador.visibility =
+
+        // -----------------------------------------------------
+        // MOSTRAR LISTA
+        // -----------------------------------------------------
+
+        bindingActual
+            .recyclerPacientesCuidador
+            .visibility =
             View.VISIBLE
 
-        // Ocultar mensaje vacío
-        binding.txtSinPacientesCuidador.visibility =
+
+        // -----------------------------------------------------
+        // OCULTAR MENSAJE VACÍO
+        // -----------------------------------------------------
+
+        bindingActual
+            .txtSinPacientesCuidador
+            .visibility =
             View.GONE
     }
 
-    /**
-     * Muestra el mensaje cuando el cuidador
-     * no tiene pacientes asignados.
-     */
+
+    // =========================================================
+    // SIN PACIENTES
+    // =========================================================
+
     private fun mostrarSinPacientes() {
 
-        // Limpiar adapter
-        adapter.actualizarLista(emptyList())
+        val bindingActual =
+            _binding ?: return
 
-        // Reiniciar contador
-        binding.txtCantidadPacientesAsignados.text = "0"
 
-        // Ocultar lista
-        binding.recyclerPacientesCuidador.visibility =
+        // -----------------------------------------------------
+        // LIMPIAR ADAPTER
+        // -----------------------------------------------------
+
+        adapter.actualizarLista(
+            emptyList()
+        )
+
+
+        // -----------------------------------------------------
+        // REINICIAR CONTADOR
+        // -----------------------------------------------------
+
+        bindingActual
+            .txtCantidadPacientesAsignados
+            .text =
+            "0"
+
+
+        // -----------------------------------------------------
+        // OCULTAR LISTA
+        // -----------------------------------------------------
+
+        bindingActual
+            .recyclerPacientesCuidador
+            .visibility =
             View.GONE
 
-        // Mostrar mensaje
-        binding.txtSinPacientesCuidador.visibility =
+
+        // -----------------------------------------------------
+        // MOSTRAR MENSAJE
+        // -----------------------------------------------------
+
+        bindingActual
+            .txtSinPacientesCuidador
+            .visibility =
             View.VISIBLE
     }
 
+
+    // =========================================================
+    // DESTRUIR VISTA
+    // =========================================================
+
     override fun onDestroyView() {
-        super.onDestroyView()
+
+        binding.recyclerPacientesCuidador.adapter =
+            null
 
         _binding = null
+
+        super.onDestroyView()
     }
 }

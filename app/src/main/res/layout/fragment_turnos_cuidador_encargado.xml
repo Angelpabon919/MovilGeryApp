@@ -51,30 +51,33 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:contentDescription="Volver"
+                    android:focusable="true"
                     android:padding="9dp"
                     android:src="@drawable/arrow_back"
                     app:tint="@android:color/white" />
 
                 <!-- NOMBRE DEL CUIDADOR -->
+                <!-- Se carga desde los argumentos/API -->
 
                 <TextView
                     android:id="@+id/txtNombreCuidadorTurno"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Nombre del cuidador"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textSize="24sp"
                     android:textStyle="bold" />
 
                 <!-- CARGO -->
+                <!-- Se carga desde los argumentos/API -->
 
                 <TextView
                     android:id="@+id/txtCargoCuidadorTurno"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="Cuidador"
+                    android:text=""
                     android:textColor="#DDE5FF"
                     android:textSize="14sp" />
 
@@ -116,6 +119,27 @@
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
+                <!-- ================================================= -->
+                <!-- BOTÓN ASIGNAR TURNO -->
+                <!-- ================================================= -->
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAsignarTurno"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Asignar turno"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#3B5BDB"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/calendar_dia"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="@android:color/white" />
+
 
                 <!-- ================================================= -->
                 <!-- SELECTOR DE SECCIONES -->
@@ -130,9 +154,7 @@
                     android:orientation="horizontal"
                     android:padding="4dp">
 
-                    <!-- ============================================= -->
                     <!-- TURNOS ASIGNADOS -->
-                    <!-- ============================================= -->
 
                     <TextView
                         android:id="@+id/btnTurnosAsignados"
@@ -148,9 +170,7 @@
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
-                    <!-- ============================================= -->
                     <!-- TURNOS PASADOS -->
-                    <!-- ============================================= -->
 
                     <TextView
                         android:id="@+id/btnTurnosPasados"
@@ -200,6 +220,20 @@
                         android:textSize="13sp" />
 
                 </LinearLayout>
+
+
+                <!-- ================================================= -->
+                <!-- INDICADOR DE CARGA -->
+                <!-- ================================================= -->
+
+                <ProgressBar
+                    android:id="@+id/progressBarTurnos"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="24dp"
+                    android:indeterminate="true"
+                    android:visibility="gone" />
 
 
                 <!-- ================================================= -->
