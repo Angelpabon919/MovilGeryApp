@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_calendario_dialog_encargado"
+    android:paddingStart="18dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="16dp">
+
+    <!-- ENCABEZADO -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/contenedorTituloCalendario"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Seleccionar fecha"
+                android:textColor="#172033"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Elige el día de la cita"
+                android:textColor="#8A96A8"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:padding="10dp"
+            android:src="@drawable/ic_calendar_blue"
+            android:background="@drawable/bg_icono_calendario"
+            android:contentDescription="Calendario" />
+
+    </RelativeLayout>
+
+    <!-- DIVISOR -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="#E8ECF2" />
+
+    <!-- NAVEGACIÓN DEL MES -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnMesAnterior"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_boton_calendario_navegacion_encargado"
+            android:padding="11dp"
+            android:src="@drawable/ic_arrow_right_blue"
+            android:contentDescription="Mes anterior"
+            android:scaleType="centerInside" />
+
+        <TextView
+            android:id="@+id/txtMesActual"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Septiembre 2026"
+            android:textColor="#172033"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnMesSiguiente"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_boton_calendario_navegacion_encargado"
+            android:padding="11dp"
+            android:src="@drawable/ic_arrow_left_blue"
+            android:contentDescription="Mes siguiente"
+            android:scaleType="centerInside" />
+
+    </LinearLayout>
+
+    <!-- DÍAS DE LA SEMANA -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="L"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="M"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="M"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="J"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="V"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="S"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="D"
+            android:textColor="#8793A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- CALENDARIO -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerDiasCalendario"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:layout_marginTop="2dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp" />
+
+    <!-- LEYENDA -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/bg_leyenda_hoy" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:text="Hoy"
+            android:textColor="#8793A6"
+            android:textSize="11sp" />
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginStart="20dp"
+            android:background="@drawable/bg_leyenda_seleccionado" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:text="Seleccionado"
+            android:textColor="#8793A6"
+            android:textSize="11sp" />
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginStart="20dp"
+            android:background="@drawable/bg_leyenda_anterior" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:text="No disponible"
+            android:textColor="#8793A6"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+    <!-- BOTONES -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnCancelarCalendario"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_boton_cancelar_calendario_encargado"
+            android:gravity="center"
+            android:text="CANCELAR"
+            android:textColor="#596579"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Space
+            android:layout_width="10dp"
+            android:layout_height="1dp" />
+
+        <TextView
+            android:id="@+id/btnSeleccionarCalendario"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_boton_seleccionar_calendario_encargado"
+            android:gravity="center"
+            android:text="SELECCIONAR"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</LinearLayout>

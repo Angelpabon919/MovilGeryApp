@@ -3,24 +3,33 @@ package com.example.molvigeryapp.ui.encargado.perfil
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.R
-import com.example.molvigeryapp.data.repository.PacienteRepository
+import com.example.molvigeryapp.data.repository.UsuarioRepository
 import com.example.molvigeryapp.databinding.FragmentPerfilEncargadoBinding
+import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.encargado.NavegacionEncargado
+import com.example.molvigeryapp.ui.encargado.WindowInsetsEncargado
 import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.citas.CitasEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.notificaciones.ContadorNotificaciones
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
+
 class PerfilEncargadoFragment : Fragment() {
+
+    // =====================================================
+    // VIEW BINDING
+    // =====================================================
 
     private var _binding: FragmentPerfilEncargadoBinding? = null
 
@@ -33,20 +42,37 @@ class PerfilEncargadoFragment : Fragment() {
     // =====================================================
 
     private val repository by lazy {
-        PacienteRepository()
+        UsuarioRepository()
     }
+
+
+    // =====================================================
+    // ESTADO DE CARGA
+    // =====================================================
+
+    private var cargandoPerfil = false
 
 
     // =====================================================
     // SESIÓN
     // =====================================================
 
-    private val preferenciasSesion by lazy {
-        requireContext().getSharedPreferences(
+    private fun obtenerPreferenciasSesion():
+            android.content.SharedPreferences? {
+
+        val contexto =
+            context ?: return null
+
+        return contexto.getSharedPreferences(
             "SESION",
             Context.MODE_PRIVATE
         )
     }
+
+
+    // =====================================================
+    // CREAR VISTA
+    // =====================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,6 +91,10 @@ class PerfilEncargadoFragment : Fragment() {
     }
 
 
+    // =====================================================
+    // VISTA CREADA
+    // =====================================================
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -74,11 +104,56 @@ class PerfilEncargadoFragment : Fragment() {
             view,
             savedInstanceState
         )
-        cargarDatosPerfil()
+
+
+        // =================================================
+        // WINDOW INSETS
+        // =================================================
+
+        WindowInsetsEncargado.aplicar(
+            root = binding.root,
+            contenido = binding.scrollPerfil,
+            menuInferior = binding.bottomNavigationPerfil
+        )
+
+
+        // =================================================
+        // CONFIGURACIONES
+        // =================================================
+
         configurarNotificaciones()
+
         configurarEditarPerfil()
+
+        configurarCambiarContrasena()
+
         configurarCerrarSesion()
+
         configurarMenuInferior()
+
+
+        // =================================================
+        // CONTADOR DE NOTIFICACIONES
+        // =================================================
+
+        ContadorNotificaciones.iniciar(
+            fragment = this,
+            badge = binding.txtNotificacionesPerfil
+        )
+    }
+
+
+    // =====================================================
+    // RECARGAR AL VOLVER A LA PANTALLA
+    // =====================================================
+
+    override fun onResume() {
+
+        super.onResume()
+
+        if (_binding != null) {
+            cargarDatosPerfil()
+        }
     }
 
 
@@ -88,52 +163,61 @@ class PerfilEncargadoFragment : Fragment() {
 
     private fun cargarDatosPerfil() {
 
+        // Evitar solicitudes simultáneas
+        if (cargandoPerfil) {
+            return
+        }
+
+
+        val preferencias =
+            obtenerPreferenciasSesion()
+                ?: return
+
+
         // =================================================
-        // OBTENER ID DEL USUARIO DE LA SESIÓN
+        // ID DEL USUARIO
         // =================================================
 
         val idUsuario =
-            preferenciasSesion.getInt(
+            preferencias.getInt(
                 "ID_USUARIO",
                 -1
             )
 
 
-        // =================================================
-        // MOSTRAR ID DE LA SESIÓN
-        // =================================================
+        if (idUsuario <= 0) {
 
-        /*Toast.makeText(
-            requireContext(),
-            "ID usuario de sesión: $idUsuario",
-            Toast.LENGTH_LONG
-        ).show()*/
-
-
-        // =================================================
-        // VERIFICAR SESIÓN
-        // =================================================
-
-        if (idUsuario == -1) {
-
-            Toast.makeText(
-                requireContext(),
+            mostrarMensaje(
                 "No se encontró el usuario de la sesión.",
                 Toast.LENGTH_LONG
-            ).show()
+            )
 
             return
         }
 
 
         // =================================================
-        // CONSULTAR API
-        // GET /api/usuarios/{id}/
+        // MOSTRAR CARGA
         // =================================================
 
-        lifecycleScope.launch {
+        cargandoPerfil = true
+
+        mostrarCargando(true)
+
+
+        // =================================================
+        // CONSULTAR API
+        // =================================================
+
+        viewLifecycleOwner.lifecycleScope.launch {
 
             try {
+
+                /*
+                 * UsuarioRepository consulta:
+                 *
+                 * GET /usuarios/{id}/
+                 */
 
                 val usuario =
                     repository.obtenerUsuarioPorId(
@@ -141,91 +225,196 @@ class PerfilEncargadoFragment : Fragment() {
                     )
 
 
-                // =============================================
-                // VERIFICAR RESPUESTA
-                // =============================================
+                // =================================================
+                // COMPROBAR VISTA
+                // =================================================
+
+                val bindingActual =
+                    _binding
+                        ?: return@launch
+
+
+                // =================================================
+                // USUARIO NO ENCONTRADO
+                // =================================================
 
                 if (usuario == null) {
 
-                    Toast.makeText(
-                        requireContext(),
-                        "No se pudo cargar el usuario $idUsuario",
+                    mostrarCargando(false)
+
+                    mostrarMensaje(
+                        "No se pudo cargar la información del perfil.",
                         Toast.LENGTH_LONG
-                    ).show()
+                    )
 
                     return@launch
                 }
 
 
-                // =============================================
+                // =================================================
                 // NOMBRE COMPLETO
-                // =============================================
+                // =================================================
 
                 val nombreCompleto =
                     "${usuario.nombres} ${usuario.apellidos}"
                         .trim()
 
 
-                // =============================================
-                // MOSTRAR NOMBRE
-                // =============================================
-
-                binding.txtNombrePerfil.text =
-                    nombreCompleto
-
-                binding.txtNombreCompletoPerfil.text =
+                bindingActual
+                    .txtNombrePerfil
+                    .text =
                     nombreCompleto
 
 
-                // =============================================
-                // MOSTRAR DOCUMENTO
-                // =============================================
-
-                binding.txtDocumentoPerfil.text =
-                    "${usuario.tipoDocumento ?: "CC"} ${usuario.numeroDocumento}"
+                bindingActual
+                    .txtNombreCompletoPerfil
+                    .text =
+                    nombreCompleto
 
 
-                // =============================================
-                // MOSTRAR CORREO
-                // =============================================
+                // =================================================
+                // DOCUMENTO
+                // =================================================
 
-                binding.txtCorreoPerfil.text =
+                val tipoDocumento =
+                    usuario.tipoDocumento
+                        ?.takeIf {
+                            it.isNotBlank()
+                        }
+                        ?: "CC"
+
+
+                val numeroDocumento =
+                    usuario.numeroDocumento
+                        ?.trim()
+                        .orEmpty()
+
+
+                bindingActual
+                    .txtDocumentoPerfil
+                    .text =
+                    if (numeroDocumento.isNotEmpty()) {
+                        "$tipoDocumento $numeroDocumento"
+                    } else {
+                        tipoDocumento
+                    }
+
+
+                // =================================================
+                // CORREO
+                // =================================================
+
+                bindingActual
+                    .txtCorreoPerfil
+                    .text =
                     usuario.correo
 
 
-                // =============================================
-                // MOSTRAR TELÉFONO
-                // =============================================
+                // =================================================
+                // TELÉFONO
+                // =================================================
 
-                binding.txtTelefonoPerfil.text =
+                bindingActual
+                    .txtTelefonoPerfil
+                    .text =
                     usuario.telefono
 
 
-                // =============================================
-                // CONFIRMACIÓN
-                // =============================================
+                // =================================================
+                // FINALIZAR CARGA
+                // =================================================
 
-                Toast.makeText(
-                    requireContext(),
-                    "Perfil cargado correctamente.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                mostrarCargando(false)
 
-            } catch (e: Exception) {
 
-                android.util.Log.e(
+            } catch (
+                e: CancellationException
+            ) {
+
+                // Cancelación normal del ciclo de vida.
+                throw e
+
+
+            } catch (
+                e: Exception
+            ) {
+
+                Log.e(
                     "PERFIL_ENCARGADO",
                     "Error inesperado al cargar el perfil",
                     e
                 )
 
-                Toast.makeText(
-                    requireContext(),
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+
+                mostrarCargando(false)
+
+
+                mostrarMensaje(
                     "Error al cargar los datos del perfil.",
                     Toast.LENGTH_LONG
-                ).show()
+                )
+
+
+            } finally {
+
+                cargandoPerfil = false
             }
         }
+    }
+
+
+    // =====================================================
+    // ESTADO DE CARGA
+    // =====================================================
+
+    private fun mostrarCargando(
+        cargando: Boolean
+    ) {
+
+        val bindingActual =
+            _binding ?: return
+
+
+        if (cargando) {
+
+            bindingActual
+                .scrollPerfil
+                .visibility =
+                View.INVISIBLE
+
+        } else {
+
+            bindingActual
+                .scrollPerfil
+                .visibility =
+                View.VISIBLE
+        }
+    }
+
+
+    // =====================================================
+    // MOSTRAR MENSAJE
+    // =====================================================
+
+    private fun mostrarMensaje(
+        mensaje: String,
+        duracion: Int
+    ) {
+
+        val contexto =
+            context ?: return
+
+
+        Toast.makeText(
+            contexto,
+            mensaje,
+            duracion
+        ).show()
     }
 
 
@@ -235,17 +424,24 @@ class PerfilEncargadoFragment : Fragment() {
 
     private fun configurarNotificaciones() {
 
-        binding.btnNotificacionesPerfil.setOnClickListener {
+        binding
+            .btnNotificacionesPerfil
+            .setOnClickListener {
 
-            parentFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.fragmentContainer,
-                    NotificacionesEncargadoFragment()
-                )
-                .addToBackStack(null)
-                .commit()
-        }
+                if (!isAdded) {
+                    return@setOnClickListener
+                }
+
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        NotificacionesEncargadoFragment()
+                    )
+                    .addToBackStack(null)
+                    .commit()
+            }
     }
 
 
@@ -255,17 +451,51 @@ class PerfilEncargadoFragment : Fragment() {
 
     private fun configurarEditarPerfil() {
 
-        binding.btnEditarPerfil.setOnClickListener {
+        binding
+            .btnEditarPerfil
+            .setOnClickListener {
 
-            parentFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.fragmentContainer,
-                    EditarPerfilEncargadoFragment()
-                )
-                .addToBackStack(null)
-                .commit()
-        }
+                if (!isAdded) {
+                    return@setOnClickListener
+                }
+
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        EditarPerfilEncargadoFragment()
+                    )
+                    .addToBackStack(null)
+                    .commit()
+            }
+    }
+
+
+    // =====================================================
+    // CAMBIAR CONTRASEÑA
+    // =====================================================
+
+    private fun configurarCambiarContrasena() {
+
+        binding
+            .cardCambiarContrasena
+            .setOnClickListener {
+
+                if (!isAdded) {
+                    return@setOnClickListener
+                }
+
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        CambiarContrasenaEncargadoFragment()
+                    )
+                    .addToBackStack(null)
+                    .commit()
+            }
     }
 
 
@@ -275,43 +505,58 @@ class PerfilEncargadoFragment : Fragment() {
 
     private fun configurarCerrarSesion() {
 
-        binding.btnCerrarSesion.setOnClickListener {
+        binding
+            .btnCerrarSesion
+            .setOnClickListener {
 
-            preferenciasSesion
-                .edit()
-                .clear()
-                .apply()
+                // =============================================
+                // SESIÓN
+                // =============================================
+
+                val preferencias =
+                    obtenerPreferenciasSesion()
+                        ?: return@setOnClickListener
 
 
-            // =============================================
-            // CREAR INTENT PARA VOLVER AL LOGIN
-            // =============================================
+                // =============================================
+                // LIMPIAR SESIÓN
+                // =============================================
 
-            val intent =
-                Intent(
-                    requireContext(),
-                    LoginActivity::class.java
+                preferencias
+                    .edit()
+                    .clear()
+                    .apply()
+
+
+                // =============================================
+                // CONTEXTO
+                // =============================================
+
+                val contexto =
+                    context
+                        ?: return@setOnClickListener
+
+
+                // =============================================
+                // IR AL LOGIN
+                // =============================================
+
+                val intent =
+                    Intent(
+                        contexto,
+                        LoginActivity::class.java
+                    )
+
+
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+
+                startActivity(
+                    intent
                 )
-
-
-            // ============================================
-            // FLAG_ACTIVITY_NEW_TASK + FLAG_ACTIVITY_CLEAR_TASk
-            // Esto evita que al presionar Atras
-            // despues de cerrar sesión el usuario
-            // pueda regresar al MainActivity o al perfil.
-            // ============================================
-
-            intent.flags =
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK
-
-
-            // =============================================
-            // ABRIR LOGIN
-            // =============================================
-
-            startActivity(intent)
-        }
+            }
     }
 
 
@@ -388,10 +633,15 @@ class PerfilEncargadoFragment : Fragment() {
 
 
             // =================================================
-            // IR A INICIO
+            // INICIO
             // =================================================
 
             onInicio = {
+
+                if (!isAdded) {
+                    return@configurar
+                }
+
 
                 parentFragmentManager
                     .beginTransaction()
@@ -404,10 +654,15 @@ class PerfilEncargadoFragment : Fragment() {
 
 
             // =================================================
-            // IR A ASIGNAR TURNO
+            // ASIGNAR TURNO
             // =================================================
 
             onAsignarTurno = {
+
+                if (!isAdded) {
+                    return@configurar
+                }
+
 
                 parentFragmentManager
                     .beginTransaction()
@@ -420,10 +675,15 @@ class PerfilEncargadoFragment : Fragment() {
 
 
             // =================================================
-            // IR A CITAS
+            // CITAS
             // =================================================
 
             onCitas = {
+
+                if (!isAdded) {
+                    return@configurar
+                }
+
 
                 parentFragmentManager
                     .beginTransaction()
@@ -436,20 +696,24 @@ class PerfilEncargadoFragment : Fragment() {
 
 
             // =================================================
-            // YA ESTAMOS EN PERFIL
+            // PERFIL ACTUAL
             // =================================================
 
             onPerfil = {
-
+                // Ya estamos en Perfil.
             }
         )
     }
 
 
+    // =====================================================
+    // DESTRUIR VISTA
+    // =====================================================
+
     override fun onDestroyView() {
 
-        super.onDestroyView()
-
         _binding = null
+
+        super.onDestroyView()
     }
 }

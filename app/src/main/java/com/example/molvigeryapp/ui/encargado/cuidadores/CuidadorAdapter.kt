@@ -19,6 +19,7 @@ class CuidadorAdapter(
         val binding: ItemCuidadorEncargadoBinding
     ) : RecyclerView.ViewHolder(binding.root)
 
+
     // ==========================================
     // CREAR TARJETA
     // ==========================================
@@ -28,22 +29,24 @@ class CuidadorAdapter(
         viewType: Int
     ): ViewHolder {
 
-        val binding = ItemCuidadorEncargadoBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding =
+            ItemCuidadorEncargadoBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
 
         return ViewHolder(binding)
     }
+
 
     // ==========================================
     // CANTIDAD DE ELEMENTOS
     // ==========================================
 
-    override fun getItemCount(): Int {
-        return lista.size
-    }
+    override fun getItemCount(): Int =
+        lista.size
+
 
     // ==========================================
     // MOSTRAR DATOS
@@ -56,14 +59,18 @@ class CuidadorAdapter(
 
         val cuidador = lista[position]
 
-        holder.binding.txtNombre.text = cuidador.nombre
+        holder.binding.txtNombre.text =
+            cuidador.nombre
 
-        holder.binding.txtCargo.text = cuidador.cargo
+        holder.binding.txtCargo.text =
+            cuidador.cargo
 
-        holder.binding.txtEstado.text = cuidador.estado
+        holder.binding.txtEstado.text =
+            cuidador.estado
 
         holder.binding.txtPacientes.text =
             "${cuidador.pacientes} pacientes"
+
 
         // ==========================================
         // CLICK EN LA TARJETA
@@ -74,11 +81,14 @@ class CuidadorAdapter(
         }
     }
 
+
     // ==========================================
     // ACTUALIZAR LISTA
     // ==========================================
 
-    fun actualizarLista(nuevaLista: List<Cuidador>) {
+    fun actualizarLista(
+        nuevaLista: List<Cuidador>
+    ) {
 
         lista = nuevaLista
 

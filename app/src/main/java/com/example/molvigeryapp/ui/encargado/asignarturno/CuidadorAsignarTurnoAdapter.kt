@@ -14,23 +14,57 @@ class CuidadorAsignarTurnoAdapter(
 ) : RecyclerView.Adapter<CuidadorAsignarTurnoAdapter.CuidadorViewHolder>() {
 
     companion object {
+
         private const val AZUL = "#3B5BDB"
         private const val GRIS = "#98A2B3"
         private const val TEXTO = "#1D2939"
     }
 
-    // Guardamos únicamente IDs que realmente existan.
+
+    // =========================================================
+    // CUIDADORES SELECCIONADOS
+    // =========================================================
+
+    /*
+     * Guardamos los ID de los cuidadores seleccionados.
+     *
+     * Al ser un MutableSet podemos tener:
+     *
+     * Cuidador A
+     * Cuidador B
+     * Cuidador C
+     *
+     * sin duplicados.
+     */
+
     private val seleccionados =
         mutableSetOf<Int>()
+
+
+    // =========================================================
+    // VIEW HOLDER
+    // =========================================================
 
     inner class CuidadorViewHolder(
         private val binding: ItemCuidadorAsignarTurnoBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(cuidador: Usuario) {
+
+        // =====================================================
+        // BIND
+        // =====================================================
+
+        fun bind(
+            cuidador: Usuario
+        ) {
 
             binding.txtNombreCuidador.text =
                 "${cuidador.nombres} ${cuidador.apellidos}"
+
+
+            // =================================================
+            // ESTADO
+            // =================================================
 
             if (cuidador.estado) {
 
@@ -51,9 +85,19 @@ class CuidadorAsignarTurnoAdapter(
                 )
             }
 
+
+            // =================================================
+            // ESTADO VISUAL
+            // =================================================
+
             actualizarEstadoVisual(
                 cuidador
             )
+
+
+            // =================================================
+            // CLICK EN LA TARJETA
+            // =================================================
 
             binding.root.setOnClickListener {
 
@@ -61,6 +105,11 @@ class CuidadorAsignarTurnoAdapter(
                     cuidador
                 )
             }
+
+
+            // =================================================
+            // CLICK EN CHECKBOX
+            // =================================================
 
             binding.checkCuidador.setOnClickListener {
 
@@ -70,21 +119,23 @@ class CuidadorAsignarTurnoAdapter(
             }
         }
 
+
+        // =====================================================
+        // ACTUALIZAR ESTADO VISUAL
+        // =====================================================
+
         private fun actualizarEstadoVisual(
             cuidador: Usuario
         ) {
 
-            /*
-             * idUsuario es Int?, por eso comprobamos
-             * que tenga un valor antes de utilizarlo.
-             */
-
             val id =
                 cuidador.idUsuario
+
 
             val seleccionado =
                 id != null &&
                         seleccionados.contains(id)
+
 
             if (seleccionado) {
 
@@ -114,35 +165,48 @@ class CuidadorAsignarTurnoAdapter(
             }
         }
 
+
+        // =====================================================
+        // CAMBIAR SELECCIÓN
+        // =====================================================
+
         private fun cambiarSeleccion(
             cuidador: Usuario
         ) {
 
             /*
-             * idUsuario puede ser null.
-             *
-             * Si no existe un ID no podemos seleccionar
-             * este cuidador porque la API necesita el ID
-             * del usuario para crear la asignación.
+             * Necesitamos el ID del usuario porque
+             * este ID será enviado al backend.
              */
 
             val id =
                 cuidador.idUsuario
                     ?: return
 
+
             if (
                 seleccionados.contains(id)
             ) {
+
+                // Ya estaba seleccionado → quitarlo.
 
                 seleccionados.remove(id)
 
             } else {
 
+                // No estaba seleccionado → agregarlo.
+
                 seleccionados.add(id)
             }
 
+
+            // =================================================
+            // ACTUALIZAR VISUAL
+            // =================================================
+
             val posicion =
                 bindingAdapterPosition
+
 
             if (
                 posicion != RecyclerView.NO_POSITION
@@ -153,9 +217,19 @@ class CuidadorAsignarTurnoAdapter(
                 )
             }
 
+
+            // =================================================
+            // AVISAR AL FRAGMENT
+            // =================================================
+
             obtenerSeleccionados()
         }
     }
+
+
+    // =========================================================
+    // CREAR VIEW HOLDER
+    // =========================================================
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -169,10 +243,16 @@ class CuidadorAsignarTurnoAdapter(
                 false
             )
 
+
         return CuidadorViewHolder(
             binding
         )
     }
+
+
+    // =========================================================
+    // VINCULAR VIEW HOLDER
+    // =========================================================
 
     override fun onBindViewHolder(
         holder: CuidadorViewHolder,
@@ -184,8 +264,18 @@ class CuidadorAsignarTurnoAdapter(
         )
     }
 
+
+    // =========================================================
+    // CANTIDAD
+    // =========================================================
+
     override fun getItemCount(): Int =
         cuidadores.size
+
+
+    // =========================================================
+    // ACTUALIZAR LISTA
+    // =========================================================
 
     fun actualizarLista(
         nuevaLista: List<Usuario>
@@ -194,9 +284,10 @@ class CuidadorAsignarTurnoAdapter(
         cuidadores =
             nuevaLista
 
+
         /*
-         * Conservamos solamente las selecciones
-         * que todavía existen en la nueva lista.
+         * Conservamos solamente los IDs seleccionados
+         * que todavía existen en la lista.
          */
 
         val idsActuales =
@@ -206,14 +297,22 @@ class CuidadorAsignarTurnoAdapter(
                 }
                 .toSet()
 
+
         seleccionados.retainAll(
             idsActuales
         )
 
+
         notifyDataSetChanged()
+
 
         obtenerSeleccionados()
     }
+
+
+    // =========================================================
+    // OBTENER CUIDADORES SELECCIONADOS
+    // =========================================================
 
     private fun obtenerSeleccionados() {
 
@@ -227,13 +326,79 @@ class CuidadorAsignarTurnoAdapter(
                         seleccionados.contains(id)
             }
 
+
         onSeleccionChanged(
             listaSeleccionados
         )
     }
 
+
+    // =========================================================
+    // OBTENER IDS SELECCIONADOS
+    // =========================================================
+
     fun obtenerIdsSeleccionados(): List<Int> =
         seleccionados.toList()
+
+
+    // =========================================================
+    // SELECCIONAR CUIDADOR AUTOMÁTICAMENTE
+    // =========================================================
+
+    /*
+     * Se utiliza cuando entramos desde:
+     *
+     * Ver turnos
+     *      ↓
+     * Asignar turno
+     *
+     * El cuidador desde el que venimos queda
+     * seleccionado inicialmente.
+     *
+     * IMPORTANTE:
+     *
+     * Esto NO elimina la posibilidad de seleccionar
+     * otros cuidadores.
+     */
+
+    fun seleccionarCuidador(
+        idUsuario: Int
+    ) {
+
+        /*
+         * Comprobamos que el cuidador exista
+         * actualmente en la lista.
+         */
+
+        val existe =
+            cuidadores.any {
+                it.idUsuario == idUsuario
+            }
+
+
+        if (!existe) {
+            return
+        }
+
+
+
+        seleccionados.add(
+            idUsuario
+        )
+
+
+
+        notifyDataSetChanged()
+
+
+        /*
+         * Informamos al Fragment de la nueva
+         * lista de seleccionados.
+         */
+
+        obtenerSeleccionados()
+    }
+
 
     fun limpiarSeleccion() {
 

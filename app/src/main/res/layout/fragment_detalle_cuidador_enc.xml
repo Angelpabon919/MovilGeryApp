@@ -95,7 +95,7 @@
                         android:id="@+id/txtNombreCuidador"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="María Fernández"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="20sp"
                         android:textStyle="bold" />
@@ -105,7 +105,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Auxiliar de Enfermería"
+                        android:text=""
                         android:textColor="#DDE5FF"
                         android:textSize="13sp" />
 
@@ -124,7 +124,7 @@
                             android:paddingEnd="8dp"
                             android:paddingTop="3dp"
                             android:paddingBottom="3dp"
-                            android:text="C-0042"
+                            android:text=""
                             android:textColor="#FFFFFF"
                             android:textSize="10sp"
                             android:background="#3152C8" />
@@ -138,7 +138,7 @@
                             android:paddingEnd="8dp"
                             android:paddingTop="3dp"
                             android:paddingBottom="3dp"
-                            android:text="Activo"
+                            android:text=""
                             android:textColor="@color/text_status"
                             android:textSize="10sp"
                             android:textStyle="bold"
@@ -186,7 +186,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="3"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -216,7 +216,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="0"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -246,7 +246,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Activo"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -259,10 +259,24 @@
 
 
         <!-- ================================================= -->
+        <!-- ESTADO DE CARGA -->
+        <!-- ================================================= -->
+
+        <ProgressBar
+            android:id="@+id/progressBarDetalleCuidador"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:visibility="gone" />
+
+
+        <!-- ================================================= -->
         <!-- ACCIONES -->
         <!-- ================================================= -->
 
         <LinearLayout
+            android:id="@+id/contenedorAccionesCuidador"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -312,9 +326,7 @@
                 <ImageView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:gravity="center"
                     android:src="@drawable/calendario"
-                    android:textSize="25sp"
                     android:background="@drawable/bg_icono_modulo"
                     app:tint="@color/colo_boton" />
 
@@ -374,9 +386,7 @@
                 <ImageView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:gravity="center"
-                    android:src="@drawable/person"
-                    android:textSize="24sp"
+                    android:src="@drawable/persona_encargado"
                     android:background="@drawable/bg_icono_modulo"
                     app:tint="@color/colo_boton" />
 
@@ -436,9 +446,7 @@
                 <ImageView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:gravity="center"
                     android:src="@drawable/warning"
-                    android:textSize="22sp"
                     android:background="@drawable/bg_icono_modulo"
                     app:tint="@color/colo_boton" />
 
@@ -478,6 +486,7 @@
 
             </LinearLayout>
 
+
             <!-- ================================================= -->
             <!-- BITÁCORA -->
             <!-- ================================================= -->
@@ -497,7 +506,6 @@
                 <ImageView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:gravity="center"
                     android:src="@drawable/menu_book"
                     android:background="@drawable/bg_icono_modulo"
                     app:tint="@color/colo_boton"
@@ -524,68 +532,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
                         android:text="Consultar el registro de actividades"
-                        android:textColor="#8A8F98"
-                        android:textSize="12sp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="28dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="›"
-                    android:textColor="#3B5BDB"
-                    android:textSize="27sp" />
-
-            </LinearLayout>
-
-
-            <!-- ================================================= -->
-            <!-- RESPONSABILIDADES -->
-            <!-- ================================================= -->
-
-            <LinearLayout
-                android:id="@+id/moduloResponsabilidades"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="15dp"
-                android:background="@drawable/bg_modulo_cuidador"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:gravity="center"
-                    android:text="✓"
-                    android:textColor="#3B5BDB"
-                    android:textSize="23sp"
-                    android:background="@drawable/bg_icono_modulo" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="13dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/textResponsabilidades"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Responsabilidades"
-                        android:textColor="#212529"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:text="Consultar sus tareas asignadas"
                         android:textColor="#8A8F98"
                         android:textSize="12sp" />
 

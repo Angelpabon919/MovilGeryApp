@@ -1,76 +1,241 @@
 package com.example.molvigeryapp.data.repository
 
+import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Cita
+import com.example.molvigeryapp.data.model.CitaApiResponse
+import com.example.molvigeryapp.data.model.CrearCitaRequest
+import com.example.molvigeryapp.data.model.Paciente
 
 object CitasRepository {
 
-    // ALMACENAMIENTO TEMPORAL PARA LAS CITAS
+    // =========================================================
+    // OBTENER CITAS DESDE LA API
+    // =========================================================
 
-    private val listaCitas = mutableListOf<Cita>()
+    suspend fun obtenerCitasDesdeApi(): List<Cita> {
 
-    private var siguienteId = 1
+        // Obtener citas del backend
+        val respuestas =
+            RetrofitClient.apiService.getCitas()
 
+        // Obtener pacientes del backend
+        val pacientes =
+            RetrofitClient.apiService.getPacientes()
 
+        // Convertir las respuestas de la API
+        // al modelo que utiliza la aplicación.
+        return respuestas.mapIndexed { index, citaApi ->
 
-    // OBTENER CITAS
+            val paciente =
+                pacientes.firstOrNull { paciente ->
 
-    fun obtenerCitas(): List<Cita> {
-        return listaCitas.toList()
-    }
+                    paciente.idPaciente ==
+                            citaApi.idPaciente
+                }
 
-
-    // AGREGAR CITA
-
-    fun agregarCita(cita: Cita) {
-
-        val nuevaCita = cita.copy(
-            id = siguienteId
-        )
-
-        listaCitas.add(nuevaCita)
-
-        siguienteId++
-    }
-
-
-    // BUSCAR CITA
-
-    fun obtenerCitaPorId(
-        id: Int
-    ): Cita? {
-
-        return listaCitas.find {
-            it.id == id
+            convertirCita(
+                citaApi = citaApi,
+                paciente = paciente,
+                indice = index
+            )
         }
     }
 
 
-    // ACTUALIZAR CITA
+    // =========================================================
+    // CONVERTIR CITA DE API A MODELO DE LA APP
+    // =========================================================
 
-    fun actualizarCita(
-        cita: Cita
-    ) {
+    private fun convertirCita(
+        citaApi: CitaApiResponse,
+        paciente: Paciente?,
+        indice: Int
+    ): Cita {
 
-        val posicion =
-            listaCitas.indexOfFirst {
-                it.id == cita.id
+        val partesMotivo =
+            separarMotivo(
+                citaApi.motivo
+            )
+
+        return Cita(
+
+            // ID interno de la aplicación
+            id = indice + 1,
+
+            // ID REAL del backend
+            idCita = citaApi.idCita,
+
+            // Paciente relacionado
+            idPaciente = citaApi.idPaciente,
+
+            // Nombre del paciente
+            nombrePaciente =
+                if (paciente != null) {
+
+                    "${paciente.nombre} ${paciente.apellido}"
+                        .trim()
+
+                } else {
+
+                    "Paciente no encontrado"
+                },
+
+            // Habitación
+            habitacion =
+                paciente?.habitacion,
+
+            // Cama
+            cama =
+                paciente?.cama,
+
+            // Tipo de cita
+            tipoCita =
+                partesMotivo.first,
+
+            // Especialidad
+            especialidad =
+                partesMotivo.second,
+
+            // Fecha
+            fecha =
+                citaApi.fecha,
+
+            // Hora
+            hora =
+                citaApi.hora,
+
+            // Observaciones
+            observaciones =
+                citaApi.observaciones,
+
+            // Estado
+            estado =
+                citaApi.estado
+        )
+    }
+
+
+    // =========================================================
+    // SEPARAR MOTIVO
+    // =========================================================
+    //
+    // Ejemplo:
+    //
+    // Consulta - Cardiología: Control general
+    //
+    // Resultado:
+    //
+    // tipoCita = Consulta
+    // especialidad = Cardiología
+    //
+    // =========================================================
+
+    private fun separarMotivo(
+        motivo: String
+    ): Pair<String, String> {
+
+        if (motivo.isBlank()) {
+
+            return Pair(
+                "Sin tipo",
+                "Sin especialidad"
+            )
+        }
+
+        return try {
+
+            val partesGuion =
+                motivo.split(
+                    " - ",
+                    limit = 2
+                )
+
+            if (partesGuion.size < 2) {
+
+                return Pair(
+                    motivo.trim(),
+                    "Sin especialidad"
+                )
             }
 
-        if (posicion != -1) {
+            val tipoCita =
+                partesGuion[0].trim()
 
-            listaCitas[posicion] = cita
+            val resto =
+                partesGuion[1].trim()
+
+            val partesDosPuntos =
+                resto.split(
+                    ":",
+                    limit = 2
+                )
+
+            val especialidad =
+                partesDosPuntos[0].trim()
+
+            Pair(
+                tipoCita,
+                especialidad
+            )
+
+        } catch (e: Exception) {
+
+            Pair(
+                motivo.trim(),
+                "Sin especialidad"
+            )
         }
     }
 
 
-    // ELIMINAR CITA
+    // =========================================================
+    // CREAR CITA
+    // =========================================================
 
-    fun eliminarCita(
-        id: Int
-    ) {
+    suspend fun crearCita(
+        cita: CrearCitaRequest
+    ): Result<CitaApiResponse> {
 
-        listaCitas.removeAll {
-            it.id == id
+        return try {
+
+            val respuesta =
+                RetrofitClient.apiService
+                    .crearCita(cita)
+
+
+            if (respuesta.isSuccessful) {
+
+                val cuerpo =
+                    respuesta.body()
+
+
+                if (cuerpo != null) {
+
+                    Result.success(
+                        cuerpo
+                    )
+
+                } else {
+
+                    Result.failure(
+                        Exception(
+                            "El servidor no devolvió la información de la cita"
+                        )
+                    )
+                }
+
+            } else {
+
+                Result.failure(
+                    Exception(
+                        "Error HTTP ${respuesta.code()}"
+                    )
+                )
+            }
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
         }
     }
 }
