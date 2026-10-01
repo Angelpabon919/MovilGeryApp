@@ -33,14 +33,15 @@ class ElementosAdapter(
         // 1. Badge / Tipo
         holder.tvTipo.text = if (esMedicamento) "Medicamento" else "Insumo"
 
-        // 2. Cantidad
-        holder.tvCantidad.text = "Cantidad: ${elemento.cantidad}"
+        // 2. Cantidad (Fallback para evitar "null" si la API devuelve cantidad_actual)
+        val stockDisponible = elemento.cantidadActual ?: elemento.cantidad ?: 0
+        holder.tvCantidad.text = "Cantidad: $stockDisponible"
 
         // 3. Mostrar ID o detalle de referencia para verificar que sea único por paciente
         val detalle = if (esMedicamento) {
             "Medicamento ID: ${elemento.idMedicamentos} | ${elemento.observaciones ?: "Sin obs."}"
         } else {
-            "Insumo ID: ${elemento.idInsumo} | ${elemento.observaciones ?: "Sin obs."}"
+            "Insumo ID: ${elemento.idInsumo ?: elemento.idElemento ?: "N/A"} | ${elemento.observaciones ?: "Sin obs."}"
         }
         holder.tvObservaciones.text = detalle
 

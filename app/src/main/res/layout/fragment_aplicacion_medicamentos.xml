@@ -144,6 +144,31 @@
                         android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Campo Cantidad a Descontar (NUEVO CAMPO) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cantidad a descontar *"
+                    android:textColor="#334155"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilCantidadAplicada"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCantidadAplicada"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Ej. 1, 2, 5"
+                        android:inputType="number" />
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <!-- Observaciones -->
                 <TextView
                     android:layout_width="wrap_content"

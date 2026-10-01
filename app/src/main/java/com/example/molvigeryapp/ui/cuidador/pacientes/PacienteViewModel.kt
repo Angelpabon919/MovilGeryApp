@@ -1,9 +1,11 @@
 package com.example.molvigeryapp.ui.cuidador.pacientes
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.molvigeryapp.data.model.AplicacionRequest
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
@@ -17,11 +19,9 @@ import kotlinx.coroutines.launch
 
 class PacienteViewModel(private val repository: PacienteRepository) : ViewModel() {
 
-
     private val _pacientes = MutableLiveData<List<Paciente>>()
     val pacientes: LiveData<List<Paciente>> get() = _pacientes
 
-    // NUEVO: Variable para enviarle ÚNICAMENTE los seleccionados al Home
     private val _pacientesSeleccionadosHome = MutableLiveData<List<Paciente>>()
     val pacientesSeleccionadosHome: LiveData<List<Paciente>> get() = _pacientesSeleccionadosHome
 
@@ -46,7 +46,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     // --- ELEMENTOS DEL PACIENTE, MEDICAMENTOS E INSUMOS ---
     private val _elementos = MutableLiveData<List<ElementoPaciente>>(emptyList())
     val elementos: LiveData<List<ElementoPaciente>> get() = _elementos
-
     val elementosPaciente: LiveData<List<ElementoPaciente>> get() = _elementos
 
     fun cargarElementosDelPaciente(idPaciente: Int) {
@@ -56,7 +55,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     private val _medicamentosCatalogo = MutableLiveData<List<Medicamento>?>()
     val medicamentosCatalogo: LiveData<List<Medicamento>?> get() = _medicamentosCatalogo
 
-    // Integración de Insumos
     private val _tiposInsumosCatalogo = MutableLiveData<List<TipoInsumo>?>()
     val tiposInsumosCatalogo: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
     val tiposInsumos: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
@@ -71,14 +69,12 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
     fun cargarPacientes() {
         viewModelScope.launch {
             try {
-                // Consultar la API solo si la lista no existe en memoria
                 if (listaPacientesCompleta.isEmpty()) {
                     listaPacientesCompleta = repository.obtenerPacientes()
                 }
 
                 _pacientes.value = listaPacientesCompleta
 
-                // Si ya había seleccionados, actualizar el LiveData del Home
                 if (tienePacientesSeleccionados) {
                     _pacientesSeleccionadosHome.value = listaPacientesCompleta.filter { it.isSelected }
                 }
@@ -93,11 +89,7 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     fun confirmarSeleccionDelDia(idUsuarioLogueado: Int) {
         tienePacientesSeleccionados = true
-
         val seleccionados = listaPacientesCompleta.filter { it.isSelected }
-
-        // FIX: No sobreescribimos _pacientes. Mantenemos _pacientes intacto con todos los datos
-        // y pasamos la lista recortada únicamente a la nueva variable del Home.
         _pacientesSeleccionadosHome.value = seleccionados
 
         val fechaActual = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(java.util.Date())
@@ -149,7 +141,7 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
 
     fun cargarRecomendaciones(idPaciente: Int) {
         viewModelScope.launch {
-            _recomendaciones.value=emptyList()
+            _recomendaciones.value = emptyList()
             val lista = repository.getRecomendaciones(idPaciente)
             _recomendaciones.value = lista ?: emptyList()
         }
@@ -191,9 +183,129 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
             val exito = repository.guardarElementoPaciente(elemento)
             if (exito) {
                 kotlinx.coroutines.delay(300)
-                cargarElementosPaciente(elemento.idPaciente)
+                elemento.idPaciente?.let { cargarElementosPaciente(it) }
             } else {
                 android.util.Log.e("PACIENTE_VM", "Error al guardar el elemento en la API")
+            }
+        }
+    }
+
+    private val _registroAplicacionState = MutableLiveData<Result<String>>()
+    val registroAplicacionState: LiveData<Result<String>> get() = _registroAplicacionState
+
+    fun registrarAplicacionMedicamento(
+        idTratamientoMedicamento: Int,
+        idUsuario: Int,
+        dosis: String,
+        via: String,
+        observacion: String,
+        cantidadAplicadaInput: Int,
+        idElementoPaciente: Int, // Este valor que entra lo usaremos como id_elemento o id_medicamento para buscar
+        cantidadActual: Int,
+        idEncargado: Int,
+        nombreMedicamento: String,
+        nombrePaciente: String,
+        context: Context
+    ) {
+        viewModelScope.launch {
+            try {
+                val cantidadADescontar = if (cantidadAplicadaInput > 0) cantidadAplicadaInput else 1
+
+                val idPaciente = _pacienteSeleccionado.value?.idPaciente ?: 1
+
+                // 🔍 PASO SEGURO: Obtener el id_inventario real consultando la API de inventario
+                val listaInventario = repository.obtenerInventario()
+
+                // Buscamos el registro en inventario que coincida con el paciente y el medicamento/elemento
+                val inventarioEncontrado = listaInventario?.find { inv ->
+                    inv.idPaciente == idPaciente &&
+                            (inv.idMedicamentos == idTratamientoMedicamento || inv.idElemento == idElementoPaciente)
+                }
+
+                val idInventarioValido = inventarioEncontrado?.idInventario ?: 0
+
+                if (idInventarioValido <= 0){
+                    _registroAplicacionState.value = Result.failure(
+                        Exception("no se encontro un inventario para el medicamento")
+                    )
+                    return@launch
+                }
+
+                android.util.Log.d(
+                    "INVENTARIO_DEBUG",
+                    "Inventario real encontrado y validado: $idInventarioValido"
+                )
+
+                val fechaActual = java.text.SimpleDateFormat(
+                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    java.util.Locale.getDefault()
+                ).format(java.util.Date())
+
+                val request = AplicacionRequest(
+                    idPaciente = idPaciente,
+                    idMedicamento = idTratamientoMedicamento,
+                    idInventario = idInventarioValido, // <-- ¡Aquí va el ID real de inventario que Django exige!
+                    idUsuario = idUsuario,
+                    fechaHora = fechaActual,
+                    dosisAdministrada = dosis,
+                    viaAdministracion = via,
+                    estado = true,
+                    observacion = observacion,
+                    cantidadAplicada = cantidadADescontar
+                )
+                val result = repository.registrarAplicacionMedicamento(request)
+
+                if (result.isSuccess) {
+                    val stockRestante = if (cantidadActual >= cantidadADescontar) cantidadActual - cantidadADescontar else 0
+                     try {
+                         repository.actualizarStockInventario(idInventarioValido, stockRestante)
+                         if (idElementoPaciente > 0){
+                             repository.actualizarCantidadElemento(idElementoPaciente, stockRestante)
+                         }
+
+                     } catch (e: Exception) {
+                         android.util.Log.e("INVENTARIO_UPDATE", "Error al actualizar stock local ", e)
+                     }
+
+                    if (stockRestante <= 3) {
+                        val notificationHelper = NotificationHelper(context)
+                        notificationHelper.enviarNotificacionStockBajo(
+                            nombreMedicamento = nombreMedicamento,
+                            nombrePaciente = nombrePaciente,
+                            cantidadRestante = stockRestante
+                        )
+
+                        try {
+                            val notificacionReq = com.example.molvigeryapp.data.model.NotificacionRequest(
+                                titulo = "⚠️ Stock Bajo: $nombreMedicamento",
+                                mensaje = "El medicamento $nombreMedicamento para el paciente $nombrePaciente se está agotando. Quedan $stockRestante unidades.",
+                                fecha_creacion = fechaActual,
+                                enviar_correo = false
+                            )
+                            val respNotif = repository.crearNotificacion(notificacionReq)
+
+                            respNotif.getOrNull()?.let { notifCreada ->
+                                val destinatarioReq = com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest(
+                                    id_notificacion = notifCreada.id_notificacion,
+                                    id_usuario = idEncargado,
+                                    leido = false
+                                )
+                                repository.asociarNotificacionDestinatario(destinatarioReq)
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("NOTIF_ERROR", "Error al registrar notificación", e)
+                        }
+                    }
+
+                    cargarElementosPaciente(idPaciente)
+                    _registroAplicacionState.value = Result.success("Aplicación registrada con éxito")
+                } else {
+                    _registroAplicacionState.value = Result.failure(
+                        result.exceptionOrNull() ?: Exception("Error al registrar aplicación")
+                    )
+                }
+            } catch (e: Exception) {
+                _registroAplicacionState.value = Result.failure(e)
             }
         }
     }
@@ -216,47 +328,6 @@ class PacienteViewModel(private val repository: PacienteRepository) : ViewModel(
         viewModelScope.launch {
             val lista = repository.getInsumosPorTipo(idTipoInsumo)
             _insumosCatalogo.value = lista
-        }
-    }
-
-    // --- LÓGICA DE APLICACIÓN DE MEDICAMENTO ---
-
-    private val _registroAplicacionState = MutableLiveData<Result<String>>()
-    val registroAplicacionState: LiveData<Result<String>> get() = _registroAplicacionState
-
-    fun registrarAplicacionMedicamento(
-        idPaciente: Int,
-        idMedicamento: Int,
-        idUsuario: Int,
-        dosis: String,
-        via: String,
-        observacion: String
-    ) {
-        viewModelScope.launch {
-            try {
-                val fechaActual = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(java.util.Date())
-
-                val request = com.example.molvigeryapp.data.model.AplicacionRequest(
-                    idPaciente = idPaciente,
-                    idMedicamento = idMedicamento,
-                    idUsuario = idUsuario,
-                    dosisAdministrada = dosis,
-                    viaAdministracion = via,
-                    observacion = observacion,
-                    fechaHora = fechaActual,
-                    estado = true
-                )
-
-                val result = repository.registrarAplicacionMedicamento(request)
-                if (result.isSuccess) {
-                    _registroAplicacionState.value = Result.success("Aplicación registrada con éxito")
-                    cargarElementosPaciente(idPaciente)
-                } else {
-                    _registroAplicacionState.value = Result.failure(result.exceptionOrNull() ?: Exception("Error al registrar"))
-                }
-            } catch (e: Exception) {
-                _registroAplicacionState.value = Result.failure(e)
-            }
         }
     }
 }

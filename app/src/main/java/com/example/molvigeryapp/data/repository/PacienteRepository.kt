@@ -1,19 +1,24 @@
 package com.example.molvigeryapp.data.repository
 
 import com.example.molvigeryapp.data.api.RetrofitClient
+import com.example.molvigeryapp.data.api.RetrofitClient.apiService
 import com.example.molvigeryapp.data.model.AplicacionRequest
-import com.example.molvigeryapp.data.model.AplicacionResponse
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.Insumo
+import com.example.molvigeryapp.data.model.Inventario
 import com.example.molvigeryapp.data.model.Medicamento
+import com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest
+import com.example.molvigeryapp.data.model.NotificacionRequest
+import com.example.molvigeryapp.data.model.NotificacionResponse
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 import retrofit2.HttpException
 
 class PacienteRepository {
@@ -36,7 +41,7 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
             try {
                 val lista = api.getRecomendacionesPorPaciente(idPaciente)
-                lista?.filter { it.idPaciente==idPaciente }
+                lista?.filter { it.idPaciente == idPaciente }
             } catch (e: Exception) {
                 android.util.Log.e(
                     "API_ERROR",
@@ -139,6 +144,7 @@ class PacienteRepository {
             emptyList()
         }
     }
+
     suspend fun getElementosPorPaciente(
         idPaciente: Int
     ): List<ElementoPaciente>? =
@@ -152,11 +158,11 @@ class PacienteRepository {
                     }
                 } else {
                     android.util.Log.e("API_ERROR", "Error HTTP ${respuesta.code()} al obtener elementos")
-                    emptyList() // <--- OJO AQUÍ
+                    emptyList()
                 }
             } catch (e: Exception) {
                 android.util.Log.e("API_ERROR", "Error al obtener elementos", e)
-                emptyList() // <--- OJO AQUÍ
+                emptyList()
             }
         }
 
@@ -281,36 +287,6 @@ class PacienteRepository {
                 val usuario =
                     api.getUsuarioById(idUsuario)
 
-                android.util.Log.d(
-                    "PERFIL_ENCARGADO",
-                    "Usuario recibido correctamente"
-                )
-
-                android.util.Log.d(
-                    "PERFIL_ENCARGADO",
-                    "ID: ${usuario.idUsuario}"
-                )
-
-                android.util.Log.d(
-                    "PERFIL_ENCARGADO",
-                    "Nombres: ${usuario.nombres}"
-                )
-
-                android.util.Log.d(
-                    "PERFIL_ENCARGADO",
-                    "Apellidos: ${usuario.apellidos}"
-                )
-
-                android.util.Log.d(
-                    "PERFIL_ENCARGADO",
-                    "Correo: ${usuario.correo}"
-                )
-
-                android.util.Log.d(
-                    "PERFIL_ENCARGADO",
-                    "Teléfono: ${usuario.telefono}"
-                )
-
                 usuario
 
             } catch (e: HttpException) {
@@ -334,6 +310,19 @@ class PacienteRepository {
                 null
             }
         }
+
+    suspend fun obtenerInventario(): List<Inventario> {
+        return try {
+            val response = apiService.obtenerInventario()
+            if (response.isSuccessful && response.body() != null) {
+                response.body()!!
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 
     suspend fun cambiarContrasena(
         idUsuario: Int,
@@ -389,23 +378,71 @@ class PacienteRepository {
                 )
             }
         }
-    suspend fun registrarAplicacionMedicamento(
-        request: AplicacionRequest
-    ): Result<AplicacionResponse> =
-        withContext(Dispatchers.IO) {
-            try {
-                val respuesta = api.registrarAplicacion(request)
-                if (respuesta.isSuccessful && respuesta.body() != null) {
-                    Result.success(respuesta.body()!!)
-                } else {
-                    val errorMsg = respuesta.errorBody()?.string() ?: "Error al registrar aplicación"
-                    android.util.Log.e("API_ERROR", "Error HTTP ${respuesta.code()}: $errorMsg")
-                    Result.failure(Exception(errorMsg))
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("API_ERROR", "Excepción al registrar aplicación", e)
-                Result.failure(e)
-            }
-        }
-} // <--- Esta es la última llave del PacienteRepository
 
+    suspend fun registrarAplicacionMedicamento(request: AplicacionRequest): Result<ResponseBody> {
+        return try {
+            val response = apiService.registrarAplicacion(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val codigo = response.code()
+                val errorBody = response.errorBody()?.string() ?: "Sin detalle de error"
+
+                android.util.Log.e(
+                    "API_ERROR_APLICACION",
+                    "Error HTTP $codigo desde Django: $errorBody"
+                )
+
+                Result.failure(Exception("HTTP $codigo: $errorBody"))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("API_ERROR_APLICACION", "Excepción de red o servidor", e)
+            Result.failure(e)
+        }
+    }
+    suspend fun actualizarStockInventario(idInventario: Int, nuevaCantidad: Int): Boolean {
+        return try {
+            // Llamamos al endpoint de actualización en tu ApiService (asegúrate de tenerlo o usar un PATCH/PUT equivalente)
+            val response = apiService.actualizarInventarioStock(idInventario, mapOf("cantidad" to nuevaCantidad))
+            response.isSuccessful
+        } catch (e: Exception) {
+            android.util.Log.e("API_ERROR", "Error al actualizar stock en inventario", e)
+            false
+        }
+    }
+    // 🛑 ESTA FUNCIÓN ES LA QUE FALTABA
+    suspend fun crearNotificacion(request: NotificacionRequest): Result<NotificacionResponse> {
+        return try {
+            val response = apiService.crearNotificacion(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Error al crear notificación: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    suspend fun actualizarCantidadElemento(idElemento: Int, nuevaCantidad: Int): Boolean {
+        return try {
+            val response = api.actualizarCantidadElemento(idElemento, mapOf("cantidad" to nuevaCantidad))
+            response.isSuccessful
+        } catch (e: Exception) {
+            android.util.Log.e("API_ERROR", "Error al actualizar cantidad del elemento", e)
+            false
+        }
+    }
+
+    suspend fun asociarNotificacionDestinatario(request: NotificacionDestinatarioRequest): Result<Boolean> {
+        return try {
+            val response = apiService.asociarNotificacionDestinatario(request)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("Error al asociar destinatario: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}

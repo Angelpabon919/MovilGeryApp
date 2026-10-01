@@ -4,7 +4,6 @@ import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Actividad
 import com.example.molvigeryapp.data.model.AplicacionRequest
-import com.example.molvigeryapp.data.model.AplicacionResponse
 import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.EventoAdverso
@@ -21,7 +20,13 @@ import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.Inventario
+import com.example.molvigeryapp.data.model.NotificacionApi
+import com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest
+import com.example.molvigeryapp.data.model.NotificacionRequest
+import com.example.molvigeryapp.data.model.NotificacionResponse
 import com.example.molvigeryapp.data.model.Usuario
+import okhttp3.ResponseBody
 
 import retrofit2.Response
 import retrofit2.http.PATCH
@@ -53,11 +58,35 @@ interface ApiService {
     // APLICACIÓN DE MEDICAMENTOS
     // =========================================================
     @POST("aplicacion_medicamento/")
-        suspend fun registrarAplicacion(
-            @Body request: AplicacionRequest
-        ): Response<AplicacionResponse>
+    suspend fun registrarAplicacion(
+        @Body request: AplicacionRequest
+    ): Response<ResponseBody>
 
+    @GET("inventario/")
+    suspend fun obtenerInventario(): Response<List<Inventario>>
 
+    @PATCH("inventario/{id}/")
+    suspend fun actualizarInventarioStock(
+        @Path("id") id: Int,
+        @Body body: Map<String, Int>
+    ): Response<ResponseBody>
+
+    @PATCH("elementos_paciente/{id}/")
+    suspend fun actualizarCantidadElemento(
+        @Path("id") idElemento: Int,
+        @Body body: Map<String, Int>
+    ): Response<ResponseBody>
+
+    @POST("notificaciones/")
+    suspend fun crearNotificacion(
+        @Body request: NotificacionRequest
+    ): Response<NotificacionResponse>
+
+    // 3. Endpoint para asociar la notificación al encargado (Tabla NotificacionDestinatario)
+    @POST("notificacion_destinatario/")
+    suspend fun asociarNotificacionDestinatario(
+        @Body request: NotificacionDestinatarioRequest
+    ): Response<ResponseBody>
 
     // =========================================================
     // RECOMENDACIONES
@@ -258,6 +287,5 @@ interface ApiService {
 
     @GET("historia_clinicas/")
     suspend fun getHistoriasClinicas(): List<HistoriaClinica>
-
 
 }

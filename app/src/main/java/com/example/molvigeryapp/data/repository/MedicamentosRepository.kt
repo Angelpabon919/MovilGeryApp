@@ -2,12 +2,12 @@ package com.example.molvigeryapp.data.repository
 
 import com.example.molvigeryapp.data.api.ApiService
 import com.example.molvigeryapp.data.model.AplicacionRequest
-import com.example.molvigeryapp.data.model.AplicacionResponse
+import okhttp3.ResponseBody
 import retrofit2.Response
 
 class MedicamentosRepository(private val apiService: ApiService) {
 
-    suspend fun registrarAplicacion(request: AplicacionRequest): Result<AplicacionResponse> {
+    suspend fun registrarAplicacion(request: AplicacionRequest): Result<ResponseBody> {
         return try {
             val response = apiService.registrarAplicacion(request)
             if (response.isSuccessful && response.body() != null) {
