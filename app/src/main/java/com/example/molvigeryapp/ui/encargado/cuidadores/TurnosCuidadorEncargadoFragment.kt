@@ -1,32 +1,44 @@
 package com.example.molvigeryapp.ui.encargado.cuidadores
 
 import android.app.AlertDialog
-import android.app.DatePickerDialog
+import com.example.molvigeryapp.ui.encargado.citas.CalendarioPersonalizadoDialog
 import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Gravity
+import android.view.MotionEvent
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.TurnoUI
 import com.example.molvigeryapp.data.repository.TurnoRepository
+import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
 import com.example.molvigeryapp.databinding.DialogEditarTurnoBinding
 import com.example.molvigeryapp.databinding.DialogEliminarTurnoBinding
 import com.example.molvigeryapp.databinding.FragmentTurnosCuidadorEncargadoBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.roundToInt
+import kotlin.coroutines.cancellation.CancellationException
+import java.util.Date
 
 class TurnosCuidadorEncargadoFragment : Fragment() {
 
@@ -49,6 +61,16 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
     private var mostrandoHistorial = false
 
+    // Evita peticiones simultáneas si una respuesta tarda más de 2 segundos.
+    private var cargandoTurnos = false
+
+    private var primeraCargaTurnos = true
+
+    companion object {
+        private const val TAG = "TURNOS_ENCARGADO"
+        private const val INTERVALO_ACTUALIZACION = 2_000L
+    }
+
     // =========================================================
     // TURNOS DEL CATÁLOGO
     // =========================================================
@@ -63,9 +85,6 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
             Map<Int, List<RegistroTurno>> = emptyMap()
 
 
-    companion object {
-        private const val TAG = "TURNOS_ENCARGADO"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,10 +124,40 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
         )
         configurarDatosCuidador()
         configurarBotonVolver()
+        configurarBotonAsignarTurno()
         configurarRecyclerView()
         configurarSelectorTurnos()
         mostrarTurnosAsignados()
-        cargarTurnos()
+        iniciarActualizacionAutomatica()
+    }
+
+    /**
+     * Carga inmediatamente al entrar y actualiza cada 2 segundos
+     * mientras el Fragment permanece visible.
+     *
+     * repeatOnLifecycle cancela el ciclo cuando la vista deja de
+     * estar STARTED, evitando peticiones cuando el usuario sale.
+     */
+    private fun iniciarActualizacionAutomatica() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                while (true) {
+
+                    cargarTurnos(
+                        mostrarCargaInicial = primeraCargaTurnos
+                    )
+
+                    primeraCargaTurnos = false
+
+                    delay(INTERVALO_ACTUALIZACION)
+                }
+            }
+        }
     }
 
     // =========================================================
@@ -124,6 +173,44 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
         binding.txtCargoCuidadorTurno.text =
             arguments?.getString("cargo")
                 ?: "Cuidador"
+    }
+
+    private fun configurarBotonAsignarTurno() {
+
+        binding.btnAsignarTurno.setOnClickListener {
+
+            val datos = Bundle().apply {
+
+                putInt(
+                    "id_usuario",
+                    idUsuario
+                )
+
+                putString(
+                    "nombre",
+                    arguments?.getString("nombre") ?: "Cuidador"
+                )
+
+                putString(
+                    "cargo",
+                    arguments?.getString("cargo") ?: "Cuidador"
+                )
+            }
+
+            val fragment =
+                AsignarTurnoEncargadoFragment()
+
+            fragment.arguments = datos
+
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    fragment
+                )
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     // =========================================================
@@ -322,7 +409,13 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
     // CARGAR TURNOS
     // =========================================================
 
-    private fun cargarTurnos() {
+    private fun cargarTurnos(
+        mostrarCargaInicial: Boolean = false
+    ) {
+
+        if (cargandoTurnos) {
+            return
+        }
 
         if (idUsuario <= 0) {
 
@@ -339,10 +432,20 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
             mostrarSinTurnos()
 
+            if (mostrarCargaInicial) {
+                ocultarCargandoTurnos()
+            }
+
             return
         }
 
-        lifecycleScope.launch {
+        cargandoTurnos = true
+
+        if (mostrarCargaInicial) {
+            mostrarCargandoTurnos()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
 
             try {
 
@@ -504,6 +607,13 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                     mostrarTurnosAsignados()
                 }
 
+                if (mostrarCargaInicial) {
+                    ocultarCargandoTurnos()
+                }
+
+            } catch (e: CancellationException) {
+                throw e
+
             } catch (e: Exception) {
 
                 Log.e(
@@ -519,20 +629,31 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                     return@launch
                 }
 
-                Toast.makeText(
-                    requireContext(),
-                    "Error al cargar turnos: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                if (mostrarCargaInicial) {
 
-                mostrarSinTurnos()
+                    mostrarSinTurnos()
+
+                    Toast.makeText(
+                        requireContext(),
+                        "No se pudieron cargar los turnos.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+            } finally {
+
+                cargandoTurnos = false
+
+                if (mostrarCargaInicial && _binding != null) {
+                    ocultarCargandoTurnos()
+                }
             }
         }
     }
 
     // =========================================================
-    // AGRUPAR TURNOS
-    // =========================================================
+// AGRUPAR TURNOS
+// =========================================================
 
     private fun agruparTurnos(
         registros: List<RegistroTurno>
@@ -542,34 +663,67 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
             return emptyList()
         }
 
-        val gruposPorTipo =
-            registros.groupBy { registro ->
+        /*
+         * Cada asignación creada desde AsignarTurnoEncargadoFragment
+         * lleva el mismo id_grupo_asignacion.
+         *
+         * Por eso una tarjeta representa una asignación completa,
+         * aunque tenga varios días y aunque existan otras asignaciones
+         * con el mismo tipo y horario.
+         *
+         * Como respaldo, si una asignación antigua no tiene
+         * id_grupo_asignacion, se utiliza el comportamiento anterior.
+         */
 
-                val turno =
-                    registro.turno
+        val grupos = registros.groupBy { registro ->
 
-                val tipo =
-                    determinarTipoTurno(
-                        turno
-                    ).trim()
-                        .lowercase(
-                            Locale.getDefault()
-                        )
+            val asignacion =
+                registro.asignacion
 
-                val horaInicio =
-                    normalizarHora(
-                        turno.hora_inicio
+            val turno =
+                registro.turno
+
+            val tipo =
+                determinarTipoTurno(
+                    turno
+                )
+                    .trim()
+                    .lowercase(
+                        Locale.getDefault()
+                    )
+
+            val horaInicio =
+                normalizarHora(
+                    turno.hora_inicio
+                ) ?: ""
+
+            val horaFin =
+                normalizarHora(
+                    turno.hora_fin
+                ) ?: ""
+
+            val idGrupo =
+                asignacion.id_grupo_asignacion
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+
+            if (idGrupo != null) {
+
+                // Nueva asignación agrupada
+                "GRUPO|$idGrupo|$tipo|$horaInicio|$horaFin"
+
+            } else {
+
+                val fecha =
+                    obtenerFechaTexto(
+                        registro
                     ) ?: ""
 
-                val horaFin =
-                    normalizarHora(
-                        turno.hora_fin
-                    ) ?: ""
-
-                "$tipo|$horaInicio|$horaFin"
+                "LEGACY|$tipo|$horaInicio|$horaFin|$fecha"
             }
+        }
 
-        return gruposPorTipo.values
+        return grupos.values
             .map { grupo ->
 
                 grupo.sortedBy { registro ->
@@ -754,6 +908,170 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
             "Nocturno"
         }
+    }
+
+    private suspend fun obtenerConflictosEdicion(
+        registrosEditados: List<RegistroTurno>,
+        idUsuario: Int,
+        turnoNuevo: Turno,
+        fechasNuevas: List<String>
+    ): List<String> {
+
+        if (registrosEditados.isEmpty()) {
+            return emptyList()
+        }
+
+        val asignaciones =
+            repository.obtenerAsignaciones()
+
+        val tipoTurnoNuevo =
+            determinarTipoTurno(turnoNuevo)
+                .trim()
+                .lowercase(Locale.getDefault())
+
+        val idGrupoEditado =
+            registrosEditados
+                .firstOrNull()
+                ?.asignacion
+                ?.id_grupo_asignacion
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+
+        val fechasConflicto =
+            mutableSetOf<String>()
+
+        val fechasNuevasSet =
+            fechasNuevas.toSet()
+
+        for (asignacion in asignaciones) {
+
+            if (asignacion.id_usuario != idUsuario) {
+                continue
+            }
+
+            /*
+             * No comparar una asignación contra ella misma.
+             */
+            if (idGrupoEditado != null) {
+
+                val idGrupoActual =
+                    asignacion.id_grupo_asignacion
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+
+                if (
+                    idGrupoActual != null &&
+                    idGrupoActual == idGrupoEditado
+                ) {
+                    continue
+                }
+
+            } else {
+
+                val mismaAsignacion =
+                    registrosEditados.any { registro ->
+
+                        registro.asignacion
+                            .id_asignacion_turno_usuario ==
+                                asignacion.id_asignacion_turno_usuario
+                    }
+
+                if (mismaAsignacion) {
+                    continue
+                }
+            }
+
+            /*
+             * Los estados Cancelado y Finalizado
+             * no bloquean una nueva asignación.
+             */
+            val estado =
+                asignacion.estado
+                    .trim()
+                    .lowercase(Locale.getDefault())
+
+            if (
+                estado == "cancelado" ||
+                estado == "cancelled" ||
+                estado == "finalizado" ||
+                estado == "finalized" ||
+                estado == "completado" ||
+                estado == "completed"
+            ) {
+                continue
+            }
+
+            val fechaExistente =
+                extraerSoloFecha(
+                    asignacion.fecha
+                )
+
+            if (fechaExistente.isNullOrBlank()) {
+                continue
+            }
+
+            /*
+             * Una asignación con fecha anterior a hoy
+             * no bloquea la edición.
+             */
+            val hoy =
+                SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.getDefault()
+                ).format(Date())
+
+            if (fechaExistente < hoy) {
+                continue
+            }
+
+            /*
+             * Obtener el turno del catálogo.
+             */
+            val turnoExistente =
+                turnosDisponibles.firstOrNull { turno ->
+
+                    turno.id_turno ==
+                            asignacion.id_turno
+                }
+
+            if (turnoExistente == null) {
+                continue
+            }
+
+            val tipoTurnoExistente =
+                determinarTipoTurno(
+                    turnoExistente
+                )
+                    .trim()
+                    .lowercase(Locale.getDefault())
+
+            /*
+             * Solo hay conflicto si es el mismo
+             * tipo de turno.
+             */
+            if (
+                tipoTurnoExistente != tipoTurnoNuevo
+            ) {
+                continue
+            }
+
+            /*
+             * Comprobar si la fecha existente
+             * está dentro del nuevo rango.
+             */
+            if (
+                fechasNuevasSet.contains(
+                    fechaExistente
+                )
+            ) {
+                fechasConflicto.add(
+                    fechaExistente
+                )
+            }
+        }
+
+        return fechasConflicto
+            .sorted()
     }
 
     // =========================================================
@@ -1008,9 +1326,8 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                     estaFinalizado || fechaYaPaso
                 }
                 .sortedByDescending { turno ->
-
                     convertirFechaParaOrden(
-                        turno.fechaInicio
+                        turno.fechaFin
                     ).timeInMillis
                 }
 
@@ -1068,6 +1385,32 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
             binding.recyclerTurnos.visibility =
                 View.VISIBLE
         }
+    }
+
+    // =========================================================
+    // ESTADO DE CARGA
+    // =========================================================
+
+    private fun mostrarCargandoTurnos() {
+
+        val bindingActual = _binding ?: return
+
+        bindingActual.progressBarTurnos.visibility =
+            View.VISIBLE
+
+        bindingActual.recyclerTurnos.visibility =
+            View.GONE
+
+        bindingActual.txtSinTurnos.visibility =
+            View.GONE
+    }
+
+    private fun ocultarCargandoTurnos() {
+
+        val bindingActual = _binding ?: return
+
+        bindingActual.progressBarTurnos.visibility =
+            View.GONE
     }
 
     // =========================================================
@@ -1181,7 +1524,6 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
         val contexto = requireContext()
 
-        // Conecta dialog_editar_turno
         val dialogBinding =
             DialogEditarTurnoBinding.inflate(layoutInflater)
 
@@ -1194,65 +1536,165 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
             android.R.color.transparent
         )
 
-        // Conecta el selector de tipo con l tabla Turnos que es de turnos
-        val nombresTurnos =
+        // =========================================================
+        // SELECTOR DE TIPO DE TURNO
+        // =========================================================
+
+        val turnosTipo =
             turnosDisponibles
                 .filter { it.estado }
-                .map { it.nombre }
-                .filter { it.isNotBlank() }
-                .distinct()
+                .filter { it.nombre.isNotBlank() }
+                .distinctBy { it.nombre.trim().lowercase(Locale.getDefault()) }
 
-        val adapterTurnos = ArrayAdapter(
+        val adapterTurnos = object : ArrayAdapter<Turno>(
             contexto,
-            android.R.layout.simple_dropdown_item_1line,
-            nombresTurnos
-        )
+            0,
+            turnosTipo
+        ) {
+            override fun getView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+                val vista = crearVistaOpcionTipoTurno(contexto)
+                configurarOpcionTipoTurno(vista, getItem(position))
+                return vista
+            }
+
+            override fun getDropDownView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+                val vista = crearVistaOpcionTipoTurno(contexto)
+                configurarOpcionTipoTurno(vista, getItem(position))
+                return vista
+            }
+        }
 
         dialogBinding.selectorTipoTurno.setAdapter(adapterTurnos)
         dialogBinding.selectorTipoTurno.setText(turno.tipo, false)
-        dialogBinding.selectorTipoTurno.setOnClickListener {
-            dialogBinding.selectorTipoTurno.showDropDown()
+        aplicarIconoTipoTurno(
+            dialogBinding.selectorTipoTurno,
+            turno.tipo
+        )
+
+        dialogBinding.selectorTipoTurno.setDropDownBackgroundDrawable(
+            crearFondoDropdown()
+        )
+        dialogBinding.selectorTipoTurno.dropDownVerticalOffset = dpApx(6)
+        dialogBinding.selectorTipoTurno.dropDownHorizontalOffset = 0
+        configurarToggleDropdown(
+            dialogBinding.selectorTipoTurno
+        )
+
+        dialogBinding.selectorTipoTurno.setOnItemClickListener { _, _, position, _ ->
+            val seleccionado = adapterTurnos.getItem(position)
+            if (seleccionado != null) {
+                dialogBinding.selectorTipoTurno.setText(
+                    seleccionado.nombre,
+                    false
+                )
+                aplicarIconoTipoTurno(
+                    dialogBinding.selectorTipoTurno,
+                    seleccionado.nombre
+                )
+                dialogBinding.selectorTipoTurno.dismissDropDown()
+            }
         }
 
-        // Conecta los campos de fecha con el DatePicker
+        // =========================================================
+        // FECHA DE INICIO
+        // =========================================================
+
         dialogBinding.selectorFechaInicio.setText(turno.fechaInicio)
         dialogBinding.selectorFechaInicio.setOnClickListener {
             seleccionarFecha(dialogBinding.selectorFechaInicio)
         }
+
+        // =========================================================
+        // FECHA DE FIN
+        // =========================================================
 
         dialogBinding.selectorFechaFin.setText(turno.fechaFin)
         dialogBinding.selectorFechaFin.setOnClickListener {
             seleccionarFecha(dialogBinding.selectorFechaFin)
         }
 
-        // Conecta el selector de estado
+        // =========================================================
+        // SELECTOR DE ESTADO
+        // =========================================================
+
         val estados =
             listOf(
-                turno.estado,
                 "Asignado",
-                "Pendiente",
                 "Cancelado",
+                "Pendiente",
                 "Finalizado"
             )
-                .filter { it.isNotBlank() }
-                .distinct()
 
-        val adapterEstados = ArrayAdapter(
+        val adapterEstados = object : ArrayAdapter<String>(
             contexto,
-            android.R.layout.simple_dropdown_item_1line,
+            0,
             estados
-        )
+        ) {
+            override fun getView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+                val vista = crearVistaOpcionEstado(contexto)
+                configurarOpcionEstado(vista, getItem(position).orEmpty())
+                return vista
+            }
 
-        dialogBinding.selectorEstadoTurno.setAdapter(adapterEstados)
-        dialogBinding.selectorEstadoTurno.setText(turno.estado, false)
-        dialogBinding.selectorEstadoTurno.setOnClickListener {
-            dialogBinding.selectorEstadoTurno.showDropDown()
+            override fun getDropDownView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
+                val vista = crearVistaOpcionEstado(contexto)
+                configurarOpcionEstado(vista, getItem(position).orEmpty())
+                return vista
+            }
         }
 
-        // conecta el diaologo editar
+        dialogBinding.selectorEstadoTurno.setAdapter(adapterEstados)
+        dialogBinding.selectorEstadoTurno.setText(
+            estados.firstOrNull {
+                it.equals(turno.estado, ignoreCase = true)
+            } ?: "Asignado",
+            false
+        )
+        dialogBinding.selectorEstadoTurno.setDropDownBackgroundDrawable(
+            crearFondoDropdown()
+        )
+        dialogBinding.selectorEstadoTurno.dropDownVerticalOffset = dpApx(6)
+        dialogBinding.selectorEstadoTurno.dropDownHorizontalOffset = 0
+        configurarToggleDropdown(
+            dialogBinding.selectorEstadoTurno
+        )
+
+        dialogBinding.selectorEstadoTurno.setOnItemClickListener { _, _, position, _ ->
+            val estadoSeleccionado = adapterEstados.getItem(position).orEmpty()
+            dialogBinding.selectorEstadoTurno.setText(
+                estadoSeleccionado,
+                false
+            )
+            dialogBinding.selectorEstadoTurno.dismissDropDown()
+        }
+
+        // =========================================================
+        // CANCELAR
+        // =========================================================
+
         dialogBinding.btnCancelarEditar.setOnClickListener {
             dialog.dismiss()
         }
+
+        // =========================================================
+        // GUARDAR
+        // =========================================================
 
         dialogBinding.btnGuardarEditar.setOnClickListener {
             val nombreTurno =
@@ -1368,67 +1810,184 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
     }
 
     // =========================================================
+    // CONFIGURACIÓN VISUAL DEL DROPDOWN
+    // =========================================================
+
+    private fun configurarToggleDropdown(
+        selector: android.widget.AutoCompleteTextView
+    ) {
+        var popupEstabaAbierto = false
+
+        selector.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    popupEstabaAbierto = selector.isPopupShowing
+                    false
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    selector.post {
+                        if (popupEstabaAbierto) {
+                            selector.dismissDropDown()
+                        } else {
+                            selector.showDropDown()
+                        }
+                    }
+                    true
+                }
+
+                else -> false
+            }
+        }
+    }
+
+    private fun crearVistaOpcionTipoTurno(contexto: android.content.Context): TextView {
+        return TextView(contexto).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpApx(56)
+            )
+            setBackgroundColor(Color.TRANSPARENT)
+            isClickable = false
+            isFocusable = false
+        }
+    }
+
+    private fun crearVistaOpcionEstado(contexto: android.content.Context): TextView {
+        return TextView(contexto).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpApx(56)
+            )
+            setBackgroundColor(Color.TRANSPARENT)
+            isClickable = false
+            isFocusable = false
+        }
+    }
+
+    private fun configurarOpcionTipoTurno(
+        textView: TextView,
+        turno: Turno?
+    ) {
+        textView.text = turno?.nombre.orEmpty()
+        textView.setTextColor(Color.parseColor("#1D2939"))
+        textView.textSize = 14f
+        textView.gravity = Gravity.CENTER_VERTICAL
+        textView.setPadding(
+            dpApx(18),
+            dpApx(8),
+            dpApx(18),
+            dpApx(8)
+        )
+        textView.minHeight = dpApx(56)
+        textView.setBackgroundColor(Color.TRANSPARENT)
+        textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            obtenerIconoTipoTurno(turno?.nombre.orEmpty()),
+            null,
+            null,
+            null
+        )
+        textView.compoundDrawablePadding = dpApx(12)
+    }
+
+    private fun configurarOpcionEstado(
+        textView: TextView,
+        estado: String
+    ) {
+        textView.text = estado
+        textView.setTextColor(Color.parseColor("#1D2939"))
+        textView.textSize = 14f
+        textView.gravity = Gravity.CENTER_VERTICAL
+        textView.setPadding(
+            dpApx(18),
+            dpApx(11),
+            dpApx(18),
+            dpApx(11)
+        )
+        textView.minHeight = dpApx(56)
+        textView.setBackgroundColor(Color.TRANSPARENT)
+        textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            null,
+            null,
+            null,
+            null
+        )
+        textView.compoundDrawablePadding = 0
+    }
+
+    private fun crearFondoDropdown(): Drawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.WHITE)
+            cornerRadius = dpApx(14).toFloat()
+            setStroke(0, Color.TRANSPARENT)
+        }
+    }
+
+    private fun aplicarIconoTipoTurno(
+        textView: TextView,
+        nombre: String
+    ) {
+        textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            obtenerIconoTipoTurno(nombre),
+            null,
+            null,
+            null
+        )
+        textView.compoundDrawablePadding = dpApx(10)
+    }
+
+    private fun obtenerIconoTipoTurno(
+        nombre: String
+    ): Drawable? {
+        val valor = nombre.trim().lowercase(Locale.getDefault())
+
+        return when {
+            valor.contains("diurno") ->
+                ContextCompat.getDrawable(requireContext(), R.drawable.sun)
+
+            valor.contains("nocturno") ->
+                ContextCompat.getDrawable(requireContext(), R.drawable.moon)
+
+            else ->
+                ContextCompat.getDrawable(requireContext(), R.drawable.clock)
+        }
+    }
+
+    private fun dpApx(valor: Int): Int {
+        return (valor * resources.displayMetrics.density).roundToInt()
+    }
+
+    // =========================================================
     // SELECCIONAR FECHA
     // =========================================================
 
     private fun seleccionarFecha(
         vista: TextView
     ) {
+        if (!isAdded) return
 
-        val fechaActual =
-            convertirFechaCalendar(
-                convertirFechaParaApi(
-                    vista.text.toString()
-                )
-            )
+        val fechaActual = vista.text
+            .toString()
+            .trim()
+            .takeIf {
+                it.isNotBlank() &&
+                        it != "Sin fecha"
+            }
 
-        val dialog =
-            DatePickerDialog(
-                requireContext(),
+        val calendario = CalendarioPersonalizadoDialog.newInstance(
+            fechaInicial = fechaActual
+        ) { fechaSeleccionada ->
 
-                { _, year, month, dayOfMonth ->
+            if (!isAdded) return@newInstance
 
-                    val fecha =
-                        Calendar.getInstance()
+            vista.text = fechaSeleccionada
+        }
 
-                    fecha.set(
-                        Calendar.YEAR,
-                        year
-                    )
-
-                    fecha.set(
-                        Calendar.MONTH,
-                        month
-                    )
-
-                    fecha.set(
-                        Calendar.DAY_OF_MONTH,
-                        dayOfMonth
-                    )
-
-                    vista.text =
-                        SimpleDateFormat(
-                            "dd/MM/yyyy",
-                            Locale.getDefault()
-                        ).format(
-                            fecha.time
-                        )
-                },
-
-                fechaActual.get(
-                    Calendar.YEAR
-                ),
-
-                fechaActual.get(
-                    Calendar.MONTH
-                ),
-
-                fechaActual.get(
-                    Calendar.DAY_OF_MONTH
-                )
-            )
-
-        dialog.show()
+        calendario.show(
+            childFragmentManager,
+            "CalendarioPersonalizadoEditarTurno"
+        )
     }
 
     // =========================================================
@@ -1443,7 +2002,7 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
         estado: String
     ) {
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
 
             try {
 
@@ -1458,6 +2017,14 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                         "El turno seleccionado no tiene ID."
                     )
                 }
+
+                val idGrupoAsignacion =
+                    registros
+                        .firstOrNull()
+                        ?.asignacion
+                        ?.id_grupo_asignacion
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
 
                 // =================================================
                 // GENERAR TODAS LAS FECHAS NUEVAS
@@ -1476,6 +2043,54 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                     throw Exception(
                         "No se pudo generar el rango de fechas."
                     )
+                }
+
+                // =================================================
+// VALIDAR CONFLICTOS ANTES DE MODIFICAR
+// =================================================
+
+                val idUsuarioCuidador =
+                    registros
+                        .firstOrNull()
+                        ?.asignacion
+                        ?.id_usuario
+
+                if (idUsuarioCuidador == null) {
+
+                    throw Exception(
+                        "No se encontró el cuidador de la asignación."
+                    )
+                }
+
+                val conflictos =
+                    obtenerConflictosEdicion(
+                        registrosEditados = registros,
+                        idUsuario = idUsuarioCuidador,
+                        turnoNuevo = turnoSeleccionado,
+                        fechasNuevas = fechasNuevas
+                    )
+
+                if (conflictos.isNotEmpty()) {
+
+                    val fechasTexto =
+                        conflictos.joinToString(
+                            separator = ", "
+                        )
+
+                    if (
+                        !isAdded ||
+                        _binding == null
+                    ) {
+                        return@launch
+                    }
+
+                    Toast.makeText(
+                        requireContext(),
+                        "El cuidador ya tiene ese tipo de turno en las fechas: $fechasTexto",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    return@launch
                 }
 
                 val asignacionesPorFecha =
@@ -1518,9 +2133,6 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                         asignacionExistente != null
                     ) {
 
-                        /* la fecha ya existe solamente se actualiza id_turno, estado
-                        el id_usuario se conserva */
-
                         val asignacionActualizada =
                             asignacionExistente.copy(
 
@@ -1534,7 +2146,10 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                                     fechaNueva,
 
                                 estado =
-                                    estado
+                                    estado,
+
+                                id_grupo_asignacion =
+                                    idGrupoAsignacion
                             )
 
                         val idAsignacion =
@@ -1585,7 +2200,10 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
                                     fechaNueva,
 
                                 estado =
-                                    estado
+                                    estado,
+
+                                id_grupo_asignacion =
+                                    idGrupoAsignacion
                             )
 
                         repository.crearAsignacion(
@@ -1651,6 +2269,9 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
                 cargarTurnos()
 
+            } catch (e: CancellationException) {
+                throw e
+
             } catch (
                 e: Exception
             ) {
@@ -1670,7 +2291,8 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
                 Toast.makeText(
                     requireContext(),
-                    "Error al actualizar el turno: ${e.message}",
+                    "No se pudo completar la edición del turno. " +
+                            "Verifica los datos e inténtalo nuevamente.",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -2122,7 +2744,10 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
 
         dialogBinding.btnConfirmarEliminar.setOnClickListener {
             dialog.dismiss()
-            eliminarAsignaciones(registros)
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                eliminarAsignaciones(registros)
+            }
         }
 
         dialog.show()
@@ -2132,71 +2757,57 @@ class TurnosCuidadorEncargadoFragment : Fragment() {
     // ELIMINAR TODAS LAS ASIGNACIONES DE UNA TARJETA
     // =========================================================
 
-    private fun eliminarAsignaciones(
+    private suspend fun eliminarAsignaciones(
         registros: List<RegistroTurno>
     ) {
+        if (registros.isEmpty()) return
 
-        lifecycleScope.launch {
+        val idGrupo = registros
+            .firstOrNull()
+            ?.asignacion
+            ?.id_grupo_asignacion
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
 
-            try {
+        try {
+            if (idGrupo != null) {
 
-                for (
-                registro in registros
-                ) {
+                registros
+                    .filter {
+                        it.asignacion.id_grupo_asignacion
+                            ?.trim()
+                            ?.equals(idGrupo, ignoreCase = false) == true
+                    }
+                    .forEach { registro ->
 
-                    val id =
-                        registro.asignacion
-                            .id_asignacion_turno_usuario
+                        val idAsignacion =
+                            registro.asignacion.id_asignacion_turno_usuario
 
-                    if (
-                        id != null
-                    ) {
+                        if (idAsignacion != null) {
+                            repository.eliminarAsignacion(idAsignacion)
+                        }
+                    }
 
-                        repository.eliminarAsignacion(
-                            id
-                        )
+            } else {
+
+                // Compatibilidad con registros antiguos
+                // que todavía no tienen id_grupo_asignacion.
+                registros.forEach { registro ->
+
+                    val idAsignacion =
+                        registro.asignacion.id_asignacion_turno_usuario
+
+                    if (idAsignacion != null) {
+                        repository.eliminarAsignacion(idAsignacion)
                     }
                 }
-
-                if (
-                    !isAdded ||
-                    _binding == null
-                ) {
-                    return@launch
-                }
-
-                Toast.makeText(
-                    requireContext(),
-                    "Turno eliminado correctamente.",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                cargarTurnos()
-
-            } catch (
-                e: Exception
-            ) {
-
-                Log.e(
-                    TAG,
-                    "ERROR AL ELIMINAR TURNO",
-                    e
-                )
-
-                if (
-                    !isAdded ||
-                    _binding == null
-                ) {
-                    return@launch
-                }
-
-                Toast.makeText(
-                    requireContext(),
-                    "Error al eliminar el turno: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
             }
+            cargarTurnos()
+
+        } catch (e: CancellationException) {
+            throw e
         }
+
     }
 
     private data class RegistroTurno(

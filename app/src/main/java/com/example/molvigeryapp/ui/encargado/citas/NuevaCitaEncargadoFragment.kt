@@ -1,28 +1,30 @@
 package com.example.molvigeryapp.ui.encargado.citas
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.molvigeryapp.R
-import com.example.molvigeryapp.data.model.Cita
+import androidx.lifecycle.lifecycleScope
+import com.example.molvigeryapp.data.model.CrearCitaRequest
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.CitasRepository
 import com.example.molvigeryapp.databinding.FragmentNuevaCitaEncargadoBinding
-import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
-
+import java.util.Locale
+import java.util.UUID
 
 class NuevaCitaEncargadoFragment : Fragment() {
 
-    // =====================================================
+    // =========================================================
     // VIEW BINDING
-    // =====================================================
+    // =========================================================
 
     private var _binding: FragmentNuevaCitaEncargadoBinding? = null
 
@@ -30,16 +32,30 @@ class NuevaCitaEncargadoFragment : Fragment() {
         get() = _binding!!
 
 
-    // =====================================================
-    // PACIENTE SELECCIONADO
-    // =====================================================
+    // =========================================================
+    // DATOS
+    // =========================================================
 
     private var paciente: Paciente? = null
 
 
-    // =====================================================
+    // =========================================================
+    // CONSTANTES
+    // =========================================================
+
+    companion object {
+
+        private const val TAG =
+            "NUEVA_CITA_ENCARGADO"
+
+        private const val ESTADO_PROGRAMADA =
+            "Programada"
+    }
+
+
+    // =========================================================
     // CREAR VISTA
-    // =====================================================
+    // =========================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,39 +74,41 @@ class NuevaCitaEncargadoFragment : Fragment() {
     }
 
 
-    // =====================================================
+    // =========================================================
     // VISTA CREADA
-    // =====================================================
+    // =========================================================
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         recibirPaciente()
 
         mostrarPaciente()
 
         configurarTipoCita()
-
         configurarEspecialidad()
-
         configurarBotonVolver()
-
         configurarFecha()
-
         configurarHora()
-
-        configurarNotificaciones()
-
         configurarBotonGuardar()
+
+        binding.txtEstadoCita.text =
+            ESTADO_PROGRAMADA
+
+        mostrarFormulario()
     }
 
 
-    // =====================================================
+    // =========================================================
     // RECIBIR PACIENTE
-    // =====================================================
+    // =========================================================
 
     private fun recibirPaciente() {
 
@@ -98,7 +116,7 @@ class NuevaCitaEncargadoFragment : Fragment() {
             arguments?.getInt(
                 "idPaciente",
                 -1
-            )
+            ) ?: -1
 
         val nombre =
             arguments?.getString(
@@ -114,97 +132,121 @@ class NuevaCitaEncargadoFragment : Fragment() {
             arguments?.getInt(
                 "habitacionPaciente",
                 -1
-            )
+            ) ?: -1
 
         val cama =
             arguments?.getInt(
                 "camaPaciente",
                 -1
+            ) ?: -1
+
+
+        paciente =
+            Paciente(
+
+                idPaciente =
+                    if (idPaciente == -1) {
+                        null
+                    } else {
+                        idPaciente
+                    },
+
+                nombre =
+                    nombre ?: "",
+
+                apellido =
+                    apellido ?: "",
+
+                habitacion =
+                    if (habitacion == -1) {
+                        null
+                    } else {
+                        habitacion
+                    },
+
+                cama =
+                    if (cama == -1) {
+                        null
+                    } else {
+                        cama
+                    }
             )
-
-
-        paciente = Paciente(
-
-            idPaciente =
-                if (idPaciente == -1) {
-                    null
-                } else {
-                    idPaciente
-                },
-
-            nombre =
-                nombre ?: "",
-
-            apellido =
-                apellido ?: "",
-
-            habitacion =
-                if (habitacion == -1) {
-                    null
-                } else {
-                    habitacion
-                },
-
-            cama =
-                if (cama == -1) {
-                    null
-                } else {
-                    cama
-                }
-        )
     }
 
 
-    // =====================================================
+    // =========================================================
     // MOSTRAR PACIENTE
-    // =====================================================
+    // =========================================================
 
     private fun mostrarPaciente() {
 
         val pacienteSeleccionado =
-            paciente ?: return
+            paciente
+
+        if (pacienteSeleccionado == null) {
+
+            mostrarError(
+                "No se pudo cargar la información del paciente."
+            )
+
+            return
+        }
+
+
+        val nombreCompleto =
+            "${pacienteSeleccionado.nombre} ${pacienteSeleccionado.apellido}"
+                .trim()
 
 
         binding.txtPacienteCita.text =
-            "${pacienteSeleccionado.nombre} ${pacienteSeleccionado.apellido}"
+            if (nombreCompleto.isBlank()) {
+                "Paciente"
+            } else {
+                nombreCompleto
+            }
+
+
+        val habitacion =
+            pacienteSeleccionado.habitacion
+                ?.toString()
+                ?: "N/A"
+
+        val cama =
+            pacienteSeleccionado.cama
+                ?.toString()
+                ?: "N/A"
 
 
         binding.txtHabitacionCita.text =
-            "Habitación ${
-                pacienteSeleccionado.habitacion ?: "N/A"
-            } · Cama ${
-                pacienteSeleccionado.cama ?: "N/A"
-            }"
+            "Habitación $habitacion · Cama $cama"
     }
 
 
-    // =====================================================
+    // =========================================================
     // TIPO DE CITA
-    // =====================================================
+    // =========================================================
 
     private fun configurarTipoCita() {
 
-        val tipos = listOf(
+        val contexto =
+            context ?: return
 
-            "Seleccionar tipo de cita",
 
-            "Consulta médica",
-
-            "Control",
-
-            "Valoración",
-
-            "Examen",
-
-            "Seguimiento",
-
-            "Urgencia"
-        )
+        val tipos =
+            listOf(
+                "Seleccionar tipo de cita",
+                "Consulta médica",
+                "Control",
+                "Valoración",
+                "Examen",
+                "Seguimiento",
+                "Urgencia"
+            )
 
 
         val adapterSpinner =
             ArrayAdapter(
-                requireContext(),
+                contexto,
                 android.R.layout.simple_spinner_item,
                 tipos
             )
@@ -215,38 +257,45 @@ class NuevaCitaEncargadoFragment : Fragment() {
         )
 
 
+        /*
+         * El popup personalizado se configura
+         * directamente en el XML mediante:
+         *
+         * android:popupBackground="@drawable/bg_spinner_popup"
+         *
+         * Por eso NO lo configuramos nuevamente aquí.
+         */
+
         binding.spinnerTipoCita.adapter =
             adapterSpinner
     }
 
 
-    // =====================================================
+    // =========================================================
     // ESPECIALIDAD
-    // =====================================================
+    // =========================================================
 
     private fun configurarEspecialidad() {
 
-        val especialidades = listOf(
+        val contexto =
+            context ?: return
 
-            "Seleccionar especialidad",
 
-            "Medicina general",
-
-            "Geriatría",
-
-            "Neurología",
-
-            "Psicología",
-
-            "Psiquiatría",
-
-            "Enfermería"
-        )
+        val especialidades =
+            listOf(
+                "Seleccionar especialidad",
+                "Medicina general",
+                "Geriatría",
+                "Neurología",
+                "Psicología",
+                "Psiquiatría",
+                "Enfermería"
+            )
 
 
         val adapterSpinner =
             ArrayAdapter(
-                requireContext(),
+                contexto,
                 android.R.layout.simple_spinner_item,
                 especialidades
             )
@@ -257,147 +306,143 @@ class NuevaCitaEncargadoFragment : Fragment() {
         )
 
 
+        /*
+         * El popup personalizado se configura
+         * directamente en el XML.
+         */
+
         binding.spinnerEspecialidad.adapter =
             adapterSpinner
     }
 
 
-    // =====================================================
+    // =========================================================
     // BOTÓN VOLVER
-    // =====================================================
+    // =========================================================
 
     private fun configurarBotonVolver() {
 
         binding.btnVolverNuevaCita.setOnClickListener {
+
+            if (!isAdded) {
+                return@setOnClickListener
+            }
 
             parentFragmentManager.popBackStack()
         }
     }
 
 
-    // =====================================================
+    // =========================================================
     // SELECCIONAR FECHA
-    // =====================================================
+    // =========================================================
 
     private fun configurarFecha() {
 
         binding.containerFechaCita.setOnClickListener {
 
+            if (_binding == null) {
+                return@setOnClickListener
+            }
+
+
+            /*
+             * Si ya existe una fecha seleccionada,
+             * el calendario se abrirá en esa fecha.
+             *
+             * Si todavía no hay fecha,
+             * se abrirá en el mes actual.
+             */
+
+            val fechaActual =
+                binding.txtFechaCita.text
+                    .toString()
+                    .trim()
+                    .takeIf {
+
+                        it.isNotBlank() &&
+                                it != "Seleccionar fecha"
+                    }
+
+
             val calendario =
-                Calendar.getInstance()
+                CalendarioPersonalizadoDialog.newInstance(
+
+                    fechaInicial =
+                        fechaActual
+
+                ) { fechaSeleccionada ->
 
 
-            val year =
-                calendario.get(Calendar.YEAR)
+                    /*
+                     * Verificamos que la vista todavía exista
+                     * antes de modificar el binding.
+                     */
 
-            val month =
-                calendario.get(Calendar.MONTH)
-
-            val day =
-                calendario.get(Calendar.DAY_OF_MONTH)
-
-
-            val datePicker =
-                DatePickerDialog(
-
-                    requireContext(),
-
-                    { _, selectedYear, selectedMonth, selectedDay ->
-
-                        val fecha =
-                            String.format(
-                                "%02d/%02d/%04d",
-                                selectedDay,
-                                selectedMonth + 1,
-                                selectedYear
-                            )
-
-                        binding.txtFechaCita.text =
-                            fecha
-                    },
-
-                    year,
-                    month,
-                    day
-                )
+                    if (_binding == null) {
+                        return@newInstance
+                    }
 
 
-            datePicker.show()
+                    binding.txtFechaCita.text =
+                        fechaSeleccionada
+                }
+
+
+            /*
+             * El calendario pertenece a este Fragment,
+             * por eso utilizamos childFragmentManager.
+             */
+
+            calendario.show(
+                childFragmentManager,
+                "CalendarioPersonalizado"
+            )
         }
     }
 
 
-    // =====================================================
+    // =========================================================
     // SELECCIONAR HORA
-    // =====================================================
+    // =========================================================
 
     private fun configurarHora() {
 
         binding.containerHoraCita.setOnClickListener {
 
-            val calendario =
-                Calendar.getInstance()
+            if (_binding == null) return@setOnClickListener
 
+            val horaActual =
+                binding.txtHoraCita.text
+                    .toString()
+                    .trim()
+                    .takeIf {
+                        it.isNotBlank() &&
+                                it != "Seleccionar hora"
+                    }
 
-            val hour =
-                calendario.get(Calendar.HOUR_OF_DAY)
+            val selectorHora =
+                SelectorHoraPersonalizadoDialog.newInstance(
+                    horaInicial = horaActual
+                ) { horaSeleccionada ->
 
-            val minute =
-                calendario.get(Calendar.MINUTE)
+                    if (_binding == null) return@newInstance
 
+                    binding.txtHoraCita.text =
+                        horaSeleccionada
+                }
 
-            val timePicker =
-                TimePickerDialog(
-
-                    requireContext(),
-
-                    { _, selectedHour, selectedMinute ->
-
-                        val hora =
-                            String.format(
-                                "%02d:%02d",
-                                selectedHour,
-                                selectedMinute
-                            )
-
-                        binding.txtHoraCita.text =
-                            hora
-                    },
-
-                    hour,
-                    minute,
-                    true
-                )
-
-
-            timePicker.show()
+            selectorHora.show(
+                childFragmentManager,
+                "SelectorHoraPersonalizado"
+            )
         }
     }
 
 
-    // =====================================================
-    // NOTIFICACIONES
-    // =====================================================
-
-    private fun configurarNotificaciones() {
-
-        binding.btnNotificacionesNuevaCita.setOnClickListener {
-
-            parentFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.fragmentContainer,
-                    NotificacionesEncargadoFragment()
-                )
-                .addToBackStack(null)
-                .commit()
-        }
-    }
-
-
-    // =====================================================
-    // GUARDAR CITA
-    // =====================================================
+    // =========================================================
+    // BOTÓN GUARDAR
+    // =========================================================
 
     private fun configurarBotonGuardar() {
 
@@ -408,11 +453,19 @@ class NuevaCitaEncargadoFragment : Fragment() {
     }
 
 
-    // =====================================================
+    // =========================================================
     // GUARDAR CITA
-    // =====================================================
+    // =========================================================
 
     private fun guardarCita() {
+
+        val contexto =
+            context ?: return
+
+
+        // -----------------------------------------------------
+        // PACIENTE
+        // -----------------------------------------------------
 
         val pacienteSeleccionado =
             paciente
@@ -421,7 +474,7 @@ class NuevaCitaEncargadoFragment : Fragment() {
         if (pacienteSeleccionado == null) {
 
             Toast.makeText(
-                requireContext(),
+                contexto,
                 "No se encontró el paciente",
                 Toast.LENGTH_SHORT
             ).show()
@@ -430,24 +483,41 @@ class NuevaCitaEncargadoFragment : Fragment() {
         }
 
 
-        // =================================================
-        // TIPO
-        // =================================================
+        val idPaciente =
+            pacienteSeleccionado.idPaciente
+
+
+        if (idPaciente == null) {
+
+            Toast.makeText(
+                contexto,
+                "El paciente no tiene un ID válido",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+
+        // -----------------------------------------------------
+        // TIPO DE CITA
+        // -----------------------------------------------------
 
         val tipoCita =
             binding.spinnerTipoCita
                 .selectedItem
                 ?.toString()
-                ?: ""
+                ?.trim()
+                .orEmpty()
 
 
         if (
-            tipoCita.isEmpty() ||
+            tipoCita.isBlank() ||
             tipoCita == "Seleccionar tipo de cita"
         ) {
 
             Toast.makeText(
-                requireContext(),
+                contexto,
                 "Selecciona el tipo de cita",
                 Toast.LENGTH_SHORT
             ).show()
@@ -456,24 +526,25 @@ class NuevaCitaEncargadoFragment : Fragment() {
         }
 
 
-        // =================================================
+        // -----------------------------------------------------
         // ESPECIALIDAD
-        // =================================================
+        // -----------------------------------------------------
 
         val especialidad =
             binding.spinnerEspecialidad
                 .selectedItem
                 ?.toString()
-                ?: ""
+                ?.trim()
+                .orEmpty()
 
 
         if (
-            especialidad.isEmpty() ||
+            especialidad.isBlank() ||
             especialidad == "Seleccionar especialidad"
         ) {
 
             Toast.makeText(
-                requireContext(),
+                contexto,
                 "Selecciona la especialidad",
                 Toast.LENGTH_SHORT
             ).show()
@@ -482,22 +553,74 @@ class NuevaCitaEncargadoFragment : Fragment() {
         }
 
 
-        // =================================================
+        // -----------------------------------------------------
+        // MOTIVO
+        // -----------------------------------------------------
+
+        val motivo =
+            binding.edtMotivoCita
+                .text
+                .toString()
+                .trim()
+
+
+        if (motivo.isBlank()) {
+
+            Toast.makeText(
+                contexto,
+                "Escribe el motivo de la cita",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            binding.edtMotivoCita.requestFocus()
+
+            return
+        }
+
+
+        // -----------------------------------------------------
+        // LUGAR
+        // -----------------------------------------------------
+
+        val lugar =
+            binding.edtLugarCita
+                .text
+                .toString()
+                .trim()
+
+
+        if (lugar.isBlank()) {
+
+            Toast.makeText(
+                contexto,
+                "Escribe el lugar de la cita",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            binding.edtLugarCita.requestFocus()
+
+            return
+        }
+
+
+        // -----------------------------------------------------
         // FECHA
-        // =================================================
+        // -----------------------------------------------------
 
         val fecha =
-            binding.txtFechaCita.text
+            binding.txtFechaCita
+                .text
                 .toString()
+                .trim()
 
 
         if (
-            fecha.isEmpty() ||
+            fecha.isBlank() ||
             fecha == "Seleccionar fecha"
         ) {
 
             Toast.makeText(
-                requireContext(),
+                contexto,
                 "Selecciona una fecha",
                 Toast.LENGTH_SHORT
             ).show()
@@ -506,22 +629,24 @@ class NuevaCitaEncargadoFragment : Fragment() {
         }
 
 
-        // =================================================
+        // -----------------------------------------------------
         // HORA
-        // =================================================
+        // -----------------------------------------------------
 
         val hora =
-            binding.txtHoraCita.text
+            binding.txtHoraCita
+                .text
                 .toString()
+                .trim()
 
 
         if (
-            hora.isEmpty() ||
+            hora.isBlank() ||
             hora == "Seleccionar hora"
         ) {
 
             Toast.makeText(
-                requireContext(),
+                contexto,
                 "Selecciona una hora",
                 Toast.LENGTH_SHORT
             ).show()
@@ -530,86 +655,431 @@ class NuevaCitaEncargadoFragment : Fragment() {
         }
 
 
-        // =================================================
+        // -----------------------------------------------------
         // OBSERVACIONES
-        // =================================================
+        // -----------------------------------------------------
 
         val observaciones =
-            binding.edtObservacionesCita.text
+            binding.edtObservacionesCita
+                .text
                 .toString()
                 .trim()
 
 
-        // =================================================
-        // CREAR CITA
-        // =================================================
+        // -----------------------------------------------------
+        // MOTIVO PARA API
+        // -----------------------------------------------------
 
-        val cita =
-            Cita(
+        /*
+         * Mantenemos el formato utilizado
+         * actualmente por tu backend:
+         *
+         * Tipo - Especialidad: Motivo
+         */
 
-                id = 0,
+        val motivoApi =
+            "$tipoCita - $especialidad: $motivo"
 
-                idPaciente =
-                    pacienteSeleccionado.idPaciente,
 
-                nombrePaciente =
-                    "${pacienteSeleccionado.nombre} ${pacienteSeleccionado.apellido}",
+        // -----------------------------------------------------
+        // FECHA PARA API
+        // -----------------------------------------------------
 
-                habitacion =
-                    pacienteSeleccionado.habitacion,
+        val fechaApi =
+            convertirFechaParaApi(
+                fecha
+            )
 
-                cama =
-                    pacienteSeleccionado.cama,
 
-                tipoCita =
-                    tipoCita,
+        // -----------------------------------------------------
+        // FECHA DE REGISTRO
+        // -----------------------------------------------------
 
-                especialidad =
-                    especialidad,
+        val fechaRegistro =
+            obtenerFechaRegistro()
+
+
+        // -----------------------------------------------------
+        // ID ÚNICO
+        // -----------------------------------------------------
+
+        val idCita =
+            "CITA-${UUID.randomUUID()}"
+
+
+        // -----------------------------------------------------
+        // REQUEST
+        // -----------------------------------------------------
+
+        val request =
+            CrearCitaRequest(
+
+                idCita =
+                    idCita,
 
                 fecha =
-                    fecha,
+                    fechaApi,
 
                 hora =
                     hora,
 
+                lugar =
+                    lugar,
+
+                motivo =
+                    motivoApi,
+
+                estado =
+                    ESTADO_PROGRAMADA,
+
                 observaciones =
                     observaciones,
 
-                estado =
-                    "PROGRAMADA"
+                fechaRegistro =
+                    fechaRegistro,
+
+                idPaciente =
+                    idPaciente,
+
+                idUsuario =
+                    null
             )
 
 
-        // =================================================
-        // GUARDAR TEMPORALMENTE
-        // =================================================
-
-        CitasRepository.agregarCita(
-            cita
+        enviarCita(
+            request
         )
-
-
-        Toast.makeText(
-            requireContext(),
-            "Cita creada correctamente",
-            Toast.LENGTH_SHORT
-        ).show()
-
-
-        // =================================================
-        // VOLVER A CITAS
-        // =================================================
-
-        parentFragmentManager.popBackStack()
     }
 
 
-    // =====================================================
-    // DESTRUIR BINDING
-    // =====================================================
+    // =========================================================
+    // ENVIAR CITA A LA API
+    // =========================================================
+
+    private fun enviarCita(
+        request: CrearCitaRequest
+    ) {
+
+        mostrarCargando(
+            "Guardando cita..."
+        )
+
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            try {
+
+                val resultado =
+                    CitasRepository.crearCita(
+                        request
+                    )
+
+
+                /*
+                 * La vista pudo destruirse mientras
+                 * esperábamos la respuesta.
+                 */
+
+                if (
+                    !isAdded ||
+                    _binding == null
+                ) {
+                    return@launch
+                }
+
+
+                resultado
+                    .onSuccess {
+
+                        if (
+                            !isAdded ||
+                            _binding == null
+                        ) {
+                            return@onSuccess
+                        }
+
+
+                        val contexto =
+                            context
+                                ?: return@onSuccess
+
+
+                        Toast.makeText(
+                            contexto,
+                            "Cita creada correctamente",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+
+                        parentFragmentManager
+                            .popBackStack()
+                    }
+
+                    .onFailure { error ->
+
+                        if (
+                            !isAdded ||
+                            _binding == null
+                        ) {
+                            return@onFailure
+                        }
+
+
+                        Log.e(
+                            TAG,
+                            "Error creando la cita",
+                            error
+                        )
+
+
+                        mostrarFormulario()
+
+
+                        val contexto =
+                            context
+                                ?: return@onFailure
+
+
+                        Toast.makeText(
+                            contexto,
+                            "No se pudo crear la cita: ${error.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+
+            } catch (
+                e: CancellationException
+            ) {
+
+                /*
+                 * Cancelación normal causada por
+                 * destrucción/navegación del Fragment.
+                 */
+
+                throw e
+
+
+            } catch (
+                e: Exception
+            ) {
+
+                Log.e(
+                    TAG,
+                    "Error inesperado creando la cita",
+                    e
+                )
+
+
+                if (
+                    !isAdded ||
+                    _binding == null
+                ) {
+                    return@launch
+                }
+
+
+                mostrarFormulario()
+
+
+                val contexto =
+                    context
+                        ?: return@launch
+
+
+                Toast.makeText(
+                    contexto,
+                    "No se pudo crear la cita.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+
+    // =========================================================
+    // MOSTRAR CARGANDO
+    // =========================================================
+
+    private fun mostrarCargando(
+        mensaje: String
+    ) {
+
+        if (_binding == null) {
+            return
+        }
+
+
+        binding.txtLoadingNuevaCita.text =
+            mensaje
+
+
+        binding.loadingNuevaCita.visibility =
+            View.VISIBLE
+
+
+        binding.contenedorErrorNuevaCita.visibility =
+            View.GONE
+
+
+        binding.scrollNuevaCita.visibility =
+            View.GONE
+
+
+        binding.btnGuardarCita.isEnabled =
+            false
+    }
+
+
+    // =========================================================
+    // MOSTRAR FORMULARIO
+    // =========================================================
+
+    private fun mostrarFormulario() {
+
+        if (_binding == null) {
+            return
+        }
+
+
+        binding.loadingNuevaCita.visibility =
+            View.GONE
+
+
+        binding.contenedorErrorNuevaCita.visibility =
+            View.GONE
+
+
+        binding.scrollNuevaCita.visibility =
+            View.VISIBLE
+
+
+        binding.btnGuardarCita.isEnabled =
+            true
+
+
+        binding.btnGuardarCita.text =
+            "GUARDAR CITA"
+    }
+
+
+    // =========================================================
+    // MOSTRAR ERROR
+    // =========================================================
+
+    private fun mostrarError(
+        mensaje: String
+    ) {
+
+        if (_binding == null) {
+            return
+        }
+
+
+        binding.loadingNuevaCita.visibility =
+            View.GONE
+
+
+        binding.scrollNuevaCita.visibility =
+            View.GONE
+
+
+        binding.contenedorErrorNuevaCita.visibility =
+            View.VISIBLE
+
+
+        binding.txtErrorNuevaCita.text =
+            mensaje
+    }
+
+
+    // =========================================================
+    // CONVERTIR FECHA PARA API
+    // =========================================================
+
+    private fun convertirFechaParaApi(
+        fecha: String
+    ): String {
+
+        return try {
+
+            val formatoEntrada =
+                SimpleDateFormat(
+                    "dd/MM/yyyy",
+                    Locale.getDefault()
+                ).apply {
+
+                    isLenient =
+                        false
+                }
+
+
+            val formatoSalida =
+                SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.getDefault()
+                )
+
+
+            val fechaConvertida =
+                formatoEntrada.parse(
+                    fecha
+                )
+
+
+            if (fechaConvertida != null) {
+
+                formatoSalida.format(
+                    fechaConvertida
+                )
+
+            } else {
+
+                fecha
+            }
+
+
+        } catch (
+            e: Exception
+        ) {
+
+            Log.e(
+                TAG,
+                "Error convirtiendo fecha: $fecha",
+                e
+            )
+
+            fecha
+        }
+    }
+
+
+    // =========================================================
+    // FECHA DE REGISTRO
+    // =========================================================
+
+    private fun obtenerFechaRegistro(): String {
+
+        val formato =
+            SimpleDateFormat(
+                "yyyy-MM-dd'T'HH:mm:ss",
+                Locale.getDefault()
+            )
+
+
+        return formato.format(
+            Calendar.getInstance().time
+        )
+    }
+
+
+
+    // =========================================================
+    // DESTRUIR VISTA
+    // =========================================================
 
     override fun onDestroyView() {
+
         super.onDestroyView()
 
         _binding = null

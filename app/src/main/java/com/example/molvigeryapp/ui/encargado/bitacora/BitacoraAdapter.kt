@@ -12,12 +12,9 @@ import java.util.Locale
 
 class BitacoraAdapter(
     private var listaBitacoras: List<Bitacora>,
-    private var listaPacientes: List<Paciente>
+    private var listaPacientes: List<Paciente>,
+    private val onClick: (Bitacora) -> Unit
 ) : RecyclerView.Adapter<BitacoraAdapter.BitacoraViewHolder>() {
-
-    // =========================================================
-    // VIEW HOLDER
-    // =========================================================
 
     inner class BitacoraViewHolder(
         private val binding: ItemEventoBitacoraEncargadoBinding
@@ -25,52 +22,40 @@ class BitacoraAdapter(
 
         fun bind(bitacora: Bitacora) {
 
-            // -------------------------------------------------
-            // TIPO DE REGISTRO
-            // -------------------------------------------------
-
             binding.txtTipoEventoBitacora.text =
-                obtenerTituloRegistro(bitacora.tipoRegistro)
-
-            // -------------------------------------------------
-            // DESCRIPCIÓN
-            // -------------------------------------------------
+                obtenerTituloRegistro(
+                    bitacora.tipoRegistro
+                )
 
             binding.txtDescripcionEventoBitacora.text =
                 bitacora.descripcion.ifBlank {
                     "Sin descripción"
                 }
 
-            // -------------------------------------------------
-            // PACIENTE
-            // -------------------------------------------------
+            val paciente =
+                obtenerPaciente(
+                    bitacora.idPaciente
+                )
 
-            val paciente = obtenerPaciente(
-                bitacora.idPaciente
-            )
-
-            val nombrePaciente = paciente?.let {
-                "${it.nombre} ${it.apellido}"
-            } ?: "Paciente no encontrado"
+            val nombrePaciente =
+                paciente?.let {
+                    "${it.nombre} ${it.apellido}"
+                } ?: "Paciente no encontrado"
 
             binding.txtPacienteEventoBitacora.text =
                 "Paciente: $nombrePaciente"
 
-            // -------------------------------------------------
-            // FECHA Y HORA
-            // -------------------------------------------------
-
             binding.txtFechaEventoBitacora.text =
-                formatearFecha(bitacora.fechaHora)
-
-            // -------------------------------------------------
-            // ESTADO
-            // -------------------------------------------------
+                formatearFecha(
+                    bitacora.fechaHora
+                )
 
             if (bitacora.estado) {
 
                 binding.iconoEstadoBitacora
-                    .setImageResource(R.drawable.check_circle)
+                    .setImageResource(
+                        R.drawable.check_circle
+                    )
 
                 binding.txtEstadoEventoBitacora.text =
                     "Actividad registrada"
@@ -78,17 +63,22 @@ class BitacoraAdapter(
             } else {
 
                 binding.iconoEstadoBitacora
-                    .setImageResource(R.drawable.check_circle)
+                    .setImageResource(
+                        R.drawable.check_circle
+                    )
 
                 binding.txtEstadoEventoBitacora.text =
                     "Registro inactivo"
             }
+
+            binding.root.setOnClickListener {
+
+                onClick(
+                    bitacora
+                )
+            }
         }
     }
-
-    // =========================================================
-    // CREAR VIEW HOLDER
-    // =========================================================
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -102,12 +92,10 @@ class BitacoraAdapter(
                 false
             )
 
-        return BitacoraViewHolder(binding)
+        return BitacoraViewHolder(
+            binding
+        )
     }
-
-    // =========================================================
-    // VINCULAR DATOS
-    // =========================================================
 
     override fun onBindViewHolder(
         holder: BitacoraViewHolder,
@@ -119,31 +107,22 @@ class BitacoraAdapter(
         )
     }
 
-    // =========================================================
-    // CANTIDAD DE ELEMENTOS
-    // =========================================================
-
     override fun getItemCount(): Int =
         listaBitacoras.size
-
-    // =========================================================
-    // ACTUALIZAR DATOS
-    // =========================================================
 
     fun actualizarDatos(
         nuevasBitacoras: List<Bitacora>,
         nuevosPacientes: List<Paciente>
     ) {
 
-        listaBitacoras = nuevasBitacoras
-        listaPacientes = nuevosPacientes
+        listaBitacoras =
+            nuevasBitacoras
+
+        listaPacientes =
+            nuevosPacientes
 
         notifyDataSetChanged()
     }
-
-    // =========================================================
-    // BUSCAR PACIENTE
-    // =========================================================
 
     private fun obtenerPaciente(
         idPaciente: Int?
@@ -157,10 +136,6 @@ class BitacoraAdapter(
             it.idPaciente == idPaciente
         }
     }
-
-    // =========================================================
-    // TÍTULO DEL REGISTRO
-    // =========================================================
 
     private fun obtenerTituloRegistro(
         tipoRegistro: String
@@ -194,10 +169,6 @@ class BitacoraAdapter(
         }
     }
 
-    // =========================================================
-    // FORMATEAR FECHA
-    // =========================================================
-
     private fun formatearFecha(
         fechaOriginal: String
     ): String {
@@ -221,7 +192,9 @@ class BitacoraAdapter(
                 )
 
             val fecha =
-                formatoEntrada.parse(fechaOriginal)
+                formatoEntrada.parse(
+                    fechaOriginal
+                )
 
             fecha?.let {
                 formatoSalida.format(it)

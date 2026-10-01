@@ -4,6 +4,8 @@ data class Cita(
 
     val id: Int,
 
+    val idCita: String,
+
     val idPaciente: Int?,
 
     val nombrePaciente: String,

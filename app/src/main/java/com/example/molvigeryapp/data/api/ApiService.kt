@@ -22,13 +22,19 @@ import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.Usuario
+import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
+import com.example.molvigeryapp.data.model.RespuestaMensaje
+import com.example.molvigeryapp.data.model.CitaApiResponse
+import com.example.molvigeryapp.data.model.CrearCitaRequest
+import com.example.molvigeryapp.data.model.NotificacionApi
+import com.example.molvigeryapp.data.model.NotificacionDestinatario
+import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 
 import retrofit2.Response
-import retrofit2.http.PATCH
-
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -52,11 +58,11 @@ interface ApiService {
     // =========================================================
     // APLICACIÓN DE MEDICAMENTOS
     // =========================================================
-    @POST("aplicacion_medicamento/")
-        suspend fun registrarAplicacion(
-            @Body request: AplicacionRequest
-        ): Response<AplicacionResponse>
 
+    @POST("aplicacion_medicamento/")
+    suspend fun registrarAplicacion(
+        @Body request: AplicacionRequest
+    ): Response<AplicacionResponse>
 
 
     // =========================================================
@@ -71,7 +77,7 @@ interface ApiService {
     @POST("recomendaciones/")
     suspend fun guardarRecomendacion(
         @Body recomendacion: Recomendacion
-    ): Response< Recomendacion>
+    ): Response<Recomendacion>
 
 
     // =========================================================
@@ -89,7 +95,6 @@ interface ApiService {
     ): List<CuidadoEnfermeria>
 
 
-
     // =========================================================
     // ASIGNACIÓN DE PACIENTES A CUIDADORES
     // =========================================================
@@ -98,9 +103,15 @@ interface ApiService {
     suspend fun guardarAsignacion(
         @Body asignacion: AsignacionPacienteCuidador
     ): Response<AsignacionPacienteCuidador>
+
     @GET("asignacion_paciente_cuidador/")
     suspend fun getAsignacionesPacienteCuidador():
             Response<List<AsignacionPacienteCuidador>>
+
+
+    // =========================================================
+    // ELEMENTOS DEL PACIENTE
+    // =========================================================
 
     @GET("elementos_paciente/")
     suspend fun getElementosPorPaciente(
@@ -112,11 +123,19 @@ interface ApiService {
         @Body elemento: ElementoPaciente
     ): Response<ElementoPaciente>
 
-    // 3. Catálogo maestro de medicamentos
+
+    // =========================================================
+    // MEDICAMENTOS
+    // =========================================================
+
     @GET("medicamentos/")
     suspend fun getMedicamentos(): Response<List<Medicamento>>
 
-    // 4. Catálogos maestros para insumos
+
+    // =========================================================
+    // TIPOS DE INSUMOS
+    // =========================================================
+
     @GET("tipo_insumo/")
     suspend fun getTiposInsumos(): Response<List<TipoInsumo>>
 
@@ -124,7 +143,6 @@ interface ApiService {
     suspend fun getInsumosPorTipo(
         @Query("id_tipo") idTipoInsumo: Int
     ): Response<List<Insumo>>
-
 
 
     // =========================================================
@@ -151,8 +169,8 @@ interface ApiService {
 
     @POST("usuarios/cambiar-contrasena/")
     suspend fun cambiarContrasena(
-        @Body datos: Map<String, Any>
-    ): Response<Map<String, String>>
+        @Body datos: CambiarContrasenaRequest
+    ): Response<RespuestaMensaje>
 
     @PATCH("usuarios/{id}/")
     suspend fun actualizarUsuario(
@@ -183,6 +201,24 @@ interface ApiService {
     suspend fun eliminarTurno(
         @Path("id") id: Int
     )
+
+
+    // =========================================================
+// NOTIFICACIONES
+// =========================================================
+
+    @GET("notificaciones/")
+    suspend fun getNotificaciones(): List<NotificacionApi>
+
+    @GET("notificacion_destinatario/")
+    suspend fun getNotificacionesDestinatarios(): List<NotificacionDestinatario>
+
+    @PATCH("notificacion_destinatario/{id}/")
+    suspend fun marcarNotificacionLeida(
+        @Path("id") id: Int,
+        @Body datos: MarcarNotificacionLeidaRequest
+    ): Response<RespuestaMensaje>
+
 
     // =========================================================
     // ASIGNACIONES DE TURNOS
@@ -230,8 +266,24 @@ interface ApiService {
 
 
     // =========================================================
+    // CITAS
+    // =========================================================
+
+    @GET("citas/")
+    suspend fun getCitas(): List<CitaApiResponse>
+
+    @POST("citas/")
+    suspend fun crearCita(
+        @Body cita: CrearCitaRequest
+    ): Response<CitaApiResponse>
+
+
+    // =========================================================
     // EVENTOS ADVERSOS
     // =========================================================
+
+    @GET("eventos_adversos/")
+    suspend fun getEventosAdversos(): List<EventoAdverso>
 
     @POST("eventos_adversos/")
     suspend fun crearEventoAdverso(
@@ -256,8 +308,16 @@ interface ApiService {
     @GET("tipo_emergencia/")
     suspend fun getTiposEmergencia(): List<TipoEmergencia>
 
+
+    // =========================================================
+    // HISTORIAS CLÍNICAS
+    // =========================================================
+
     @GET("historia_clinicas/")
     suspend fun getHistoriasClinicas(): List<HistoriaClinica>
 
-
+    @POST("historia_clinicas/")
+    suspend fun crearHistoriaClinica(
+        @Body historia: HistoriaClinica
+    ): HistoriaClinica
 }

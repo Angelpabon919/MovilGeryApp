@@ -6,7 +6,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC">
+    android:background="#F8FAFC"
+    android:focusableInTouchMode="true">
 
     <!-- ===================================================== -->
     <!-- ENCABEZADO -->
@@ -26,17 +27,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- ================================================= -->
-        <!-- TÍTULO -->
-        <!-- ================================================= -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
-
-            <!-- BOTÓN VOLVER -->
 
             <ImageButton
                 android:id="@+id/btnVolverEditarPerfil"
@@ -47,8 +42,6 @@
                 android:background="@android:color/transparent"
                 android:contentDescription="Volver"
                 app:tint="@color/white" />
-
-            <!-- TÍTULO -->
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -90,12 +83,14 @@
         android:layout_height="0dp"
         android:fillViewport="true"
         android:clipToPadding="false"
+        android:focusable="false"
         android:overScrollMode="ifContentScrolls"
         android:scrollbars="vertical"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="40dp"
+        android:paddingBottom="60dp"
+        android:descendantFocusability="afterDescendants"
         app:layout_constraintTop_toBottomOf="@id/headerEditarPerfil"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -122,7 +117,7 @@
                     android:layout_width="90dp"
                     android:layout_height="90dp"
                     android:padding="12dp"
-                    android:src="@drawable/person"
+                    android:src="@drawable/persona_encargado"
                     android:background="@drawable/bg_estado_perfil"
                     android:contentDescription="Foto de perfil" />
 
@@ -186,14 +181,38 @@
 
 
             <!-- ================================================= -->
-            <!-- DOCUMENTO -->
+            <!-- TIPO DE DOCUMENTO -->
             <!-- ================================================= -->
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
-                android:text="Documento"
+                android:text="Tipo de documento"
+                android:textColor="#344054"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <Spinner
+                android:id="@+id/spinnerTipoDocumentoPerfil"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_search"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:spinnerMode="dropdown" />
+
+
+            <!-- ================================================= -->
+            <!-- NÚMERO DE DOCUMENTO -->
+            <!-- ================================================= -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="Número de documento"
                 android:textColor="#344054"
                 android:textSize="13sp"
                 android:textStyle="bold" />

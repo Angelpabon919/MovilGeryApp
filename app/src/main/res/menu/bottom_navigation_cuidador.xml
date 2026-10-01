@@ -20,7 +20,7 @@
 
     <item
         android:id="@+id/nav_cuidador_perfil"
-        android:icon="@drawable/ic_avatar_placeholder"
+        android:icon="@drawable/persona_encargado"
         android:title="Perfil" />
 
 </menu>

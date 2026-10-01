@@ -23,16 +23,22 @@ class NotificacionAdapter(
         fun bind(notificacion: Notificacion) {
 
             // =================================================
-            // IMAGEN DE LA NOTIFICACIÓN
+            // ICONO
             // =================================================
 
-            binding.imgIconoNotificacion.setImageResource(
-                notificacion.icono
-            )
+            if (notificacion.icono != 0) {
+                binding.imgIconoNotificacion.setImageResource(
+                    notificacion.icono
+                )
+            } else {
+                binding.imgIconoNotificacion.setImageDrawable(
+                    null
+                )
+            }
 
 
             // =================================================
-            // INFORMACIÓN DE LA NOTIFICACIÓN
+            // INFORMACIÓN
             // =================================================
 
             binding.txtTipoNotificacion.text =
@@ -49,7 +55,7 @@ class NotificacionAdapter(
 
 
             // =================================================
-            // INDICADOR DE NOTIFICACIÓN NO LEÍDA
+            // INDICADOR NO LEÍDA
             // =================================================
 
             binding.indicadorNoLeida.visibility =
@@ -61,11 +67,10 @@ class NotificacionAdapter(
 
 
             // =================================================
-            // CLICK EN LA NOTIFICACIÓN
+            // CLICK
             // =================================================
 
             binding.root.setOnClickListener {
-
                 onClick(notificacion)
             }
         }
@@ -93,26 +98,23 @@ class NotificacionAdapter(
 
 
     // =====================================================
-    // CONECTAR DATOS CON EL ITEM
+    // CONECTAR DATOS
     // =====================================================
 
     override fun onBindViewHolder(
         holder: NotificacionViewHolder,
         position: Int
     ) {
-
         holder.bind(lista[position])
     }
 
 
     // =====================================================
-    // CANTIDAD DE ELEMENTOS
+    // CANTIDAD
     // =====================================================
 
-    override fun getItemCount(): Int {
-
-        return lista.size
-    }
+    override fun getItemCount(): Int =
+        lista.size
 
 
     // =====================================================

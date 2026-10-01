@@ -13,49 +13,62 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- ================================================= -->
+        <!-- ===================================================== -->
         <!-- ENCABEZADO -->
-        <!-- ================================================= -->
+        <!-- ===================================================== -->
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#3B5BDB"
+            android:layout_height="100dp"
+            android:background="@drawable/bg_rounded"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="16dp"
-            android:paddingTop="18dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="18dp">
+            android:paddingEnd="16dp">
 
             <ImageButton
                 android:id="@+id/btnVolverEvento"
                 android:layout_width="48dp"
+                android:layout_marginTop="10dp"
                 android:layout_height="48dp"
-                android:layout_marginTop="15dp"
                 android:background="@android:color/transparent"
                 android:contentDescription="Volver"
                 android:padding="8dp"
                 android:src="@drawable/arrow_back"
                 app:tint="#FFFFFF" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
+                android:layout_marginTop="10dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:text="Detalle del evento"
-                android:layout_marginTop="15dp
-"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Detalle del evento"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="Información del evento adverso"
+                    android:textColor="#E2E9FF"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <!-- ================================================= -->
+
+        <!-- ===================================================== -->
         <!-- CONTENIDO -->
-        <!-- ================================================= -->
+        <!-- ===================================================== -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -63,40 +76,46 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+
             <!-- ================================================= -->
-            <!-- INFORMACIÓN DEL EVENTO -->
+            <!-- INFORMACIÓN PRINCIPAL -->
             <!-- ================================================= -->
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
+
+
+                    <!-- TÍTULO -->
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="EVENTO ADVERSO"
                         android:textColor="#687078"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08" />
 
                     <TextView
                         android:id="@+id/txtTipoEvento"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="Caída"
                         android:textColor="#212529"
-                        android:textSize="21sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
+
 
                     <!-- ESTADO -->
 
@@ -115,27 +134,89 @@
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
+
                     <!-- SEPARADOR -->
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="18dp"
                         android:background="#E9ECEF" />
+
+
+                    <!-- ID EVENTO -->
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Identificador del evento"
+                        android:textColor="#687078"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtIdEvento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="EV-001"
+                        android:textColor="#212529"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+
+                    <!-- TIPO EMERGENCIA -->
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="Tipo de emergencia"
+                        android:textColor="#687078"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtTipoEmergenciaEvento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="Caída"
+                        android:textColor="#212529"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Nivel de emergencia"
+                        android:textColor="#687078"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtNivelEmergenciaEvento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="Alto"
+                        android:textColor="#212529"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
 
                     <!-- PACIENTE -->
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="14dp"
                         android:text="Paciente"
                         android:textColor="#687078"
                         android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/txtPacienteEvento"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
                         android:text="Rosa Martínez"
@@ -143,24 +224,6 @@
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
-                    <!-- FECHA -->
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:text="Fecha y hora"
-                        android:textColor="#687078"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/txtFechaEvento"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:text="03 Sep 2026 · 14:30"
-                        android:textColor="#212529"
-                        android:textSize="15sp" />
 
                     <!-- CUIDADOR -->
 
@@ -174,7 +237,7 @@
 
                     <TextView
                         android:id="@+id/txtCuidadorEvento"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
                         android:text="María Fernández"
@@ -182,9 +245,30 @@
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
+
+                    <!-- FECHA -->
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="Fecha y hora"
+                        android:textColor="#687078"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtFechaEvento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="03 Sep 2026 · 14:30"
+                        android:textColor="#212529"
+                        android:textSize="15sp" />
+
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
+
 
             <!-- ================================================= -->
             <!-- DESCRIPCIÓN -->
@@ -195,19 +279,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="DESCRIPCIÓN"
+                        android:text="DESCRIPCIÓN DEL EVENTO"
                         android:textColor="#212529"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -217,8 +301,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:lineSpacingExtra="3dp"
-                        android:text="El paciente presentó una caída mientras se encontraba en la habitación. El cuidador informó inmediatamente del evento para realizar el seguimiento correspondiente."
+                        android:lineSpacingExtra="4dp"
+                        android:text="Descripción del evento."
                         android:textColor="#687078"
                         android:textSize="14sp" />
 
@@ -226,8 +310,9 @@
 
             </androidx.cardview.widget.CardView>
 
+
             <!-- ================================================= -->
-            <!-- REGISTRO FOTOGRÁFICO -->
+            <!-- ACCIONES REALIZADAS -->
             <!-- ================================================= -->
 
             <androidx.cardview.widget.CardView
@@ -235,47 +320,167 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:contentDescription="Acciones realizadas"
+                            android:src="@drawable/check"
+                            app:tint="#3B5BDB" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="ACCIONES REALIZADAS"
+                            android:textColor="#212529"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/txtAccionesRealizadasEvento"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="REGISTRO FOTOGRÁFICO"
-                        android:textColor="#212529"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="4dp"
+                        android:text="Acciones realizadas durante el evento."
+                        android:textColor="#687078"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+
+            <!-- ================================================= -->
+            <!-- REGISTRO FOTOGRÁFICO OBLIGATORIO -->
+            <!-- ================================================= -->
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+
+                    <!-- TÍTULO -->
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="Registro fotográfico"
+                            android:src="@drawable/camara"
+                            app:tint="#3B5BDB" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="REGISTRO FOTOGRÁFICO"
+                            android:textColor="#212529"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_status_activo"
+                            android:paddingStart="9dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="9dp"
+                            android:paddingBottom="5dp"
+                            android:text="OBLIGATORIO"
+                            android:textColor="#8A6200"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+
+                    <!-- DESCRIPCIÓN -->
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Evidencia fotográfica registrada durante el evento."
+                        android:layout_marginTop="8dp"
+                        android:text="Evidencia fotográfica registrada durante el evento adverso."
                         android:textColor="#687078"
                         android:textSize="12sp" />
 
-                    <ImageView
-                        android:id="@+id/imgRegistroFotografico"
+
+                    <!-- FOTO -->
+
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="190dp"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/redondeado"
-                        android:contentDescription="Registro fotográfico del evento"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/img" />
+                        android:layout_height="210dp"
+                        android:layout_marginTop="14dp">
+
+                        <ImageView
+                            android:id="@+id/imgRegistroFotografico"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/redondeado"
+                            android:contentDescription="Registro fotográfico del evento"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/img" />
+
+                        <TextView
+                            android:id="@+id/txtSinRegistroFotografico"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:background="#E9ECEF"
+                            android:paddingStart="14dp"
+                            android:paddingTop="8dp"
+                            android:paddingEnd="14dp"
+                            android:paddingBottom="8dp"
+                            android:text="Sin registro fotográfico"
+                            android:textColor="#687078"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
+
+                    </FrameLayout>
+
+
+                    <!-- FECHA FOTO -->
 
                     <TextView
                         android:id="@+id/txtFechaFotografia"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Registrada el 03 Sep 2026 · 14:35"
+                        android:layout_marginTop="9dp"
+                        android:text="Evidencia registrada"
                         android:textColor="#687078"
                         android:textSize="11sp" />
 
@@ -283,8 +488,9 @@
 
             </androidx.cardview.widget.CardView>
 
+
             <!-- ================================================= -->
-            <!-- OBSERVACIONES -->
+            <!-- BITÁCORA RELACIONADA -->
             <!-- ================================================= -->
 
             <androidx.cardview.widget.CardView
@@ -293,31 +499,40 @@
                 android:layout_marginTop="14dp"
                 android:layout_marginBottom="20dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="OBSERVACIONES"
+                        android:text="BITÁCORA RELACIONADA"
                         android:textColor="#212529"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/txtObservacionesEvento"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="Se recomienda continuar observando al paciente y registrar cualquier cambio en su estado."
+                        android:layout_marginTop="8dp"
+                        android:text="Este evento se encuentra asociado a una bitácora del cuidador."
                         android:textColor="#687078"
-                        android:textSize="14sp" />
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/txtIdBitacoraEvento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Bitácora #001"
+                        android:textColor="#3B5BDB"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 

@@ -6,65 +6,127 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.databinding.ItemPacienteAsignadoEncargadoBinding
 
-class PacientesAsignadosAdapter :
-    RecyclerView.Adapter<PacientesAsignadosAdapter.PacienteViewHolder>() {
+class PacientesAsignadosAdapter(
+    private val onPacienteClick: (Paciente) -> Unit
+) : RecyclerView.Adapter<PacientesAsignadosAdapter.PacienteViewHolder>() {
 
     private var pacientes: List<Paciente> = emptyList()
 
-    fun actualizarLista(nuevaLista: List<Paciente>) {
+    // =====================================================
+    // ACTUALIZAR LISTA
+    // =====================================================
+
+    fun actualizarLista(
+        nuevaLista: List<Paciente>
+    ) {
         pacientes = nuevaLista
         notifyDataSetChanged()
     }
+
+    // =====================================================
+    // CREAR VIEW HOLDER
+    // =====================================================
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): PacienteViewHolder {
 
-        val binding = ItemPacienteAsignadoEncargadoBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding =
+            ItemPacienteAsignadoEncargadoBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
 
-        return PacienteViewHolder(binding)
+        return PacienteViewHolder(
+            binding,
+            onPacienteClick
+        )
     }
+
+    // =====================================================
+    // CONECTAR DATOS
+    // =====================================================
 
     override fun onBindViewHolder(
         holder: PacienteViewHolder,
         position: Int
     ) {
-        holder.bind(pacientes[position])
+        holder.bind(
+            pacientes[position]
+        )
     }
 
-    override fun getItemCount(): Int = pacientes.size
+    // =====================================================
+    // CANTIDAD
+    // =====================================================
+
+    override fun getItemCount(): Int =
+        pacientes.size
+
+    // =====================================================
+    // VIEW HOLDER
+    // =====================================================
 
     class PacienteViewHolder(
-        private val binding: ItemPacienteAsignadoEncargadoBinding
+        private val binding: ItemPacienteAsignadoEncargadoBinding,
+        private val onPacienteClick: (Paciente) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(paciente: Paciente) {
+        fun bind(
+            paciente: Paciente
+        ) {
+
+            // -------------------------------------------------
+            // NOMBRE
+            // -------------------------------------------------
+
+            val nombreCompleto =
+                "${paciente.nombre} ${paciente.apellido}"
+                    .trim()
 
             binding.txtNombrePaciente.text =
-                "${paciente.nombre} ${paciente.apellido}".trim()
+                nombreCompleto.ifBlank {
+                    "Paciente sin nombre"
+                }
+
+            // -------------------------------------------------
+            // HABITACIÓN
+            // -------------------------------------------------
 
             binding.txtHabitacionPaciente.text =
-                if (paciente.habitacion != null) {
-                    "Habitación ${paciente.habitacion}"
-                } else {
-                    "Habitación no registrada"
-                }
+                paciente.habitacion
+                    ?.let {
+                        "Habitación $it"
+                    }
+                    ?: "Habitación no registrada"
+
+            // -------------------------------------------------
+            // CAMA
+            // -------------------------------------------------
 
             binding.txtCamaPaciente.text =
-                if (paciente.cama != null) {
-                    "Cama ${paciente.cama}"
-                } else {
-                    "Cama no registrada"
-                }
+                paciente.cama
+                    ?.let {
+                        "Cama $it"
+                    }
+                    ?: "Cama no registrada"
+
+            // -------------------------------------------------
+            // EPS
+            // -------------------------------------------------
 
             binding.txtEpsPaciente.text =
-                paciente.eps?.takeIf { it.isNotBlank() }
+                paciente.eps
+                    ?.takeIf {
+                        it.isNotBlank()
+                    }
                     ?: "EPS no registrada"
+
+            // -------------------------------------------------
+            // ESTADO
+            // -------------------------------------------------
 
             binding.txtEstadoPaciente.text =
                 if (paciente.estado) {
@@ -72,6 +134,14 @@ class PacientesAsignadosAdapter :
                 } else {
                     "Inactivo"
                 }
+
+            // -------------------------------------------------
+            // CLICK
+            // -------------------------------------------------
+
+            binding.root.setOnClickListener {
+                onPacienteClick(paciente)
+            }
         }
     }
 }

@@ -1,78 +1,199 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
     android:id="@+id/itemNotificacion"
+
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+
+    android:layout_marginStart="2dp"
+    android:layout_marginEnd="2dp"
     android:layout_marginBottom="12dp"
-    android:orientation="horizontal"
-    android:padding="16dp"
-    android:gravity="center_vertical"
-    android:background="@drawable/redondeado_card"
+
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
 
-    <!-- ICONO -->
-    <ImageView
-        android:id="@+id/imgIconoNotificacion"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:scaleType="centerInside"
-        android:contentDescription="Icono de notificación" />
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp">
 
-    <!-- INFORMACIÓN -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginStart="12dp">
 
-        <TextView
-            android:id="@+id/txtTipoNotificacion"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Evento adverso"
-            android:textColor="#1F2937"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="top"
 
-        <TextView
-            android:id="@+id/txtTituloNotificacion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:text="Caída de paciente"
-            android:textColor="#374151"
-            android:textSize="14sp" />
+        android:paddingStart="16dp"
+        android:paddingTop="15dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="15dp">
 
-        <TextView
-            android:id="@+id/txtDetalleNotificacion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:text="Rosa Martínez"
-            android:textColor="#98A2B3"
-            android:textSize="13sp" />
+        <!-- ================================================= -->
+        <!-- ICONO -->
+        <!-- ================================================= -->
 
-        <TextView
-            android:id="@+id/txtFechaNotificacion"
-            android:layout_width="wrap_content"
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="1dp"
+            android:backgroundTint="@color/secondary">
+
+            <ImageView
+                android:id="@+id/imgIconoNotificacion"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:src="@drawable/persona_encargado"
+
+                android:contentDescription="Icono de notificación"
+                android:padding="11dp"
+                android:scaleType="centerInside" />
+
+        </FrameLayout>
+
+
+        <!-- ================================================= -->
+        <!-- INFORMACIÓN -->
+        <!-- ================================================= -->
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Hace 15 minutos"
-            android:textColor="#98A2B3"
-            android:textSize="12sp" />
+
+            android:layout_weight="1"
+            android:layout_marginStart="13dp"
+
+            android:orientation="vertical">
+
+
+            <!-- ================================================= -->
+            <!-- FILA SUPERIOR: TIPO + INDICADOR -->
+            <!-- ================================================= -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+
+                <TextView
+                    android:id="@+id/txtTipoNotificacion"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+
+                    android:layout_weight="1"
+
+                    android:ellipsize="end"
+                    android:maxLines="1"
+
+                    android:text="Evento adverso"
+
+                    android:textColor="#3B5BDB"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+
+                <!-- INDICADOR NO LEÍDA -->
+
+                <View
+                    android:id="@+id/indicadorNoLeida"
+                    android:layout_width="9dp"
+                    android:layout_height="9dp"
+
+                    android:layout_marginStart="8dp"
+
+                    android:background="@drawable/bg_indicador_notificacion" />
+
+            </LinearLayout>
+
+
+            <!-- ================================================= -->
+            <!-- TÍTULO -->
+            <!-- ================================================= -->
+
+            <TextView
+                android:id="@+id/txtTituloNotificacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="4dp"
+
+                android:ellipsize="end"
+                android:maxLines="2"
+
+                android:text="Caída de paciente"
+
+                android:textColor="#172033"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+
+            <!-- ================================================= -->
+            <!-- DETALLE -->
+            <!-- ================================================= -->
+
+            <TextView
+                android:id="@+id/txtDetalleNotificacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="4dp"
+
+                android:ellipsize="end"
+                android:maxLines="2"
+
+                android:text="Rosa Martínez"
+
+                android:textColor="#667085"
+                android:textSize="13sp" />
+
+
+            <!-- ================================================= -->
+            <!-- FECHA / TIEMPO RELATIVO -->
+            <!-- ================================================= -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="8dp"
+
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+
+                    android:contentDescription="Hora de la notificación"
+                    android:src="@drawable/ic_clock_blue"
+                    android:alpha="0.75" />
+
+
+                <TextView
+                    android:id="@+id/txtFechaNotificacion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginStart="5dp"
+
+                    android:text="Hace 15 minutos"
+
+                    android:textColor="#98A2B3"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- INDICADOR NO LEÍDA -->
-    <View
-        android:id="@+id/indicadorNoLeida"
-        android:layout_width="9dp"
-        android:layout_height="9dp"
-        android:background="@drawable/bg_indicador_notificacion"
-        android:visibility="visible" />
-
-</LinearLayout>
+</androidx.cardview.widget.CardView>
