@@ -9,7 +9,10 @@
     android:background="@color/color_background"
     tools:context=".ui.cuidador.llegada.VerificacionLlegadaFragment">
 
+    <!-- ========================================================= -->
     <!-- ENCABEZADO AZUL -->
+    <!-- ========================================================= -->
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLlegada"
         android:layout_width="0dp"
@@ -24,6 +27,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <!-- PARTE SUPERIOR DEL ENCABEZADO -->
+
         <LinearLayout
             android:id="@+id/headerSuperior"
             android:layout_width="0dp"
@@ -35,6 +39,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <!-- NOMBRE DE LA APP -->
+
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -61,8 +66,8 @@
 
             </LinearLayout>
 
-
             <!-- CAMPANA DE NOTIFICACIONES -->
+
             <FrameLayout
                 android:layout_width="52dp"
                 android:layout_height="52dp">
@@ -77,6 +82,7 @@
                     android:src="@drawable/notifications" />
 
                 <!-- CANTIDAD DE NOTIFICACIONES -->
+
                 <TextView
                     android:id="@+id/txtNotificaciones"
                     android:layout_width="22dp"
@@ -93,27 +99,29 @@
 
         </LinearLayout>
 
-
         <!-- TÍTULO -->
+
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
+            android:gravity="center"
             android:text="Verificación de Llegada"
             android:textColor="@color/white"
             android:textSize="25sp"
-            android:gravity="center"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/headerSuperior" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
+    <!-- ========================================================= -->
     <!-- CONTENIDO DESPLAZABLE -->
+    <!-- ========================================================= -->
+
     <ScrollView
         android:id="@+id/scrollLlegada"
         android:layout_width="0dp"
@@ -133,7 +141,10 @@
             android:paddingEnd="20dp"
             android:paddingBottom="30dp">
 
+            <!-- ================================================= -->
             <!-- SUBTÍTULO -->
+            <!-- ================================================= -->
+
             <TextView
                 android:id="@+id/tvSubtitulo"
                 android:layout_width="0dp"
@@ -146,7 +157,10 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
 
+            <!-- ================================================= -->
             <!-- TARJETA DEL MAPA -->
+            <!-- ================================================= -->
+
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardMapa"
                 android:layout_width="0dp"
@@ -158,29 +172,43 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tvSubtitulo">
 
+                <!-- IMPORTANTE:
+                     CardView solo puede tener UN hijo directo.
+                     Por eso usamos FrameLayout. -->
 
-                    <!-- Este espacio posteriormente será el mapa -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <!-- MAPA -->
+
                     <org.osmdroid.views.MapView
                         android:id="@+id/mapa"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                        android:layout_height="match_parent" />
+
+                    <!-- MENSAJE SOBRE EL MAPA -->
 
                     <TextView
                         android:id="@+id/tvEsperandoUbicacion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="Obteniendo ubicacion..."
-                        android:textColor="@color/black"
-                        android:textSize="14sp"
                         android:background="@color/color_surface"
                         android:padding="8dp"
-                        />
+                        android:text="Obteniendo ubicacion..."
+                        android:textColor="@color/black"
+                        android:textSize="14sp" />
+
+                </FrameLayout>
 
             </androidx.cardview.widget.CardView>
 
 
+            <!-- ================================================= -->
             <!-- TARJETA DE LA SEDE -->
+            <!-- ================================================= -->
+
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardSede"
                 android:layout_width="0dp"
@@ -198,13 +226,13 @@
                     android:layout_height="wrap_content"
                     android:padding="18dp">
 
-                    <TextView
+                    <ImageView
                         android:id="@+id/tvIconoSede"
                         android:layout_width="42dp"
                         android:layout_height="42dp"
                         android:background="@drawable/bg_icono_llegada"
                         android:gravity="center"
-                        android:text="📍"
+                        android:src="@drawable/ubicacion_cuidador"
                         android:textSize="20sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -235,11 +263,13 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-
             </androidx.cardview.widget.CardView>
 
 
+            <!-- ================================================= -->
             <!-- TARJETA DEL HORARIO -->
+            <!-- ================================================= -->
+
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardHorario"
                 android:layout_width="0dp"
@@ -257,13 +287,13 @@
                     android:layout_height="wrap_content"
                     android:padding="18dp">
 
-                    <TextView
+                    <ImageView
                         android:id="@+id/tvIconoHorario"
                         android:layout_width="42dp"
                         android:layout_height="42dp"
                         android:background="@drawable/bg_icono_llegada"
                         android:gravity="center"
-                        android:text="🕐"
+                        android:src="@drawable/clock"
                         android:textSize="20sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -306,11 +336,14 @@
                         app:layout_constraintStart_toStartOf="@id/tvHorarioTitulo"
                         app:layout_constraintTop_toBottomOf="@id/tvHoraProgramada" />
 
-
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-
             </androidx.cardview.widget.CardView>
+
+
+            <!-- ================================================= -->
+            <!-- BOTÓN -->
+            <!-- ================================================= -->
 
             <Button
                 android:id="@+id/btnContinuarTemporal"
@@ -318,20 +351,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/color_primary"
                 android:text="Continuar a pacientes"
                 android:textColor="@color/white"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                android:backgroundTint="@color/color_primary"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/cardHorario"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/cardHorario" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 
     </ScrollView>
 

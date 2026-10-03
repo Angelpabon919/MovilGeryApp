@@ -19,12 +19,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.tileprovider.tilesource.XYTileSource
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay
 
 class VerificacionLlegadaFragment : Fragment() {
 
@@ -46,12 +44,17 @@ class VerificacionLlegadaFragment : Fragment() {
                 permisos[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
             if (ubicacionPrecisa || ubicacionAproximada) {
+
                 obtenerUbicacion()
 
             } else {
-                binding.tvEsperandoUbicacion.text =
+
+                val safeBinding = _binding ?: return@registerForActivityResult
+
+                safeBinding.tvEsperandoUbicacion.text =
                     "Permiso de ubicación denegado"
-                binding.tvEstadoLlegada.text =
+
+                safeBinding.tvEstadoLlegada.text =
                     "Necesitamos tu ubicación para verificar la llegada"
             }
         }
@@ -62,11 +65,12 @@ class VerificacionLlegadaFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding = FragmentVerificacionLlegadaBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+        _binding =
+            FragmentVerificacionLlegadaBinding.inflate(
+                inflater,
+                container,
+                false
+            )
 
         return binding.root
     }
@@ -75,16 +79,38 @@ class VerificacionLlegadaFragment : Fragment() {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         fusedLocationClient =
             LocationServices.getFusedLocationProviderClient(
                 requireActivity()
             )
-        Configuration.getInstance().load(requireContext(),
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+        configurarMapa()
+
+        configurarPantalla()
+
+        verificarPermisoUbicacion()
+
+        configurarBotonContinuar()
+    }
+
+    private fun configurarMapa() {
+
+        Configuration.getInstance().load(
+            requireContext(),
+            PreferenceManager.getDefaultSharedPreferences(
+                requireContext()
+            )
         )
-        Configuration.getInstance().setUserAgentValue ( "GerIApp/1.0")
+
+        Configuration.getInstance().setUserAgentValue(
+            "GerIApp/1.0"
+        )
+
         val stadiaMap = XYTileSource(
             "stadiaMaps",
             0,
@@ -93,12 +119,22 @@ class VerificacionLlegadaFragment : Fragment() {
             ".png?api_key=c308f0bd-c5a9-4d85-8b32-5896d3b10f9c",
             arrayOf(
                 "http://tiles.stadiamaps.com/tiles/osm_bright/"
-            ),"© Stadia Maps © OpenStreetMap contributors © OpenMapTiles"
+            ),
+            "© Stadia Maps © OpenStreetMap contributors © OpenMapTiles"
         )
-        binding.mapa.setTileSource(stadiaMap)
-        binding.mapa.setMultiTouchControls(true)
+
+        binding.mapa.setTileSource(
+            stadiaMap
+        )
+
+        binding.mapa.setMultiTouchControls(
+            true
+        )
+
         val locationProvider =
-            GpsMyLocationProvider(requireContext())
+            GpsMyLocationProvider(
+                requireContext()
+            )
 
         locationOverlay =
             MyLocationNewOverlay(
@@ -108,34 +144,50 @@ class VerificacionLlegadaFragment : Fragment() {
 
         locationOverlay.enableMyLocation()
 
-        binding.mapa.overlays.add(locationOverlay)
-        configurarPantalla()
-        verificarPermisoUbicacion()
+        binding.mapa.overlays.add(
+            locationOverlay
+        )
+    }
+
+    private fun configurarPantalla() {
+
+        binding.tvEstadoLlegada.text =
+            "Esperando llegada..."
+
+        binding.tvEsperandoUbicacion.text =
+            "Obteniendo ubicación..."
+
+        binding.tvDistancia.text =
+            "Calculando..."
+    }
+
+    private fun configurarBotonContinuar() {
 
         binding.btnContinuarTemporal.setOnClickListener {
 
-            // Mostramos nuevamente el BottomNavigation
-            requireActivity()
-                .findViewById<View>(R.id.bottomNavigation)
-                .visibility = View.VISIBLE
+            /*
+             * Flujo del cuidador:
+             *
+             * Login
+             *    ↓
+             * Verificación de llegada
+             *    ↓
+             * PacientesListFragment
+             *    ↓
+             * HomeFragment
+             *
+             * En esta pantalla todavía NO mostramos
+             * el BottomNavigation.
+             */
 
-            // Vamos a la lista de pacientes
-            parentFragmentManager.beginTransaction()
+            parentFragmentManager
+                .beginTransaction()
                 .replace(
                     R.id.fragmentContainer,
                     PacientesListFragment()
                 )
                 .commit()
         }
-    }
-    private fun configurarPantalla() {
-
-        binding.tvEstadoLlegada.text =
-            "Esperando llegada..."
-        binding.tvEsperandoUbicacion.text =
-            "Obteniendo ubicación..."
-        binding.tvDistancia.text =
-            "Calculando..."
     }
 
     private fun verificarPermisoUbicacion() {
@@ -170,61 +222,87 @@ class VerificacionLlegadaFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun obtenerUbicacion() {
 
-        binding.tvEsperandoUbicacion.text =
+        val currentBinding = _binding ?: return
+
+        currentBinding.tvEsperandoUbicacion.text =
             "Obteniendo ubicación..."
 
         val cancellationTokenSource =
             CancellationTokenSource()
 
-        fusedLocationClient.getCurrentLocation(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            cancellationTokenSource.token
-        ).addOnSuccessListener { location ->
+        fusedLocationClient
+            .getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                cancellationTokenSource.token
+            )
+            .addOnSuccessListener { location ->
 
-            if (location != null) {
+                val safeBinding = _binding ?: return@addOnSuccessListener
 
-                val latitud = location.latitude
-                val longitud = location.longitude
+                if (location != null) {
 
-                val puntoActual = GeoPoint(latitud,longitud)
-                binding.mapa.controller.setZoom(17.0)
-                binding.mapa.controller.setCenter(puntoActual)
+                    val latitud =
+                        location.latitude
 
-                binding.tvEsperandoUbicacion.visibility = View.GONE
+                    val longitud =
+                        location.longitude
 
-                binding.tvEstadoLlegada.text =
-                    "Ubicación obtenida correctamente"
+                    val puntoActual =
+                        GeoPoint(
+                            latitud,
+                            longitud
+                        )
 
-
-                // MOSTRAMOS LAS COORDENADAS
-                // SOLO PARA HACER LA PRUEBA
-                binding.tvDistancia.text =
-                    "Lat: %.5f\nLon: %.5f".format(
-                        latitud,
-                        longitud
+                    safeBinding.mapa.controller.setZoom(
+                        17.0
                     )
-            } else {
 
-                binding.tvEsperandoUbicacion.text =
-                    "No se pudo obtener la ubicación"
+                    safeBinding.mapa.controller.setCenter(
+                        puntoActual
+                    )
 
-                binding.tvEstadoLlegada.text =
-                    "Intenta activar el GPS"
+                    safeBinding.tvEsperandoUbicacion.visibility =
+                        View.GONE
+
+                    safeBinding.tvEstadoLlegada.text =
+                        "Ubicación obtenida correctamente"
+
+                    safeBinding.tvDistancia.text =
+                        "Lat: %.5f\nLon: %.5f".format(
+                            latitud,
+                            longitud
+                        )
+
+                } else {
+
+                    safeBinding.tvEsperandoUbicacion.text =
+                        "No se pudo obtener la ubicación"
+
+                    safeBinding.tvEstadoLlegada.text =
+                        "Intenta activar el GPS"
+                }
             }
+            .addOnFailureListener {
 
-        }.addOnFailureListener {
+                val safeBinding = _binding ?: return@addOnFailureListener
 
-            binding.tvEsperandoUbicacion.text =
-                "Error al obtener ubicación"
+                safeBinding.tvEsperandoUbicacion.text =
+                    "Error al obtener ubicación"
 
-            binding.tvEstadoLlegada.text =
-                "Verifica que el GPS esté activado"
-        }
+                safeBinding.tvEstadoLlegada.text =
+                    "Verifica que el GPS esté activado"
+            }
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+
+        if (::locationOverlay.isInitialized) {
+
+            locationOverlay.disableMyLocation()
+        }
 
         _binding = null
+
+        super.onDestroyView()
     }
 }

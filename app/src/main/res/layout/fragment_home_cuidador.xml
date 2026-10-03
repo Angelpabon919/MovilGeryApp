@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,12 +8,15 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <!-- Header Azul Superior Redondeado -->
+    <!-- ===================================================== -->
+    <!-- HEADER AZUL -->
+    <!-- ===================================================== -->
+
     <View
         android:id="@+id/viewHeaderBackground"
         android:layout_width="0dp"
         android:layout_height="200dp"
-        android:background="@drawable/shape_header_blue_bottom_rounded"
+        android:background="@drawable/bg_rounded"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -41,7 +45,6 @@
         app:layout_constraintStart_toStartOf="@id/tvAppName"
         app:layout_constraintTop_toBottomOf="@id/tvAppName" />
 
-    <!-- Icono de Notificaciones (Campana) -->
     <ImageView
         android:id="@+id/btnNotification"
         android:layout_width="40dp"
@@ -54,7 +57,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/tvAppName" />
 
-    <!-- Buscador: Buscar paciente -->
+    <!-- ===================================================== -->
+    <!-- BUSCADOR -->
+    <!-- ===================================================== -->
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cardSearch"
         android:layout_width="0dp"
@@ -92,10 +98,15 @@
                 android:textColor="#1E293B"
                 android:textColorHint="#94A3B8"
                 android:textSize="14sp" />
+
         </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
-    <!-- Tarjeta Desplegable: Medicamentos de hoy -->
+    <!-- ===================================================== -->
+    <!-- CARD MEDICAMENTOS -->
+    <!-- ===================================================== -->
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cardMedicamentos"
         android:layout_width="0dp"
@@ -113,7 +124,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Cabecera interactiva -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/layoutHeaderMedicamentos"
                 android:layout_width="match_parent"
@@ -167,7 +177,6 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Contenedor Desplegable -->
             <LinearLayout
                 android:id="@+id/containerMedicamentosContent"
                 android:layout_width="match_parent"
@@ -188,9 +197,13 @@
             </LinearLayout>
 
         </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
-    <!-- Título Sección Pacientes Asignados y Botón Editar -->
+    <!-- ===================================================== -->
+    <!-- TITULO PACIENTES -->
+    <!-- ===================================================== -->
+
     <LinearLayout
         android:id="@+id/layoutHeaderPacientes"
         android:layout_width="0dp"
@@ -226,7 +239,10 @@
 
     </LinearLayout>
 
-    <!-- Lista Pura de Pacientes Asignados -->
+    <!-- ===================================================== -->
+    <!-- LISTA PACIENTES -->
+    <!-- ===================================================== -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPacientesAsignados"
         android:layout_width="0dp"
@@ -234,11 +250,177 @@
         android:layout_marginTop="8dp"
         android:clipToPadding="false"
         android:paddingHorizontal="20dp"
-        android:paddingBottom="20dp"
+        android:paddingBottom="105dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutHeaderPacientes"
         tools:listitem="@layout/item_paciente" />
+
+    <!-- ===================================================== -->
+    <!-- NAVEGACION INFERIOR CUIDADOR -->
+    <!-- ===================================================== -->
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/bottomNavigationCuidador"
+        android:layout_width="0dp"
+        android:layout_height="68dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#F7F9FC"
+        app:cardCornerRadius="34dp"
+        app:cardElevation="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <!-- ================= INICIO ================= -->
+
+            <LinearLayout
+                android:id="@+id/navInicio"
+                android:layout_width="0dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_nav_selected"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iconInicio"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Inicio"
+                    android:src="@drawable/home"
+                    app:tint="#3B5BDB" />
+
+                <TextView
+                    android:id="@+id/textInicio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Inicio"
+                    android:textColor="#3B5BDB"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- ================= AGENDA ================= -->
+
+            <LinearLayout
+                android:id="@+id/navAgenda"
+                android:layout_width="0dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iconAgenda"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Agenda"
+                    android:src="@drawable/agenda"
+                    app:tint="#7F8A9A" />
+
+                <TextView
+                    android:id="@+id/textAgenda"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Agenda"
+                    android:textColor="#7F8A9A"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+            <!-- ================= CAMARAS ================= -->
+
+            <LinearLayout
+                android:id="@+id/navCamaras"
+                android:layout_width="0dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iconCamaras"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Cámaras"
+                    android:src="@drawable/outline_camera_video_24"
+                    app:tint="#7F8A9A" />
+
+                <TextView
+                    android:id="@+id/textCamaras"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Cámaras"
+                    android:textColor="#7F8A9A"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+            <!-- ================= PERFIL ================= -->
+
+            <LinearLayout
+                android:id="@+id/navPerfil"
+                android:layout_width="0dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iconPerfil"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Mi perfil"
+                    android:src="@drawable/persona_encargado"
+                    app:tint="#7F8A9A" />
+
+                <TextView
+                    android:id="@+id/textPerfil"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Perfil"
+                    android:textColor="#7F8A9A"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

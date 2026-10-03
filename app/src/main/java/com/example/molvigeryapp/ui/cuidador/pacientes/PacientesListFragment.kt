@@ -88,13 +88,6 @@ class PacientesListFragment : Fragment() {
         viewModel.cargarPacientes()
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        (requireActivity() as MainActivity)
-            .mostrarBottomNavigation()
-    }
-
     private fun setupRecyclerView() {
 
         adapter = PacienteAdapter(

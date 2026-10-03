@@ -8,6 +8,10 @@ import com.example.molvigeryapp.data.model.Paciente
 
 object CitasRepository {
 
+    // ALMACENAMIENTO TEMPORAL PARA LAS CITAS EN MEMORIA
+    private val listaCitas = mutableListOf<Cita>()
+    private var siguienteId = 1
+
     // =========================================================
     // OBTENER CITAS DESDE LA API
     // =========================================================
@@ -28,9 +32,7 @@ object CitasRepository {
 
             val paciente =
                 pacientes.firstOrNull { paciente ->
-
-                    paciente.idPaciente ==
-                            citaApi.idPaciente
+                    paciente.idPaciente == citaApi.idPaciente
                 }
 
             convertirCita(
@@ -40,6 +42,59 @@ object CitasRepository {
             )
         }
     }
+
+    // =========================================================
+    // MÉTODOS EN MEMORIA LOCAL
+    // =========================================================
+
+    fun obtenerCitas(): List<Cita> {
+        return listaCitas.toList()
+    }
+
+    fun agregarCita(cita: Cita) {
+        val nuevaCita = cita.copy(
+            id = siguienteId.toString()
+        )
+        listaCitas.add(nuevaCita)
+        siguienteId++
+    }
+
+    fun obtenerCitaPorId(
+        id: String?
+    ): Cita? {
+        return listaCitas.find {
+            it.id == id
+        }
+    }
+
+    fun obtenerCitaPorId(
+        id: Int
+    ): Cita? = obtenerCitaPorId(id.toString())
+
+    fun actualizarCita(
+        cita: Cita
+    ) {
+        val posicion =
+            listaCitas.indexOfFirst {
+                it.id == cita.id
+            }
+
+        if (posicion != -1) {
+            listaCitas[posicion] = cita
+        }
+    }
+
+    fun eliminarCita(
+        id: String?
+    ) {
+        listaCitas.removeAll {
+            it.id == id
+        }
+    }
+
+    fun eliminarCita(
+        id: Int
+    ) = eliminarCita(id.toString())
 
 
     // =========================================================
@@ -59,10 +114,9 @@ object CitasRepository {
 
         return Cita(
 
-            // ID interno de la aplicación
-            id = indice + 1,
+            // ID
+            id = citaApi.idCita,
 
-            // ID REAL del backend
             idCita = citaApi.idCita,
 
             // Paciente relacionado
@@ -71,46 +125,46 @@ object CitasRepository {
             // Nombre del paciente
             nombrePaciente =
                 if (paciente != null) {
-
-                    "${paciente.nombre} ${paciente.apellido}"
-                        .trim()
-
+                    "${paciente.nombre} ${paciente.apellido}".trim()
                 } else {
-
                     "Paciente no encontrado"
                 },
 
             // Habitación
-            habitacion =
-                paciente?.habitacion,
+            habitacion = paciente?.habitacion,
 
             // Cama
-            cama =
-                paciente?.cama,
+            cama = paciente?.cama,
 
             // Tipo de cita
-            tipoCita =
-                partesMotivo.first,
+            tipoCita = partesMotivo.first,
 
             // Especialidad
-            especialidad =
-                partesMotivo.second,
+            especialidad = partesMotivo.second,
 
             // Fecha
-            fecha =
-                citaApi.fecha,
+            fecha = citaApi.fecha,
 
             // Hora
-            hora =
-                citaApi.hora,
+            hora = citaApi.hora,
 
             // Observaciones
-            observaciones =
-                citaApi.observaciones,
+            observaciones = citaApi.observaciones,
 
             // Estado
-            estado =
-                citaApi.estado
+            estado = citaApi.estado,
+
+            // Lugar
+            lugar = citaApi.lugar,
+
+            // Motivo
+            motivo = citaApi.motivo,
+
+            // Fecha Registro
+            fechaRegistro = citaApi.fechaRegistro,
+
+            // ID Usuario
+            idUsuario = citaApi.idUsuario
         )
     }
 
@@ -118,24 +172,12 @@ object CitasRepository {
     // =========================================================
     // SEPARAR MOTIVO
     // =========================================================
-    //
-    // Ejemplo:
-    //
-    // Consulta - Cardiología: Control general
-    //
-    // Resultado:
-    //
-    // tipoCita = Consulta
-    // especialidad = Cardiología
-    //
-    // =========================================================
 
     private fun separarMotivo(
         motivo: String
     ): Pair<String, String> {
 
         if (motivo.isBlank()) {
-
             return Pair(
                 "Sin tipo",
                 "Sin especialidad"
@@ -151,18 +193,14 @@ object CitasRepository {
                 )
 
             if (partesGuion.size < 2) {
-
                 return Pair(
                     motivo.trim(),
                     "Sin especialidad"
                 )
             }
 
-            val tipoCita =
-                partesGuion[0].trim()
-
-            val resto =
-                partesGuion[1].trim()
+            val tipoCita = partesGuion[0].trim()
+            val resto = partesGuion[1].trim()
 
             val partesDosPuntos =
                 resto.split(
@@ -170,8 +208,7 @@ object CitasRepository {
                     limit = 2
                 )
 
-            val especialidad =
-                partesDosPuntos[0].trim()
+            val especialidad = partesDosPuntos[0].trim()
 
             Pair(
                 tipoCita,
@@ -189,7 +226,7 @@ object CitasRepository {
 
 
     // =========================================================
-    // CREAR CITA
+    // CREAR CITA EN API
     // =========================================================
 
     suspend fun crearCita(
@@ -199,37 +236,24 @@ object CitasRepository {
         return try {
 
             val respuesta =
-                RetrofitClient.apiService
-                    .crearCita(cita)
-
+                RetrofitClient.apiService.crearCita(cita)
 
             if (respuesta.isSuccessful) {
 
-                val cuerpo =
-                    respuesta.body()
-
+                val cuerpo = respuesta.body()
 
                 if (cuerpo != null) {
-
-                    Result.success(
-                        cuerpo
-                    )
-
+                    Result.success(cuerpo)
                 } else {
-
                     Result.failure(
-                        Exception(
-                            "El servidor no devolvió la información de la cita"
-                        )
+                        Exception("El servidor no devolvió la información de la cita")
                     )
                 }
 
             } else {
 
                 Result.failure(
-                    Exception(
-                        "Error HTTP ${respuesta.code()}"
-                    )
+                    Exception("Error HTTP ${respuesta.code()}")
                 )
             }
 

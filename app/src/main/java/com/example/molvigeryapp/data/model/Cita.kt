@@ -1,28 +1,55 @@
 package com.example.molvigeryapp.data.model
 
+import com.google.gson.annotations.SerializedName
+import java.io.Serializable
+
 data class Cita(
 
-    val id: Int,
+    @SerializedName("id_cita")
+    val id: String? = null,
 
-    val idCita: String,
+    val idCita: String? = null,
 
-    val idPaciente: Int?,
+    @SerializedName("id_paciente")
+    val idPaciente: Int? = null,
 
-    val nombrePaciente: String,
+    @SerializedName("nombre_paciente")
+    val nombrePaciente: String? = null,
 
-    val habitacion: Int?,
+    @SerializedName("habitacion")
+    val habitacion: Int? = null,
 
-    val cama: Int?,
+    @SerializedName("cama")
+    val cama: Int? = null,
 
-    val tipoCita: String,
+    @SerializedName("tipo_cita")
+    val tipoCita: String? = null,
 
-    val especialidad: String,
+    @SerializedName("especialidad")
+    val especialidad: String? = null,
 
-    val fecha: String,
+    @SerializedName("fecha")
+    val fecha: String = "",
 
-    val hora: String,
+    @SerializedName("hora")
+    val hora: String = "",
 
-    val observaciones: String,
+    @SerializedName("lugar")
+    val lugar: String? = null,
 
-    val estado: String
-)
+    @SerializedName("motivo")
+    val motivo: String? = null,
+
+    @SerializedName("estado")
+    val estado: String = "",
+
+    @SerializedName("observaciones")
+    val observaciones: String? = null,
+
+    @SerializedName("fecha_registro")
+    val fechaRegistro: String? = null,
+
+    @SerializedName("id_usuario")
+    val idUsuario: Int? = null
+
+) : Serializable
