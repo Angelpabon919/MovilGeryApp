@@ -14,6 +14,7 @@ import com.example.molvigeryapp.databinding.FragmentHomeCuidadorBinding
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
 import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.CamarasFragment
+import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
 class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
@@ -100,10 +101,12 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             },
 
             onPerfil = {
-
-                // Por ahora dejamos preparado
-                // el botón hasta conectar
-                // el fragmento de perfil.
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer, PerfilCuidadorFragment()
+                    )
+                    .commit()
             }
         )
     }
