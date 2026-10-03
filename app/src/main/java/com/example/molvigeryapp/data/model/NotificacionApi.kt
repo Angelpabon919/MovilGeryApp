@@ -3,9 +3,8 @@ package com.example.molvigeryapp.data.model
 import com.google.gson.annotations.SerializedName
 
 data class NotificacionApi(
-
     @SerializedName("id_notificacion")
-    val idNotificacion: Int,
+    val idNotificacion: Int? = null,
 
     @SerializedName("titulo")
     val titulo: String,
@@ -17,17 +16,17 @@ data class NotificacionApi(
     val mensaje: String,
 
     @SerializedName("enviar_correo")
-    val enviarCorreo: Boolean,
+    val enviarCorreo: Boolean = false,
 
     @SerializedName("fecha_hora")
-    val fechaHora: String,
+    val fechaHora: String? = null,
 
     @SerializedName("estado")
-    val estado: Boolean,
+    val estado: Boolean = true,
 
     @SerializedName("id_paciente")
-    val idPaciente: Int?,
+    val idPaciente: Int? = null,
 
     @SerializedName("id_usuario")
-    val idUsuario: Int?
+    val idUsuario: Int? = null
 )

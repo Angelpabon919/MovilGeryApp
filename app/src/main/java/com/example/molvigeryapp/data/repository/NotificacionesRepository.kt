@@ -163,7 +163,7 @@ object NotificacionesRepository {
         return Notificacion(
 
             idNotificacion =
-                notificacion.idNotificacion,
+                notificacion.idNotificacion ?: 0,
 
             idNotificacionDestinatario =
                 destinatario.idNotificacionDestinatario,
@@ -181,7 +181,7 @@ object NotificacionesRepository {
 
             fecha =
                 formatearFecha(
-                    notificacion.fechaHora
+                    notificacion.fechaHora ?: ""
                 ),
 
             icono =
@@ -199,7 +199,7 @@ object NotificacionesRepository {
                 destinatario.idUsuario,
 
             fechaHora =
-                notificacion.fechaHora
+                notificacion.fechaHora ?: ""
         )
     }
 
@@ -215,7 +215,7 @@ object NotificacionesRepository {
         return Notificacion(
 
             idNotificacion =
-                notificacion.idNotificacion,
+                notificacion.idNotificacion ?: 0,
 
             idNotificacionDestinatario =
                 0,
@@ -233,7 +233,7 @@ object NotificacionesRepository {
 
             fecha =
                 formatearFecha(
-                    notificacion.fechaHora
+                    notificacion.fechaHora ?: ""
                 ),
 
             icono =
@@ -252,10 +252,10 @@ object NotificacionesRepository {
                 notificacion.idPaciente,
 
             idUsuario =
-                notificacion.idUsuario,
+                notificacion.idUsuario ?: 0,
 
             fechaHora =
-                notificacion.fechaHora
+                notificacion.fechaHora ?: ""
         )
     }
 

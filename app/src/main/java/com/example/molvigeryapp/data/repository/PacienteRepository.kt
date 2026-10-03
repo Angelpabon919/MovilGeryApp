@@ -3,16 +3,23 @@ package com.example.molvigeryapp.data.repository
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.AplicacionRequest
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.Insumo
+import com.example.molvigeryapp.data.model.Inventario
 import com.example.molvigeryapp.data.model.Medicamento
+import com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest
+import com.example.molvigeryapp.data.model.NotificacionRequest
+import com.example.molvigeryapp.data.model.NotificacionResponse
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.TipoInsumo
+import com.example.molvigeryapp.data.model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 
 class PacienteRepository {
 
@@ -27,440 +34,304 @@ class PacienteRepository {
             api.getPacientes()
         }
 
-    suspend fun obtenerPacientePorId(
-        id: Int
-    ): Paciente =
+    suspend fun obtenerPacientePorId(id: Int): Paciente =
         withContext(Dispatchers.IO) {
             api.getPacienteById(id)
         }
 
+    // =========================================================
+    // USUARIOS
+    // =========================================================
+
+    suspend fun obtenerUsuarioPorId(idUsuario: Int): Usuario? =
+        withContext(Dispatchers.IO) {
+            try {
+                api.getUsuarioById(idUsuario)
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Error al obtener usuario $idUsuario", e)
+                null
+            }
+        }
+
+    suspend fun cambiarContrasena(
+        idUsuario: Int,
+        contrasenaActual: String,
+        nuevaContrasena: String
+    ): Pair<Boolean, String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val datos = CambiarContrasenaRequest(
+                    idUsuario = idUsuario,
+                    contrasenaActual = contrasenaActual,
+                    nuevaContrasena = nuevaContrasena,
+                    confirmarContrasena = nuevaContrasena
+                )
+                val respuesta = api.cambiarContrasena(datos)
+                if (respuesta.isSuccessful) {
+                    val mensaje = "Contraseña actualizada correctamente."
+                    Pair(true, mensaje)
+                } else {
+                    Pair(false, "No se pudo actualizar la contraseña.")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Error al cambiar contraseña", e)
+                Pair(false, "Error de conexión con el servidor.")
+            }
+        }
 
     // =========================================================
     // RECOMENDACIONES
     // =========================================================
 
-    suspend fun getRecomendaciones(
-        idPaciente: Int
-    ): List<Recomendacion>? =
+    suspend fun getRecomendaciones(idPaciente: Int): List<Recomendacion>? =
         withContext(Dispatchers.IO) {
-
             try {
                 val lista = api.getRecomendacionesPorPaciente(idPaciente)
                 lista.filter { it.idPaciente == idPaciente }
 
+
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al obtener recomendaciones",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al obtener recomendaciones", e)
                 null
             }
         }
 
-
-    suspend fun guardarRecomendacion(
-        recomendacion: Recomendacion
-    ): Boolean =
+    suspend fun guardarRecomendacion(recomendacion: Recomendacion): Boolean =
         withContext(Dispatchers.IO) {
-
             try {
-
-                api.guardarRecomendacion(
-                    recomendacion
-                )
-
+                api.guardarRecomendacion(recomendacion)
                 true
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al guardar recomendación",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al guardar recomendación", e)
                 false
             }
         }
-
 
     // =========================================================
     // CUIDADOS DE ENFERMERÍA
     // =========================================================
 
-    suspend fun guardarCuidadoEnfermeria(
-        cuidado: CuidadoEnfermeria
-    ): Boolean =
+    suspend fun guardarCuidadoEnfermeria(cuidado: CuidadoEnfermeria): Boolean =
         withContext(Dispatchers.IO) {
-
             try {
-
-                api.guardarCuidadoEnfermeria(
-                    cuidado
-                )
-
+                api.guardarCuidadoEnfermeria(cuidado)
                 true
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al guardar cuidado de enfermería",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al guardar cuidado de enfermería", e)
                 false
             }
         }
 
-
-    suspend fun getCuidadosPorPaciente(
-        idPaciente: Int
-    ): List<CuidadoEnfermeria>? =
+    suspend fun getCuidadosPorPaciente(idPaciente: Int): List<CuidadoEnfermeria>? =
         withContext(Dispatchers.IO) {
-
             try {
-
-                api.getCuidadosPorPaciente(
-                    idPaciente
-                )
-
+                api.getCuidadosPorPaciente(idPaciente)
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al obtener cuidados de enfermería",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al obtener cuidados de enfermería", e)
                 null
             }
         }
-
 
     // =========================================================
     // ASIGNACIONES PACIENTE - CUIDADOR
     // =========================================================
 
-    suspend fun guardarAsignacion(
-        asignacion: AsignacionPacienteCuidador
-    ): Boolean =
+    suspend fun guardarAsignacion(asignacion: AsignacionPacienteCuidador): Boolean =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.guardarAsignacion(
-                        asignacion
-                    )
-
+                val respuesta = api.guardarAsignacion(asignacion)
                 respuesta.isSuccessful
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error en la petición POST de asignación",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error en la petición POST de asignación", e)
                 false
             }
         }
 
-
-    suspend fun obtenerAsignacionesPacienteCuidador():
-            List<AsignacionPacienteCuidador> =
+    suspend fun obtenerAsignacionesPacienteCuidador(): List<AsignacionPacienteCuidador> =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.getAsignacionesPacienteCuidador()
-
+                val respuesta = api.getAsignacionesPacienteCuidador()
                 if (respuesta.isSuccessful) {
-
-                    respuesta.body()
-                        ?: emptyList()
-
+                    respuesta.body() ?: emptyList()
                 } else {
-
-                    android.util.Log.e(
-                        "API_ERROR",
-                        "Error HTTP ${respuesta.code()} al obtener asignaciones"
-                    )
-
                     emptyList()
                 }
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al obtener asignaciones de pacientes",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al obtener asignaciones de pacientes", e)
                 emptyList()
             }
         }
-
 
     // =========================================================
     // ELEMENTOS DEL PACIENTE
     // =========================================================
 
-    suspend fun getElementosPorPaciente(
-        idPaciente: Int
-    ): List<ElementoPaciente> =
+    suspend fun getElementosPorPaciente(idPaciente: Int): List<ElementoPaciente> =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.getElementosPorPaciente(
-                        idPaciente
-                    )
-
+                val respuesta = api.getElementosPorPaciente(idPaciente)
                 if (respuesta.isSuccessful) {
-
-                    val listaCompleta =
-                        respuesta.body()
-                            ?: emptyList()
-
-                    listaCompleta.filter {
-                        it.idPaciente == idPaciente
-                    }
-
+                    val listaCompleta = respuesta.body() ?: emptyList()
+                    listaCompleta.filter { it.idPaciente == idPaciente }
                 } else {
-
-                    android.util.Log.e(
-                        "API_ERROR",
-                        "Error HTTP ${respuesta.code()} al obtener elementos"
-                    )
-
                     emptyList()
                 }
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al obtener elementos",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al obtener elementos", e)
                 emptyList()
             }
         }
 
-
-    suspend fun guardarElementoPaciente(
-        elemento: ElementoPaciente
-    ): Boolean =
+    suspend fun guardarElementoPaciente(elemento: ElementoPaciente): Boolean =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.guardarElementoPaciente(
-                        elemento
-                    )
-
-                if (respuesta.isSuccessful) {
-
-                    true
-
-                } else {
-
-                    android.util.Log.e(
-                        "API_ERROR",
-                        "Error al guardar elemento " +
-                                "${respuesta.code()}: " +
-                                "${respuesta.errorBody()?.string()}"
-                    )
-
-                    false
-                }
-
+                val respuesta = api.guardarElementoPaciente(elemento)
+                respuesta.isSuccessful
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Excepción al guardar elemento",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Excepción al guardar elemento", e)
                 false
             }
         }
 
+    suspend fun actualizarCantidadElemento(idElemento: Int, nuevaCantidad: Int): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.actualizarCantidadElemento(idElemento, mapOf("cantidad" to nuevaCantidad))
+                response.isSuccessful
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Error al actualizar cantidad del elemento", e)
+                false
+            }
+        }
 
     // =========================================================
-    // MEDICAMENTOS
+    // MEDICAMENTOS E INVENTARIO
     // =========================================================
 
     suspend fun getMedicamentos(): List<Medicamento>? =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.getMedicamentos()
-
+                val respuesta = api.getMedicamentos()
                 if (respuesta.isSuccessful) {
-
                     respuesta.body()
-
                 } else {
-
-                    android.util.Log.e(
-                        "API_ERROR",
-                        "Error HTTP ${respuesta.code()} al obtener medicamentos"
-                    )
-
                     null
                 }
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al obtener medicamentos",
-                    e
-                )
-
+                android.util.Log.e("API_ERROR", "Error al obtener medicamentos", e)
                 null
             }
         }
 
+    suspend fun obtenerInventario(): List<Inventario> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.obtenerInventario()
+                if (response.isSuccessful && response.body() != null) {
+                    response.body()!!
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+    suspend fun actualizarStockInventario(idInventario: Int, nuevaCantidad: Int): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.actualizarInventarioStock(idInventario, mapOf("cantidad" to nuevaCantidad))
+                response.isSuccessful
+            } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Error al actualizar stock en inventario", e)
+                false
+            }
+        }
 
     // =========================================================
-    // TIPOS DE INSUMOS
+    // TIPOS DE INSUMOS E INSUMOS
     // =========================================================
 
     suspend fun getTiposInsumos(): List<TipoInsumo>? =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.getTiposInsumos()
-
+                val respuesta = api.getTiposInsumos()
                 if (respuesta.isSuccessful) {
-
                     respuesta.body()
-
                 } else {
-
-                    android.util.Log.e(
-                        "INSUMOS_DEBUG",
-                        "Error Tipos HTTP " +
-                                "${respuesta.code()}: " +
-                                "${respuesta.errorBody()?.string()}"
-                    )
-
                     null
                 }
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "INSUMOS_DEBUG",
-                    "Excepción al cargar tipos de insumo",
-                    e
-                )
-
+                android.util.Log.e("INSUMOS_DEBUG", "Excepción al cargar tipos de insumo", e)
                 null
             }
         }
 
-
-    // =========================================================
-    // INSUMOS POR TIPO
-    // =========================================================
-
-    suspend fun getInsumosPorTipo(
-        idTipo: Int
-    ): List<Insumo>? =
+    suspend fun getInsumosPorTipo(idTipo: Int): List<Insumo>? =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.getInsumosPorTipo(
-                        idTipo
-                    )
-
+                val respuesta = api.getInsumosPorTipo(idTipo)
                 if (respuesta.isSuccessful) {
-
                     respuesta.body()
-
                 } else {
-
-                    android.util.Log.e(
-                        "INSUMOS_DEBUG",
-                        "Error Insumos HTTP " +
-                                "${respuesta.code()}: " +
-                                "${respuesta.errorBody()?.string()}"
-                    )
-
                     null
                 }
-
             } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "INSUMOS_DEBUG",
-                    "Excepción al cargar insumos por tipo",
-                    e
-                )
-
+                android.util.Log.e("INSUMOS_DEBUG", "Excepción al cargar insumos por tipo", e)
                 null
             }
         }
-
 
     // =========================================================
     // APLICACIÓN DE MEDICAMENTOS
     // =========================================================
 
-    suspend fun registrarAplicacionMedicamento(
-        request: AplicacionRequest
-    ): Result<Boolean> =
+    suspend fun registrarAplicacionMedicamento(request: AplicacionRequest): Result<ResponseBody> =
         withContext(Dispatchers.IO) {
-
             try {
-
-                val respuesta =
-                    api.registrarAplicacion(
-                        request
-                    )
-
-                if (respuesta.isSuccessful) {
-
-                    Result.success(true)
-
+                val response = api.registrarAplicacion(request)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
                 } else {
-
-                    Result.failure(
-                        Exception(
-                            "Error HTTP ${respuesta.code()} al registrar la aplicación"
-                        )
-                    )
+                    val codigo = response.code()
+                    val errorBody = response.errorBody()?.string() ?: "Sin detalle de error"
+                    android.util.Log.e("API_ERROR_APLICACION", "Error HTTP $codigo desde Django: $errorBody")
+                    Result.failure(Exception("HTTP $codigo: $errorBody"))
                 }
-
             } catch (e: Exception) {
+                android.util.Log.e("API_ERROR_APLICACION", "Excepción de red o servidor", e)
+                Result.failure(e)
+            }
+        }
 
-                android.util.Log.e(
-                    "API_ERROR",
-                    "Error al registrar aplicación de medicamento",
-                    e
-                )
+    // =========================================================
+    // NOTIFICACIONES
+    // =========================================================
 
+    suspend fun crearNotificacion(request: NotificacionRequest): Result<NotificacionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.crearNotificacion(request)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception("Error al crear notificación: ${response.code()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    suspend fun asociarNotificacionDestinatario(request: NotificacionDestinatarioRequest): Result<Boolean> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.asociarNotificacionDestinatario(request)
+                if (response.isSuccessful) {
+                    Result.success(true)
+                } else {
+                    Result.failure(Exception("Error al asociar destinatario: ${response.code()}"))
+                }
+            } catch (e: Exception) {
                 Result.failure(e)
             }
         }

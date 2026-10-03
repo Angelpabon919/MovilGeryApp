@@ -3,6 +3,7 @@ package com.example.molvigeryapp.ui.cuidador.pacientes
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.molvigeryapp.ui.cuidador.bitacora.BitacoraFragment
+import com.example.molvigeryapp.ui.cuidador.medicamentos.AplicacionMedicamentosFragment
 
 class PacientePagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
