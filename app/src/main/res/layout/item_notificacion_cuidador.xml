@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/redondeado_card"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- CABECERA DE LA TARJETA (Tipo y Estado/Punto azul) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/txtTipoAlerta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Asignación de Turno"
+            android:textColor="#2563EB"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtTiempo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hace 15 min"
+            android:textColor="#98A2B3"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- TÍTULO PRINCIPAL (Ej: Nombre del paciente o detalle del turno) -->
+    <TextView
+        android:id="@+id/txtTituloAlerta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Turno asignado"
+        android:textColor="#1D2939"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- DESCRIPCIÓN O MENSAJE -->
+    <TextView
+        android:id="@+id/txtMensajeAlerta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="El encargado te ha asignado el turno  para eszta semana."
+        android:textColor="#475467"
+        android:textSize="14sp" />
+
+</LinearLayout>

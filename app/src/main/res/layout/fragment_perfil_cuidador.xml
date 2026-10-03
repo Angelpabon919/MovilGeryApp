@@ -71,14 +71,14 @@
                 <TextView
                     android:id="@+id/txtNotificacionesPerfil"
                     android:layout_width="22dp"
-                    android:layout_height="22dp"
+                    android:layout_height="13dp"
                     android:layout_gravity="top|end"
+                    android:background="@drawable/bg_badge"
                     android:gravity="center"
                     android:text="3"
                     android:textColor="@android:color/white"
                     android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_badge" />
+                    android:textStyle="bold" />
             </FrameLayout>
         </LinearLayout>
 

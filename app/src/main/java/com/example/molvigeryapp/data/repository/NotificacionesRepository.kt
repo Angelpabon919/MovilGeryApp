@@ -488,4 +488,17 @@ object NotificacionesRepository {
             fechaHora
         )?.time ?: 0L
     }
+
+    suspend fun marcarNotificacionLeida(idNotificacionDestinatario: Int): Boolean {
+        if (idNotificacionDestinatario <= 0) return false
+        return try {
+            val response = RetrofitClient.apiService.marcarNotificacionLeida(
+                id = idNotificacionDestinatario,
+                datos = com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest(leida = true)
+            )
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

@@ -42,17 +42,17 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/btnMenuOpciones"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:gravity="center"
-                android:text="⋮"
-                android:textColor="#FFFFFF"
-                android:textSize="28sp"
-                android:contentDescription="Más opciones" />
+            <ImageView
+                android:id="@+id/btnNotification"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:padding="15dp"
+                android:background="@drawable/bg_notifi"
+                android:contentDescription="Notificaciones"
+                android:src="@drawable/notifications"
+                android:layout_alignParentRight="true"
+
+                 />
         </RelativeLayout>
 
         <!-- Tarjeta / Contenido de Bienvenida dentro del Header -->

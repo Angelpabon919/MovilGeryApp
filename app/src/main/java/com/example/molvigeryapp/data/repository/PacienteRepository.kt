@@ -60,7 +60,7 @@ class PacienteRepository {
     ): Pair<Boolean, String> =
         withContext(Dispatchers.IO) {
             try {
-                val datos = CambiarContrasenaRequest(
+                val datos = com.example.molvigeryapp.data.model.CambiarContrasenaRequest(
                     idUsuario = idUsuario,
                     contrasenaActual = contrasenaActual,
                     nuevaContrasena = nuevaContrasena,

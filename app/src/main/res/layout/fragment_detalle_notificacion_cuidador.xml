@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- ENCABEZADO -->
+    <LinearLayout
+        android:id="@+id/headerDetalleNotificacion"
+        android:layout_width="0dp"
+        android:layout_height="90dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="20dp"
+        android:background="@drawable/bg_rounded"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/btnVolverDetalleNotificacion"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="10dp"
+            android:padding="10dp"
+            android:src="@drawable/arrow_back"
+            android:contentDescription="Volver"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:id="@+id/txtTituloHeaderDetalle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="10dp"
+            android:text="Detalle de notificacion"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- CONTENIDO -->
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="20dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/headerDetalleNotificacion"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- TIPO Y TÍTULO PRINCIPAL -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="18dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtTipoDetalleNotificacion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TURNO ASIGNADO"
+                            android:textColor="#3B5BDB"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtTituloDetalleNotificacion"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Turno de mañana"
+                            android:textColor="#1F2937"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- INFORMACIÓN / MENSAJE DEL TURNO O CITA -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="INFORMACIÓN DEL EVENTO"
+                android:textColor="#687078"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="1dp">
+
+                <TextView
+                    android:id="@+id/txtMensajeDetalleNotificacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:text="Detalles del turno o cita médica del paciente..."
+                    android:textColor="#344054"
+                    android:textSize="15sp"
+                    android:lineSpacingExtra="4dp" />
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- PACIENTE ASOCIADO -->
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="1dp"/>
+
+            <!-- FECHA DE RECEPCIÓN -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="FECHA DE NOTIFICACIÓN"
+                android:textColor="#687078"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtFechaDetalleNotificacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Hace un momento"
+                android:textColor="#1F2937"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
