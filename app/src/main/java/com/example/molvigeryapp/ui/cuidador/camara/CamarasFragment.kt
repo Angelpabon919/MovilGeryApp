@@ -5,8 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.databinding.FragmentCamaraBinding
 import com.example.molvigeryapp.databinding.ItemCamaraBinding
+import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
+import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
+import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
 
 class CamarasFragment : Fragment() {
 
@@ -25,30 +29,188 @@ class CamarasFragment : Fragment() {
             false
         )
 
-        agregarCamara("Cámara - Habitación 1")
-
         return binding.root
     }
 
-    private fun agregarCamara(nombre: String) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
-        val camaraBinding = ItemCamaraBinding.inflate(
-            layoutInflater,
-            binding.contenedorCamaras,
-            false
+        super.onViewCreated(
+            view,
+            savedInstanceState
         )
 
-        camaraBinding.tvNombreCamara.text = nombre
-        camaraBinding.tvEstadoCamara.text = "● En línea"
+        agregarCamara(
+            "Cámara - Habitación 1"
+        )
+
+        configurarNavegacion()
+    }
+
+    // =============================================
+    // NAVEGACIÓN INFERIOR
+    // =============================================
+
+    private fun configurarNavegacion() {
+
+        NavegacionCuidador.configurar(
+
+            // =====================================
+            // INICIO
+            // =====================================
+
+            navInicio =
+                binding.navInicio,
+
+            iconInicio =
+                binding.iconInicio,
+
+            textInicio =
+                binding.textInicio,
+
+
+            // =====================================
+            // AGENDA
+            // =====================================
+
+            navAgenda =
+                binding.navAgenda,
+
+            iconAgenda =
+                binding.iconAgenda,
+
+            textAgenda =
+                binding.textAgenda,
+
+
+            // =====================================
+            // CÁMARAS
+            // =====================================
+
+            navCamaras =
+                binding.navCamaras,
+
+            iconCamaras =
+                binding.iconCamaras,
+
+            textCamaras =
+                binding.textCamaras,
+
+
+            // =====================================
+            // PERFIL
+            // =====================================
+
+            navPerfil =
+                binding.navPerfil,
+
+            iconPerfil =
+                binding.iconPerfil,
+
+            textPerfil =
+                binding.textPerfil,
+
+
+            // =====================================
+            // PANTALLA ACTUAL
+            // =====================================
+
+            pantallaActual =
+                NavegacionCuidador.Pantalla.CAMARAS,
+
+
+            // =====================================
+            // ACCIÓN INICIO
+            // =====================================
+
+            onInicio = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        HomeFragment()
+                    )
+                    .commit()
+            },
+
+
+            // =====================================
+            // ACCIÓN AGENDA
+            // =====================================
+
+            onAgenda = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        AgendaFragment()
+                    )
+                    .commit()
+            },
+
+
+            // =====================================
+            // ACCIÓN CÁMARAS
+            // =====================================
+
+            onCamaras = {
+
+                // Ya estamos en Cámaras.
+            },
+
+
+            // =====================================
+            // ACCIÓN PERFIL
+            // =====================================
+
+            onPerfil = {
+
+                // Perfil lo conectaremos
+                // cuando tengamos su Fragment.
+            }
+        )
+    }
+
+    // =============================================
+    // AGREGAR CÁMARA
+    // =============================================
+
+    private fun agregarCamara(
+        nombre: String
+    ) {
+
+        val camaraBinding =
+            ItemCamaraBinding.inflate(
+                layoutInflater,
+                binding.contenedorCamaras,
+                false
+            )
+
+        camaraBinding.tvNombreCamara.text =
+            nombre
+
+        camaraBinding.tvEstadoCamara.text =
+            "● En línea"
 
         binding.contenedorCamaras.addView(
             camaraBinding.root
         )
     }
 
+    // =============================================
+    // LIMPIAR BINDING
+    // =============================================
+
     override fun onDestroyView() {
-        super.onDestroyView()
+
+        binding.contenedorCamaras.removeAllViews()
+
         _binding = null
+
+        super.onDestroyView()
     }
 }
-

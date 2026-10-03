@@ -294,7 +294,6 @@ interface ApiService {
     @GET("actividades/")
     suspend fun getActividades(): List<Actividad>
 
-
     // =========================================================
     // CITAS
     // =========================================================

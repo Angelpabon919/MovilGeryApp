@@ -645,9 +645,9 @@
 
                 <ImageView
                     android:id="@+id/iconPerfilAsignarTurno"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/persona_encargado"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/person_icon"
                     android:contentDescription="Mi perfil"
                     app:tint="#7F8A9A" />
 

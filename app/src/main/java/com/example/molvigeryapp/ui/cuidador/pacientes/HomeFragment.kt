@@ -11,13 +11,15 @@ import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentHomeCuidadorBinding
+import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
+import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
+import com.example.molvigeryapp.ui.cuidador.camara.CamarasFragment
 
 class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
     private var _binding: FragmentHomeCuidadorBinding? = null
     private val binding get() = _binding!!
 
-    // Usamos activityViewModels con la fábrica para evitar cierres inesperados
     private val viewModel: PacienteViewModel by activityViewModels {
         PacienteViewModelFactory(PacienteRepository())
     }
@@ -25,111 +27,310 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private var isExpanded = false
     private lateinit var homeAdapter: HomeAdapter
 
-    // Copia local para manejar el filtro del buscador sin perder la lista de seleccionados
     private var listaOriginalPacientes: List<Paciente> = emptyList()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentHomeCuidadorBinding.bind(view)
+
+        _binding =
+            FragmentHomeCuidadorBinding.bind(view)
 
         setupDespliegueMedicamentos()
         setupRecyclerViewPacientes()
         setupBuscador()
         setupBotonEditar()
         observarDatos()
+        configurarNavegacion()
     }
 
+    // =====================================================
+    // NAVEGACIÓN CUIDADOR
+    // =====================================================
+
+    private fun configurarNavegacion() {
+
+        NavegacionCuidador.configurar(
+
+            navInicio = binding.navInicio,
+            iconInicio = binding.iconInicio,
+            textInicio = binding.textInicio,
+
+            navAgenda = binding.navAgenda,
+            iconAgenda = binding.iconAgenda,
+            textAgenda = binding.textAgenda,
+
+            navCamaras = binding.navCamaras,
+            iconCamaras = binding.iconCamaras,
+            textCamaras = binding.textCamaras,
+
+            navPerfil = binding.navPerfil,
+            iconPerfil = binding.iconPerfil,
+            textPerfil = binding.textPerfil,
+
+            pantallaActual =
+                NavegacionCuidador.Pantalla.INICIO,
+
+            onInicio = {
+                // Ya estamos en Inicio.
+            },
+
+            onAgenda = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        AgendaFragment()
+                    )
+                    .commit()
+            },
+
+            onCamaras = {
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        CamarasFragment()
+                    )
+                    .commit()
+            },
+
+            onPerfil = {
+
+                // Por ahora dejamos preparado
+                // el botón hasta conectar
+                // el fragmento de perfil.
+            }
+        )
+    }
+
+    // =====================================================
+    // BOTÓN EDITAR PACIENTES
+    // =====================================================
+
     private fun setupBotonEditar() {
+
         binding.btnEditPacientes.setOnClickListener {
-            // Regresa a la pantalla previa en la pila o reemplaza al fragmento de selección general
-            if (parentFragmentManager.backStackEntryCount > 0) {
-                parentFragmentManager.popBackStack()
+
+            if (
+                parentFragmentManager
+                    .backStackEntryCount > 0
+            ) {
+
+                parentFragmentManager
+                    .popBackStack()
+
             } else {
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, PacientesListFragment())
+
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        PacientesListFragment()
+                    )
                     .commit()
             }
         }
     }
 
-    private fun setupDespliegueMedicamentos() {
-        binding.layoutHeaderMedicamentos.setOnClickListener {
-            isExpanded = !isExpanded
+    // =====================================================
+    // DESPLEGAR MEDICAMENTOS
+    // =====================================================
 
-            if (isExpanded) {
-                binding.containerMedicamentosContent.visibility = View.VISIBLE
-                binding.btnExpandMedicamentos.setImageResource(R.drawable.ic_arrow_up)
-            } else {
-                binding.containerMedicamentosContent.visibility = View.GONE
-                binding.btnExpandMedicamentos.setImageResource(R.drawable.ic_arrow_down)
+    private fun setupDespliegueMedicamentos() {
+
+        binding.layoutHeaderMedicamentos
+            .setOnClickListener {
+
+                isExpanded = !isExpanded
+
+                if (isExpanded) {
+
+                    binding
+                        .containerMedicamentosContent
+                        .visibility = View.VISIBLE
+
+                    binding
+                        .btnExpandMedicamentos
+                        .setImageResource(
+                            R.drawable.ic_arrow_up
+                        )
+
+                } else {
+
+                    binding
+                        .containerMedicamentosContent
+                        .visibility = View.GONE
+
+                    binding
+                        .btnExpandMedicamentos
+                        .setImageResource(
+                            R.drawable.ic_arrow_down
+                        )
+                }
             }
-        }
     }
 
+    // =====================================================
+    // RECYCLERVIEW PACIENTES
+    // =====================================================
+
     private fun setupRecyclerViewPacientes() {
+
         homeAdapter = HomeAdapter { paciente ->
-            // 1. Guardar el paciente presionado en el ViewModel
+
+            // Guardamos el paciente seleccionado
             viewModel.seleccionarPaciente(paciente)
 
-            // 2. Navegar directamente al detalle del paciente (Tabs)
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, DetallePacienteFragment())
+            // Vamos al detalle del paciente
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    DetallePacienteFragment()
+                )
                 .addToBackStack(null)
                 .commit()
         }
-        binding.rvPacientesAsignados.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvPacientesAsignados.adapter = homeAdapter
+
+        binding.rvPacientesAsignados.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        binding.rvPacientesAsignados.adapter =
+            homeAdapter
     }
+
+    // =====================================================
+    // OBSERVAR PACIENTES
+    // =====================================================
 
     private fun observarDatos() {
-        // Observa EXCLUSIVAMENTE a los seleccionados para la lista del Home
-        viewModel.pacientesSeleccionadosHome.observe(viewLifecycleOwner) { listaSeleccionados ->
-            val lista = listaSeleccionados ?: emptyList()
-            listaOriginalPacientes = lista
 
-            // Si hay texto escrito en el buscador, aplica el filtro; de lo contrario muestra la lista
-            val textoBusqueda = binding.etSearchPaciente.text.toString()
-            if (textoBusqueda.isNotEmpty()) {
-                filtrarLista(textoBusqueda)
-            } else {
-                homeAdapter.actualizarLista(lista)
+        viewModel
+            .pacientesSeleccionadosHome
+            .observe(viewLifecycleOwner) { listaSeleccionados ->
+
+                val lista =
+                    listaSeleccionados ?: emptyList()
+
+                listaOriginalPacientes = lista
+
+                val textoBusqueda =
+                    binding.etSearchPaciente
+                        .text
+                        .toString()
+
+                if (textoBusqueda.isNotEmpty()) {
+
+                    filtrarLista(textoBusqueda)
+
+                } else {
+
+                    homeAdapter
+                        .actualizarLista(lista)
+                }
             }
-        }
     }
+
+    // =====================================================
+    // BUSCADOR
+    // =====================================================
 
     private fun setupBuscador() {
-        binding.etSearchPaciente.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                filtrarLista(s?.toString() ?: "")
-            }
+        binding.etSearchPaciente
+            .addTextChangedListener(
+                object : TextWatcher {
 
-            override fun afterTextChanged(s: Editable?) {}
-        })
+                    override fun beforeTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int
+                    ) {
+                    }
+
+                    override fun onTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {
+
+                        filtrarLista(
+                            s?.toString() ?: ""
+                        )
+                    }
+
+                    override fun afterTextChanged(
+                        s: Editable?
+                    ) {
+                    }
+                }
+            )
     }
 
-    private fun filtrarLista(texto: String) {
-        val consulta = texto.trim().lowercase()
+    // =====================================================
+    // FILTRAR PACIENTES
+    // =====================================================
+
+    private fun filtrarLista(
+        texto: String
+    ) {
+
+        val consulta =
+            texto.trim().lowercase()
 
         if (consulta.isEmpty()) {
-            homeAdapter.actualizarLista(listaOriginalPacientes)
-        } else {
-            val listaFiltrada = listaOriginalPacientes.filter { paciente ->
-                val nombreCompleto = "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}".lowercase()
-                val documento = paciente.numeroDocumento?.lowercase() ?: ""
-                val habitacion = paciente.habitacion?.toString()?.lowercase() ?: ""
 
-                nombreCompleto.contains(consulta) ||
-                        documento.contains(consulta) ||
-                        habitacion.contains(consulta)
-            }
-            homeAdapter.actualizarLista(listaFiltrada)
+            homeAdapter
+                .actualizarLista(
+                    listaOriginalPacientes
+                )
+
+        } else {
+
+            val listaFiltrada =
+                listaOriginalPacientes.filter { paciente ->
+
+                    val nombreCompleto =
+                        "${paciente.nombre ?: ""} " +
+                                "${paciente.apellido ?: ""}"
+                                    .lowercase()
+
+                    val documento =
+                        paciente.numeroDocumento
+                            ?.lowercase()
+                            ?: ""
+
+                    val habitacion =
+                        paciente.habitacion
+                            ?.toString()
+                            ?.lowercase()
+                            ?: ""
+
+                    nombreCompleto.contains(consulta) ||
+                            documento.contains(consulta) ||
+                            habitacion.contains(consulta)
+                }
+
+            homeAdapter
+                .actualizarLista(listaFiltrada)
         }
     }
 
+    // =====================================================
+    // DESTRUIR BINDING
+    // =====================================================
+
     override fun onDestroyView() {
+
         super.onDestroyView()
+
         _binding = null
     }
 }
