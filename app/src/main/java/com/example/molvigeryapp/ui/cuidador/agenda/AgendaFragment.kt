@@ -14,6 +14,7 @@ import com.example.molvigeryapp.databinding.FragmentAgendaBinding
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
 import com.example.molvigeryapp.ui.cuidador.camara.CamarasFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
 class AgendaFragment : Fragment() {
 
@@ -177,9 +178,12 @@ class AgendaFragment : Fragment() {
             // =====================================
 
             onPerfil = {
-
-                // Perfil lo conectaremos
-                // cuando tengamos su Fragment.
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer, PerfilCuidadorFragment()
+                    )
+                    .commit()
             }
         )
     }
