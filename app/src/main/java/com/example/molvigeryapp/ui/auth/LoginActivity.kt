@@ -12,6 +12,8 @@ import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.databinding.ActivityLoginBinding
 import kotlinx.coroutines.launch
+import com.example.molvigeryapp.data.repository.FcmTokenRepository
+import com.google.firebase.messaging.FirebaseMessaging
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -68,6 +70,31 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    // guarda el token cuando el usuario haga login
+
+    private fun registrarTokenFCM(idUsuario: Int) {
+
+        if (idUsuario <= 0) return
+
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+
+                if (!task.isSuccessful) {
+                    return@addOnCompleteListener
+                }
+
+                val token = task.result ?: return@addOnCompleteListener
+
+                lifecycleScope.launch {
+
+                    FcmTokenRepository.registrarToken(
+                        idUsuario = idUsuario,
+                        token = token
+                    )
+                }
+            }
+    }
+
     private fun realizarLogin(
         correo: String,
         contrasena: String,
@@ -105,6 +132,10 @@ class LoginActivity : AppCompatActivity() {
                     .putInt("ID_ROL", idRol)
                     .putInt("ID_USUARIO", idUsuario)
                     .apply()
+
+                // registra el token
+                registrarTokenFCM(idUsuario)
+
 
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 intent.putExtra("ID_ROL", usuario.id_rol)
