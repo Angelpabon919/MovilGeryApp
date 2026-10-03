@@ -249,6 +249,11 @@ interface ApiService {
         @Body datos: MarcarNotificacionLeidaRequest
     ): Response<RespuestaMensaje>
 
+    @POST("fcm_tokens/")
+    suspend fun registrarTokenFCM(
+        @Body datos: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Any>
+
 
     // =========================================================
     // ASIGNACIONES DE TURNOS
