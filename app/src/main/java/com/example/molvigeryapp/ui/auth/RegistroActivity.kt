@@ -6,12 +6,10 @@ import android.util.Patterns
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.databinding.ActivityRegistroBinding
-import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.model.Usuario
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -28,12 +26,16 @@ class RegistroActivity : AppCompatActivity() {
         binding = ActivityRegistroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
         val adapter = ArrayAdapter.createFromResource(
-            this, R.array.tipos_documento,
+            this,
+            R.array.tipos_documento,
             android.R.layout.simple_spinner_item
         )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        adapter.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+
         binding.spTipoDocumento.adapter = adapter
 
         binding.tvIniciarSesion.setOnClickListener {
@@ -41,9 +43,11 @@ class RegistroActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
         binding.tvVolver.setOnClickListener {
             finish()
         }
+
         binding.btnRegistrarse.setOnClickListener {
 
             val nombres = binding.etNombres.text.toString()
@@ -52,9 +56,10 @@ class RegistroActivity : AppCompatActivity() {
             val telefono = binding.etTelefono.text.toString()
             val correo = binding.etCorreo.text.toString()
             val contrasena = binding.etContrasena.text.toString()
-            val confirmarcontrasena = binding.etConfirmarContrasena.text.toString()
-            val tipoDocumento = binding.spTipoDocumento.selectedItem.toString()
-
+            val confirmarcontrasena =
+                binding.etConfirmarContrasena.text.toString()
+            val tipoDocumento =
+                binding.spTipoDocumento.selectedItem.toString()
 
             if (binding.spTipoDocumento.selectedItemPosition == 0) {
                 return@setOnClickListener
@@ -64,64 +69,107 @@ class RegistroActivity : AppCompatActivity() {
                 binding.etNombres.error = "Ingrese su nombre"
                 return@setOnClickListener
             }
+
             if (apellidos.isEmpty()) {
                 binding.etApellidos.error = "Ingrese su Apellido"
                 return@setOnClickListener
             }
+
             if (documento.isEmpty()) {
                 binding.etDocumento.error = "Ingrese su Documento"
                 return@setOnClickListener
             }
+
             if (telefono.isEmpty()) {
-                binding.etTelefono.error = "Ingrese el numero de telefono"
+                binding.etTelefono.error =
+                    "Ingrese el numero de telefono"
                 return@setOnClickListener
             }
+
             if (telefono.length < 10) {
-                binding.etTelefono.error = "Ingrese un numero dde telefono valido"
+                binding.etTelefono.error =
+                    "Ingrese un numero dde telefono valido"
                 return@setOnClickListener
             }
+
             if (correo.isEmpty()) {
                 binding.etCorreo.error = "Ingrese el correo"
                 return@setOnClickListener
             }
+
             if (!Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
                 binding.etCorreo.error = "Ingrese un correo válido"
                 return@setOnClickListener
             }
+
             if (contrasena.isEmpty()) {
-                binding.etContrasena.error = "Ingrese una contraseña"
+                binding.etContrasena.error =
+                    "Ingrese una contraseña"
                 return@setOnClickListener
             }
-            if (contrasena.length < 5) {
-                binding.etContrasena.error = "la contraseña debe tener minimo 5 caracteres"
+
+            // Mínimo 8 caracteres
+            if (contrasena.length < 8) {
+                binding.etContrasena.error =
+                    "La contraseña debe tener mínimo 8 caracteres"
                 return@setOnClickListener
             }
+
+            // Debe tener una letra mayúscula
+            if (!contrasena.any { it.isUpperCase() }) {
+                binding.etContrasena.error =
+                    "La contraseña debe tener al menos una letra mayúscula"
+                return@setOnClickListener
+            }
+
+            // Debe tener un número
+            if (!contrasena.any { it.isDigit() }) {
+                binding.etContrasena.error =
+                    "La contraseña debe tener al menos un número"
+                return@setOnClickListener
+            }
+
+            // Debe tener un carácter especial
+            if (!contrasena.any { !it.isLetterOrDigit() }) {
+                binding.etContrasena.error =
+                    "La contraseña debe tener al menos un carácter especial"
+                return@setOnClickListener
+            }
+
             if (confirmarcontrasena.isEmpty()) {
-                binding.etConfirmarContrasena.error = "confirme su contraseña"
+                binding.etConfirmarContrasena.error =
+                    "confirme su contraseña"
                 return@setOnClickListener
             }
+
             if (contrasena != confirmarcontrasena) {
-                binding.etConfirmarContrasena.error = "Las contraseñas no coinciden"
+                binding.etConfirmarContrasena.error =
+                    "Las contraseñas no coinciden"
                 return@setOnClickListener
             }
 
-            val tipoDocumentoApi = when (binding.spTipoDocumento.selectedItemPosition) {
-                1 -> "CC"
-                2 -> "TI"
-                3 -> "CE"
-                4 -> "PA"
-                else -> {
-                    Toast.makeText(
-                        this,
-                        "selecione un tipo de documento valido",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@setOnClickListener
-                }
-            }
+            val tipoDocumentoApi =
+                when (binding.spTipoDocumento.selectedItemPosition) {
+                    1 -> "CC"
+                    2 -> "TI"
+                    3 -> "CE"
+                    4 -> "PA"
 
-            val fechaIngreso = SimpleDateFormat("yyyy-MM-dd",
-                Locale.getDefault()).format(Date())
+                    else -> {
+                        Toast.makeText(
+                            this,
+                            "selecione un tipo de documento valido",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        return@setOnClickListener
+                    }
+                }
+
+            val fechaIngreso = SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.getDefault()
+            ).format(Date())
 
             val usuario = Usuario(
                 tipoDocumento = tipoDocumentoApi,
@@ -136,21 +184,34 @@ class RegistroActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    val respuesta = RetrofitClient.apiService.registrarUsuario(usuario)
-                    Toast.makeText(this@RegistroActivity, "Registro Exitoso", Toast.LENGTH_SHORT)
-                        .show()
 
-                    val intent = Intent(this@RegistroActivity, LoginActivity::class.java)
+                    val respuesta =
+                        RetrofitClient.apiService.registrarUsuario(usuario)
+
+                    Toast.makeText(
+                        this@RegistroActivity,
+                        "Registro Exitoso",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val intent =
+                        Intent(
+                            this@RegistroActivity,
+                            LoginActivity::class.java
+                        )
+
                     startActivity(intent)
                     finish()
+
                 } catch (e: Exception) {
 
                     Toast.makeText(
                         this@RegistroActivity,
-                        "Error al Registrase", Toast.LENGTH_SHORT
+                        "Error al Registrase",
+                        Toast.LENGTH_SHORT
                     ).show()
-                }
                 }
             }
         }
     }
+}

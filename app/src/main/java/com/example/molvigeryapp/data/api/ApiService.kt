@@ -21,6 +21,7 @@ import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
 import com.example.molvigeryapp.data.model.RespuestaMensaje
@@ -263,7 +264,6 @@ interface ApiService {
 
     @GET("actividades/")
     suspend fun getActividades(): List<Actividad>
-
 
     // =========================================================
     // CITAS

@@ -28,7 +28,7 @@
                 android:id="@+id/imgAvatar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/persona_encargado"
+                android:src="@drawable/person_icon"
                 app:tint="#2563EB" />
         </FrameLayout>
 

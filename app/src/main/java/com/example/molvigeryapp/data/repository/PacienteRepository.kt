@@ -3,6 +3,7 @@ package com.example.molvigeryapp.data.repository
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.AplicacionRequest
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.Insumo
@@ -44,10 +45,8 @@ class PacienteRepository {
         withContext(Dispatchers.IO) {
 
             try {
-
-                api.getRecomendacionesPorPaciente(
-                    idPaciente
-                )
+                val lista = api.getRecomendacionesPorPaciente(idPaciente)
+                lista.filter { it.idPaciente == idPaciente }
 
             } catch (e: Exception) {
 
@@ -463,6 +462,30 @@ class PacienteRepository {
                 )
 
                 Result.failure(e)
+            }
+        }
+
+
+    // =========================================================
+    // CITAS - AGENDA
+    // =========================================================
+
+    suspend fun obtenerCitas(): List<Cita> =
+        withContext(Dispatchers.IO) {
+
+            try {
+
+                CitasRepository.obtenerCitasDesdeApi()
+
+            } catch (e: Exception) {
+
+                android.util.Log.e(
+                    "API_ERROR",
+                    "Error al obtener citas",
+                    e
+                )
+
+                emptyList()
             }
         }
 }

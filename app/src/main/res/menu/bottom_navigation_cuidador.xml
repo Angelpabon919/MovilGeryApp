@@ -9,9 +9,9 @@
 
 
     <item
-        android:id="@+id/nav_cuidador_actividades"
-        android:icon="@drawable/bitacora"
-        android:title="Actividades" />
+        android:id="@+id/nav_cuidador_agenda"
+        android:icon="@drawable/agenda"
+        android:title="Agenda" />
 
     <item
         android:id="@+id/nav_cuidador_camaras"
@@ -20,7 +20,7 @@
 
     <item
         android:id="@+id/nav_cuidador_perfil"
-        android:icon="@drawable/persona_encargado"
+        android:icon="@drawable/person_icon"
         android:title="Perfil" />
 
 </menu>

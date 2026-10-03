@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="7dp"
+    android:layout_marginBottom="7dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardCitaPaciente"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="18dp">
+
+            <!-- ICONO DEL PACIENTE -->
+            <ImageView
+                android:id="@+id/ivPersonIcon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/person_icon"
+                android:contentDescription="Paciente"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- MOTIVO DE LA CITA -->
+            <TextView
+                android:id="@+id/tvMotivoCita"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="8dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Motivo de la cita"
+                android:textColor="@color/black"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/ivPersonIcon"
+                app:layout_constraintTop_toTopOf="@id/ivPersonIcon"
+                app:layout_constraintEnd_toStartOf="@id/tvEstadoCita" />
+
+            <!-- ESTADO -->
+            <TextView
+                android:id="@+id/tvEstadoCita"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_estado_cita"
+                android:paddingStart="10dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="5dp"
+                android:text="Pendiente"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/ivPersonIcon" />
+
+            <!-- LUGAR -->
+            <TextView
+                android:id="@+id/tvLugarCita"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginEnd="8dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Lugar de la cita"
+                android:textColor="@color/color_primary"
+                android:textSize="14sp"
+                app:layout_constraintStart_toEndOf="@id/ivPersonIcon"
+                app:layout_constraintTop_toBottomOf="@id/tvMotivoCita"
+                app:layout_constraintEnd_toStartOf="@id/tvFlechaCita" />
+
+            <!-- SEPARADOR -->
+            <View
+                android:id="@+id/viewSeparadorCita"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="15dp"
+                android:background="#E2E6ED"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/ivPersonIcon" />
+
+            <!-- FECHA -->
+            <TextView
+                android:id="@+id/tvFechaCita"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
+                android:text=" 30/09/2026"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/viewSeparadorCita" />
+
+            <!-- HORA -->
+            <TextView
+                android:id="@+id/tvHoraCita"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="18dp"
+                android:text="10:00 AM"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                app:layout_constraintStart_toEndOf="@id/tvFechaCita"
+                app:layout_constraintTop_toTopOf="@id/tvFechaCita" />
+
+            <!-- FLECHA -->
+            <TextView
+                android:id="@+id/tvFlechaCita"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_icono_agenda"
+                android:gravity="center"
+                android:text="›"
+                android:textColor="@color/color_primary"
+                android:textSize="27sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tvFechaCita"
+                app:layout_constraintBottom_toBottomOf="@id/tvFechaCita" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

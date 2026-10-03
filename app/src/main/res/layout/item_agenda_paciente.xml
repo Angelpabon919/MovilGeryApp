@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPacienteAgenda"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="18dp">
+
+            <!-- Icono del paciente -->
+
+            <TextView
+                android:id="@+id/tvIconoPaciente"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/person_icon"
+                android:gravity="center"
+                android:textSize="22sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Nombre -->
+
+            <TextView
+                android:id="@+id/tvNombrePaciente"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="12dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Nombre del paciente"
+                android:textColor="@color/black"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/tvIconoPaciente"
+                app:layout_constraintTop_toTopOf="@id/tvIconoPaciente"
+                app:layout_constraintEnd_toStartOf="@id/tvFlechaAgenda" />
+
+            <!-- Habitación -->
+
+            <TextView
+                android:id="@+id/tvHabitacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Habitación 1"
+                android:textColor="@color/color_primary"
+                android:textSize="14sp"
+                app:layout_constraintStart_toStartOf="@id/tvNombrePaciente"
+                app:layout_constraintTop_toBottomOf="@id/tvNombrePaciente" />
+
+            <!-- Cama -->
+
+            <TextView
+                android:id="@+id/tvCama"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="Cama 1"
+                android:textColor="@color/color_secondary"
+                android:textSize="14sp"
+                app:layout_constraintStart_toEndOf="@id/tvHabitacion"
+                app:layout_constraintTop_toTopOf="@id/tvHabitacion" />
+
+            <!-- Texto inferior -->
+
+            <TextView
+                android:id="@+id/tvTieneCitas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text=" Tiene citas programadas"
+                android:textColor="@color/color_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvIconoPaciente"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Flecha -->
+
+            <TextView
+                android:id="@+id/tvFlechaAgenda"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="›"
+                android:textColor="@color/color_primary"
+                android:textSize="30sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/tvIconoPaciente" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

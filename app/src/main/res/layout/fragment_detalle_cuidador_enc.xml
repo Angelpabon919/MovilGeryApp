@@ -387,6 +387,8 @@
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:src="@drawable/persona_encargado"
+                    android:gravity="center"
+                    android:textSize="24sp"
                     android:background="@drawable/bg_icono_modulo"
                     app:tint="@color/colo_boton" />
 

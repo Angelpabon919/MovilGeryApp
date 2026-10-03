@@ -3,96 +3,128 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background"
-    tools:context=".ui.cuidador.camara.CamarasFragment">
+    android:background="@color/color_background">
 
     <!-- ===================================================== -->
-    <!-- CONTENIDO DE CÁMARAS -->
+    <!-- ENCABEZADO AZUL -->
     <!-- ===================================================== -->
 
-    <ScrollView
-        android:id="@+id/scrollCamaras"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/headerAgenda"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        android:scrollbars="none"
+        android:layout_height="145dp"
+        android:background="@drawable/bg_rounded"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvTituloAgenda"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="110dp">
+            android:text="Agenda"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/tvSubtituloAgenda"
+            app:layout_constraintVertical_chainStyle="packed" />
 
-            <!-- ================================================= -->
-            <!-- ENCABEZADO -->
-            <!-- ================================================= -->
+        <TextView
+            android:id="@+id/tvSubtituloAgenda"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Pacientes con citas programadas"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTituloAgenda"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="110dp"
-                android:background="@drawable/bg_rounded"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp">
-
-                <TextView
-                    android:id="@+id/tvTituloCamaras"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Cámaras"
-                    android:textColor="@color/white"
-                    android:textSize="26sp"
-                    android:textStyle="bold"
-                    app:layout_constraintBottom_toTopOf="@+id/tvSubtituloCamaras"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent" />
-
-                <TextView
-                    android:id="@+id/tvSubtituloCamaras"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Monitoreo de las instalaciones"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tvTituloCamaras" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-            <!-- ================================================= -->
-            <!-- CONTENIDO -->
-            <!-- ================================================= -->
+    <!-- ===================================================== -->
+    <!-- TÍTULO DE LA LISTA -->
+    <!-- ===================================================== -->
 
-            <TextView
-                android:id="@+id/tvCamarasDisponibles"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="20dp"
-                android:text="Cámaras disponibles"
-                android:textColor="@color/black"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvListaAgenda"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        android:text="Mis pacientes"
+        android:textColor="@color/black"
+        android:textSize="19sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/headerAgenda"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-            <LinearLayout
-                android:id="@+id/contenedorCamaras"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
 
-        </LinearLayout>
+    <!-- ===================================================== -->
+    <!-- LISTA DE PACIENTES -->
+    <!-- ===================================================== -->
 
-    </ScrollView>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPacientesAgenda"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:paddingTop="4dp"
+        android:paddingBottom="105dp"
+        android:scrollbars="vertical"
+        app:layout_constraintTop_toBottomOf="@id/tvListaAgenda"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <!-- ===================================================== -->
+    <!-- MENSAJE CUANDO NO HAY CITAS -->
+    <!-- ===================================================== -->
+
+    <TextView
+        android:id="@+id/tvSinCitas"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:gravity="center"
+        android:text="No hay pacientes con citas programadas."
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/rvPacientesAgenda"
+        app:layout_constraintBottom_toBottomOf="@id/rvPacientesAgenda"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <!-- ===================================================== -->
+    <!-- CARGANDO -->
+    <!-- ===================================================== -->
+
+    <ProgressBar
+        android:id="@+id/progressAgenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/rvPacientesAgenda"
+        app:layout_constraintBottom_toBottomOf="@id/rvPacientesAgenda"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/rvPacientesAgenda" />
 
 
     <!-- ===================================================== -->
