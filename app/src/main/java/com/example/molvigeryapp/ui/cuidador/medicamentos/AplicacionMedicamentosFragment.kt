@@ -10,11 +10,13 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.launch
 
 class AplicacionMedicamentosFragment : Fragment(R.layout.fragment_aplicacion_medicamentos) {
 
@@ -60,13 +62,26 @@ class AplicacionMedicamentosFragment : Fragment(R.layout.fragment_aplicacion_med
                         android.R.color.holo_red_dark
                     )
                 )
-                if (stockActual in 1..limiteCritico) {
+                if (stockActual <= limiteCritico) {
                     Toast.makeText(
                         requireContext(),
                         "⚠️ Stock crítico: $stockActual unidades restantes",
                         Toast.LENGTH_SHORT
                     ).show()
+                    val nombreMedi = mapaNombresMedicamentos[idMedicamentoSeleccionado] ?: "Medicamento"
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        try {
+                            com.example.molvigeryapp.data.repository.StockNotificacionesRepository().enviarAlertaStockBajo(
+                                nombreInsumo = nombreMedi,
+                                stockActual = stockActual
+                            )
+                            Log.d(TAG, "Notificación de stock bajo enviada con éxito.")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al enviar notificación de stock", e)
+                        }
+                    }
                 }
+
             } else {
                 tvStock.setTextColor(
                     ContextCompat.getColor(

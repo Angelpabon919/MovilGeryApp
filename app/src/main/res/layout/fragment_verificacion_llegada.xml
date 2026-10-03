@@ -68,34 +68,7 @@
 
             <!-- CAMPANA DE NOTIFICACIONES -->
 
-            <FrameLayout
-                android:layout_width="52dp"
-                android:layout_height="52dp">
 
-                <ImageView
-                    android:id="@+id/btnNotificaciones"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:background="@drawable/bg_notifi"
-                    android:contentDescription="Notificaciones"
-                    android:padding="15dp"
-                    android:src="@drawable/notifications" />
-
-                <!-- CANTIDAD DE NOTIFICACIONES -->
-
-                <TextView
-                    android:id="@+id/txtNotificaciones"
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:layout_gravity="top|end"
-                    android:background="@drawable/bg_badge"
-                    android:gravity="center"
-                    android:text="3"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-            </FrameLayout>
 
         </LinearLayout>
 

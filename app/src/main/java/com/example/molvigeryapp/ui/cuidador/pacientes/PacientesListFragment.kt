@@ -16,6 +16,7 @@ import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesListBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
+import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 
 class PacientesListFragment : Fragment() {
 
@@ -46,39 +47,17 @@ class PacientesListFragment : Fragment() {
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
-    ) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.btnMenuOpciones.setOnClickListener { vista ->
-
-            val popupMenu = PopupMenu(
-                requireContext(),
-                vista
-            )
-
-            popupMenu.menuInflater.inflate(
-                R.menu.menu_opciones,
-                popupMenu.menu
-            )
-
-            popupMenu.setOnMenuItemClickListener { item ->
-
-                when (item.itemId) {
-
-                    R.id.menu_perfil -> {
-                        true
-                    }
-
-                    R.id.menu_cerrar_sesion -> {
-                        cerrarSesion()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
-
-            popupMenu.show()
+    ){
+            super.onViewCreated(view, savedInstanceState)
+        binding.btnNotification.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    NotificacionesFragment()
+                )
+                .addToBackStack(null)
+                    .commit()
         }
 
         setupRecyclerView()

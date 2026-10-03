@@ -47,13 +47,12 @@
 
     <ImageView
         android:id="@+id/btnNotification"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="20dp"
-        android:background="@drawable/shape_rounded_avatar"
-        android:padding="8dp"
-        android:src="@android:drawable/ic_popup_reminder"
-        app:layout_constraintBottom_toBottomOf="@id/tvUserWelcome"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:padding="15dp"
+        android:background="@drawable/bg_notifi"
+        android:contentDescription="Notificaciones"
+        android:src="@drawable/notifications"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/tvAppName" />
 
@@ -61,6 +60,11 @@
     <!-- BUSCADOR -->
     <!-- ===================================================== -->
 
+=======
+
+
+    <!-- Buscador: Buscar paciente -->
+>>>>>>> Stashed changes
     <androidx.cardview.widget.CardView
         android:id="@+id/cardSearch"
         android:layout_width="0dp"

@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 class DetalleNotificacionEncargadoFragment : Fragment() {
 
     // =========================================================
-    // VIEW BINDING
+    // VIEW BINDINGss
     // =========================================================
 
     private var _binding: FragmentDetalleNotificacionEncargadoBinding? =
