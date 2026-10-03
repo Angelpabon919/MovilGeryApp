@@ -90,7 +90,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
             android:padding="10dp"
-            android:src="@drawable/person"
+            android:src="@drawable/person_icon"
             android:background="@drawable/bg_estado_perfil"
             android:contentDescription="Foto de la cuidadora" />
 
