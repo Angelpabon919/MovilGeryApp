@@ -2,6 +2,7 @@ package com.example.molvigeryapp.data.repository
 
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
+import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.Notificacion
 import com.example.molvigeryapp.data.model.NotificacionApi
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
@@ -13,7 +14,7 @@ import java.util.TimeZone
 object NotificacionesRepository {
 
     // =========================================================
-    // OBTENER TODAS LAS NOTIFICACIONES DEL USUARIO
+    // OBTENER NOTIFICACIONES DEL USUARIO
     // =========================================================
 
     suspend fun obtenerNotificacionesUsuario(
@@ -25,12 +26,10 @@ object NotificacionesRepository {
         }
 
         val notificaciones =
-            RetrofitClient.apiService
-                .getNotificaciones()
+            RetrofitClient.apiService.getNotificaciones()
 
         val destinatarios =
-            RetrofitClient.apiService
-                .getNotificacionesDestinatarios()
+            RetrofitClient.apiService.getNotificacionesDestinatarios()
 
         return convertirNotificaciones(
             notificaciones = notificaciones,
@@ -53,12 +52,10 @@ object NotificacionesRepository {
         }
 
         val lista =
-            obtenerNotificacionesUsuario(
-                idUsuario
-            )
+            obtenerNotificacionesUsuario(idUsuario)
 
-        return lista.count { notificacion ->
-            !notificacion.leida
+        return lista.count {
+            !it.leida
         }
     }
 
@@ -73,52 +70,49 @@ object NotificacionesRepository {
         idUsuario: Int
     ): List<Notificacion> {
 
-        /*
-         * Nos quedamos solamente con los destinatarios
-         * correspondientes al usuario actual.
-         */
-        val destinatariosUsuario =
-            destinatarios.filter { destinatario ->
+        // -----------------------------------------------------
+        // DESTINATARIOS DEL USUARIO ACTUAL
+        // -----------------------------------------------------
 
-                destinatario.idUsuario ==
-                        idUsuario
+        val destinatariosUsuario =
+            destinatarios.filter {
+                it.idUsuario == idUsuario
             }
 
 
-        /*
-         * Creamos un mapa:
-         *
-         * ID NOTIFICACIÓN -> DESTINATARIO
-         *
-         * Esto permite encontrar rápidamente
-         * el estado "leida".
-         */
+        // -----------------------------------------------------
+        // CREAR MAPA:
+        //
+        // id_notificacion -> destinatario
+        // -----------------------------------------------------
+
         val mapaDestinatarios =
             destinatariosUsuario
-                .filter { destinatario ->
-
-                    destinatario.idNotificacion != null
+                .filter {
+                    it.idNotificacion != null
                 }
-                .associateBy { destinatario ->
-
-                    destinatario.idNotificacion
+                .associateBy {
+                    it.idNotificacion
                 }
 
+
+        // -----------------------------------------------------
+        // CONVERTIR NOTIFICACIONES
+        // -----------------------------------------------------
 
         return notificaciones
             .mapNotNull { notificacion ->
 
-                /*
-                 * Buscamos si esta notificación
-                 * tiene destinatario para este usuario.
-                 */
                 val destinatario =
                     mapaDestinatarios[
                         notificacion.idNotificacion
                     ]
 
-
                 if (destinatario != null) {
+
+                    // =========================================
+                    // TIENE DESTINATARIO
+                    // =========================================
 
                     convertirConDestinatario(
                         notificacion = notificacion,
@@ -129,12 +123,12 @@ object NotificacionesRepository {
                     notificacion.idUsuario == idUsuario
                 ) {
 
-                    /*
-                     * Notificación creada directamente
-                     * para el usuario.
-                     */
+                    // =========================================
+                    // NOTIFICACIÓN DIRECTA
+                    // =========================================
+
                     convertirDirecta(
-                        notificacion
+                        notificacion = notificacion
                     )
 
                 } else {
@@ -142,17 +136,31 @@ object NotificacionesRepository {
                     null
                 }
             }
-            .sortedByDescending { notificacion ->
 
-                obtenerFechaOriginal(
-                    notificacion.fechaHora
-                )
-            }
+            // =================================================
+            // ORDENAR DE MÁS NUEVA A MÁS ANTIGUA
+            //
+            // Primero:
+            // fechaHora DESC
+            //
+            // Segundo:
+            // idNotificacion DESC
+            //
+            // El ID sirve como desempate.
+            // =================================================
+
+            .sortedWith(
+                compareByDescending<Notificacion> {
+                    obtenerFechaOriginal(it.fechaHora)
+                }.thenByDescending {
+                    it.idNotificacion
+                }
+            )
     }
 
 
     // =========================================================
-    // NOTIFICACIÓN CON DESTINATARIO
+    // CONVERTIR CON DESTINATARIO
     // =========================================================
 
     private fun convertirConDestinatario(
@@ -189,6 +197,7 @@ object NotificacionesRepository {
                     notificacion.tipo
                 ),
 
+            // Estado real del servidor
             leida =
                 destinatario.leida,
 
@@ -205,7 +214,7 @@ object NotificacionesRepository {
 
 
     // =========================================================
-    // NOTIFICACIÓN DIRECTA
+    // CONVERTIR NOTIFICACIÓN DIRECTA
     // =========================================================
 
     private fun convertirDirecta(
@@ -216,6 +225,10 @@ object NotificacionesRepository {
 
             idNotificacion =
                 notificacion.idNotificacion ?: 0,
+
+            // -------------------------------------------------
+            // Todavía no existe destinatario
+            // -------------------------------------------------
 
             idNotificacionDestinatario =
                 0,
@@ -241,10 +254,10 @@ object NotificacionesRepository {
                     notificacion.tipo
                 ),
 
-            /*
-             * Si es una notificación directa
-             * todavía no tenemos destinatario.
-             */
+            // -------------------------------------------------
+            // Sin destinatario no podemos persistir el estado
+            // -------------------------------------------------
+
             leida =
                 false,
 
@@ -261,7 +274,7 @@ object NotificacionesRepository {
 
 
     // =========================================================
-    // TIPO
+    // CONVERTIR TIPO
     // =========================================================
 
     private fun convertirTipo(
@@ -269,25 +282,34 @@ object NotificacionesRepository {
     ): String {
 
         return when (
-            tipo.uppercase(
+            tipo.lowercase(
                 Locale.getDefault()
             )
         ) {
 
-            "CITA" ->
-                "Nueva cita médica"
+            "cita" ->
+                "Cita"
 
-            "TURNO" ->
+            "medicamento" ->
+                "Medicamento"
+
+            "emergencia" ->
+                "Emergencia"
+
+            "bitacora" ->
+                "Bitácora"
+
+            "turno" ->
                 "Turno"
 
-            "EVENTO_ADVERSO" ->
+            "paciente" ->
+                "Paciente"
+
+            "evento_adverso" ->
                 "Evento adverso"
 
-            "STOCK" ->
-                "Stock bajo"
-
-            "BITACORA" ->
-                "Nueva bitácora"
+            "recordatorio" ->
+                "Recordatorio"
 
             else ->
                 tipo
@@ -296,7 +318,7 @@ object NotificacionesRepository {
 
 
     // =========================================================
-    // ICONO
+    // OBTENER ICONO
     // =========================================================
 
     private fun obtenerIcono(
@@ -304,25 +326,34 @@ object NotificacionesRepository {
     ): Int {
 
         return when (
-            tipo.uppercase(
+            tipo.lowercase(
                 Locale.getDefault()
             )
         ) {
 
-            "CITA" ->
-                R.drawable.img
-
-            "TURNO" ->
+            "cita" ->
                 R.drawable.calendar_dia
 
-            "EVENTO_ADVERSO" ->
-                R.drawable.bitacora
+            "medicamento" ->
+                R.drawable.clock
 
-            "STOCK" ->
+            "emergencia" ->
                 R.drawable.warning
 
-            "BITACORA" ->
+            "bitacora" ->
                 R.drawable.bitacora
+
+            "turno" ->
+                R.drawable.calendar_dia
+
+            "paciente" ->
+                R.drawable.persona_encargado
+
+            "evento_adverso" ->
+                R.drawable.warning
+
+            "recordatorio" ->
+                R.drawable.notifications
 
             else ->
                 R.drawable.notifications
@@ -339,9 +370,7 @@ object NotificacionesRepository {
     ): String {
 
         val fecha =
-            parsearFecha(
-                fechaOriginal
-            )
+            parsearFecha(fechaOriginal)
 
         return if (fecha != null) {
 
@@ -364,19 +393,45 @@ object NotificacionesRepository {
         fechaOriginal: String
     ): Date? {
 
-        val formatos =
-            listOf(
+        if (fechaOriginal.isBlank()) {
+            return null
+        }
 
-                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX",
+        // =====================================================
+        // FORMATOS DE FECHA QUE PUEDE DEVOLVER DJANGO
+        // =====================================================
 
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        val formatos = listOf(
 
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
+            // Ejemplo:
+            // 2026-10-05T15:30:20.123456-05:00
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX",
 
-                "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
+            // Ejemplo:
+            // 2026-10-05T15:30:20.123-05:00
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
 
-                "yyyy-MM-dd'T'HH:mm:ss'Z'"
-            )
+            // Ejemplo:
+            // 2026-10-05T15:30:20-05:00
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+
+            // Ejemplo:
+            // 2026-10-05T20:30:20.123456Z
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
+
+            // Ejemplo:
+            // 2026-10-05T20:30:20.123Z
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+
+            // Ejemplo:
+            // 2026-10-05T20:30:20Z
+            "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        )
+
+
+        // =====================================================
+        // INTENTAR CADA FORMATO
+        // =====================================================
 
         for (patron in formatos) {
 
@@ -389,9 +444,7 @@ object NotificacionesRepository {
                     )
 
                 formato.timeZone =
-                    TimeZone.getTimeZone(
-                        "UTC"
-                    )
+                    TimeZone.getTimeZone("UTC")
 
                 val fecha =
                     formato.parse(
@@ -403,7 +456,8 @@ object NotificacionesRepository {
                 }
 
             } catch (_: Exception) {
-                // Probar siguiente formato.
+
+                // Continuar con el siguiente formato
             }
         }
 
@@ -419,46 +473,98 @@ object NotificacionesRepository {
         fecha: Date
     ): String {
 
+        val ahora =
+            System.currentTimeMillis()
+
         val diferencia =
-            System.currentTimeMillis() -
-                    fecha.time
+            ahora - fecha.time
+
+        // -----------------------------------------------------
+        // Evitar tiempos negativos
+        // -----------------------------------------------------
 
         if (diferencia < 0) {
-            return "Ahora"
+            return "Hace unos segundos"
         }
 
+
+        val segundos =
+            diferencia / 1000
+
         val minutos =
-            diferencia /
-                    (1000L * 60L)
+            segundos / 60
 
         val horas =
-            minutos / 60L
+            minutos / 60
 
         val dias =
-            horas / 24L
+            horas / 24
+
 
         return when {
 
-            minutos < 1L ->
-                "Ahora"
+            // -------------------------------------------------
+            // SEGUNDOS
+            // -------------------------------------------------
 
-            minutos == 1L ->
-                "Hace 1 minuto"
+            segundos < 60 ->
+                "Hace unos segundos"
 
-            minutos < 60L ->
-                "Hace $minutos minutos"
 
-            horas == 1L ->
-                "Hace 1 hora"
+            // -------------------------------------------------
+            // MINUTOS
+            // -------------------------------------------------
 
-            horas < 24L ->
-                "Hace $horas horas"
+            minutos < 60 -> {
 
-            dias == 1L ->
-                "Ayer"
+                if (minutos == 1L) {
 
-            dias < 7L ->
-                "Hace $dias días"
+                    "Hace 1 minuto"
+
+                } else {
+
+                    "Hace $minutos minutos"
+                }
+            }
+
+
+            // -------------------------------------------------
+            // HORAS
+            // -------------------------------------------------
+
+            horas < 24 -> {
+
+                if (horas == 1L) {
+
+                    "Hace 1 hora"
+
+                } else {
+
+                    "Hace $horas horas"
+                }
+            }
+
+
+            // -------------------------------------------------
+            // DÍAS
+            // -------------------------------------------------
+
+            dias < 7 -> {
+
+                if (dias == 1L) {
+
+                    "Hace 1 día"
+
+                } else {
+
+                    "Hace $dias días"
+                }
+            }
+
+
+            // -------------------------------------------------
+            // FECHA COMPLETA
+            // -------------------------------------------------
 
             else -> {
 
@@ -477,7 +583,7 @@ object NotificacionesRepository {
 
 
     // =========================================================
-    // FECHA ORIGINAL
+    // FECHA ORIGINAL PARA ORDENAMIENTO
     // =========================================================
 
     private fun obtenerFechaOriginal(
@@ -489,15 +595,75 @@ object NotificacionesRepository {
         )?.time ?: 0L
     }
 
-    suspend fun marcarNotificacionLeida(idNotificacionDestinatario: Int): Boolean {
-        if (idNotificacionDestinatario <= 0) return false
+    // =========================================================
+// MARCAR CUALQUIER NOTIFICACIÓN COMO LEÍDA
+// =========================================================
+
+    suspend fun marcarCualquierNotificacionLeida(
+        idNotificacion: Int,
+        idUsuario: Int
+    ): Boolean {
+
+        if (idNotificacion <= 0 || idUsuario <= 0) {
+            return false
+        }
+
         return try {
-            val response = RetrofitClient.apiService.marcarNotificacionLeida(
-                id = idNotificacionDestinatario,
-                datos = com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest(leida = true)
-            )
-            response.isSuccessful
-        } catch (e: Exception) {
+
+            val respuesta =
+                RetrofitClient.apiService
+                    .marcarNotificacionLeidaCompleta(
+
+                        datos =
+                            com.example.molvigeryapp.data.model
+                                .MarcarNotificacionLeidaCompletaRequest(
+                                    idNotificacion =
+                                        idNotificacion,
+
+                                    idUsuario =
+                                        idUsuario
+                                )
+                    )
+
+            respuesta.isSuccessful
+
+        } catch (_: Exception) {
+
+            false
+        }
+    }
+
+
+    // =========================================================
+    // MARCAR NOTIFICACIÓN COMO LEÍDA
+    // =========================================================
+
+    suspend fun marcarNotificacionLeida(
+        idNotificacionDestinatario: Int
+    ): Boolean {
+
+        if (idNotificacionDestinatario <= 0) {
+            return false
+        }
+
+        return try {
+
+            val respuesta =
+                RetrofitClient.apiService
+                    .marcarNotificacionLeida(
+
+                        id = idNotificacionDestinatario,
+
+                        datos =
+                            MarcarNotificacionLeidaRequest(
+                                leida = true
+                            )
+                    )
+
+            respuesta.isSuccessful
+
+        } catch (_: Exception) {
+
             false
         }
     }

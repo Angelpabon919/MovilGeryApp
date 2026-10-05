@@ -22,27 +22,47 @@ import kotlinx.coroutines.launch
 
 class NotificacionesEncargadoFragment : Fragment() {
 
+
     private var _binding: FragmentNotificacionesEncargadoBinding? =
         null
 
-    private val binding
+    private val binding: FragmentNotificacionesEncargadoBinding
         get() = requireNotNull(_binding)
 
+
+    // =========================================================
+    // ADAPTER
+    // =========================================================
+
     private lateinit var adapter: NotificacionAdapter
+
+
+    // =========================================================
+    // CONTROL DE CARGA
+    // =========================================================
 
     private var cargando = false
 
     private var primeraCarga = true
+
 
     companion object {
 
         private const val TAG =
             "NOTIFICACIONES_ENCARGADO"
 
+        // =====================================================
+        // ACTUALIZACIÓN AUTOMÁTICA CADA 2 SEGUNDOS
+        // =====================================================
+
         private const val INTERVALO_ACTUALIZACION =
-            800L
+            2_000L
     }
 
+
+    // =========================================================
+    // CREAR VISTA
+    // =========================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,6 +80,10 @@ class NotificacionesEncargadoFragment : Fragment() {
         return binding.root
     }
 
+
+    // =========================================================
+    // VISTA CREADA
+    // =========================================================
 
     override fun onViewCreated(
         view: View,
@@ -79,6 +103,10 @@ class NotificacionesEncargadoFragment : Fragment() {
     }
 
 
+    // =========================================================
+    // CONFIGURAR RECYCLER VIEW
+    // =========================================================
+
     private fun configurarRecyclerView() {
 
         adapter =
@@ -91,6 +119,7 @@ class NotificacionesEncargadoFragment : Fragment() {
                 )
             }
 
+
         binding.recyclerNotificaciones.apply {
 
             layoutManager =
@@ -99,18 +128,20 @@ class NotificacionesEncargadoFragment : Fragment() {
                 )
 
             adapter =
-                this@NotificacionesEncargadoFragment
-                    .adapter
+                this@NotificacionesEncargadoFragment.adapter
 
             setHasFixedSize(false)
         }
     }
 
 
+    // =========================================================
+    // BOTÓN VOLVER
+    // =========================================================
+
     private fun configurarBotonVolver() {
 
-        binding
-            .btnVolverNotificaciones
+        binding.btnVolverNotificaciones
             .setOnClickListener {
 
                 parentFragmentManager
@@ -118,6 +149,10 @@ class NotificacionesEncargadoFragment : Fragment() {
             }
     }
 
+
+    // =========================================================
+    // ACTUALIZACIÓN AUTOMÁTICA
+    // =========================================================
 
     private fun iniciarActualizacionAutomatica() {
 
@@ -127,7 +162,16 @@ class NotificacionesEncargadoFragment : Fragment() {
                 Lifecycle.State.STARTED
             ) {
 
+                // =================================================
+                // CARGA INMEDIATA
+                // =================================================
+
                 cargarNotificaciones()
+
+
+                // =================================================
+                // ACTUALIZACIÓN CADA 2 SEGUNDOS
+                // =================================================
 
                 while (isActive) {
 
@@ -142,7 +186,15 @@ class NotificacionesEncargadoFragment : Fragment() {
     }
 
 
+    // =========================================================
+    // CARGAR NOTIFICACIONES
+    // =========================================================
+
     private suspend fun cargarNotificaciones() {
+
+        // =====================================================
+        // EVITAR PETICIONES SIMULTÁNEAS
+        // =====================================================
 
         if (cargando) {
             return
@@ -152,12 +204,26 @@ class NotificacionesEncargadoFragment : Fragment() {
 
         try {
 
+            // =================================================
+            // MOSTRAR CARGA SOLO EN LA PRIMERA CARGA
+            // =================================================
+
             if (primeraCarga) {
                 mostrarCarga(true)
             }
 
+
+            // =================================================
+            // OBTENER CONTEXTO
+            // =================================================
+
             val contexto =
                 context ?: return
+
+
+            // =================================================
+            // OBTENER USUARIO DE SESIÓN
+            // =================================================
 
             val preferencias =
                 contexto.getSharedPreferences(
@@ -171,6 +237,7 @@ class NotificacionesEncargadoFragment : Fragment() {
                     -1
                 )
 
+
             if (idUsuario <= 0) {
 
                 throw Exception(
@@ -178,10 +245,16 @@ class NotificacionesEncargadoFragment : Fragment() {
                 )
             }
 
+
             Log.d(
                 TAG,
                 "Cargando notificaciones del usuario $idUsuario"
             )
+
+
+            // =================================================
+            // CONSULTAR API
+            // =================================================
 
             val listaFinal =
                 NotificacionesRepository
@@ -189,33 +262,62 @@ class NotificacionesEncargadoFragment : Fragment() {
                         idUsuario
                     )
 
-            if (
-                !isAdded ||
-                _binding == null
-            ) {
+
+            // =================================================
+            // COMPROBAR VISTA
+            // =================================================
+
+            if (!isAdded || _binding == null) {
                 return
             }
+
 
             Log.d(
                 TAG,
                 "Notificaciones encontradas: ${listaFinal.size}"
             )
 
+
+            // =================================================
+            // ACTUALIZAR ADAPTER
+            //
+            // La lista ya viene ordenada desde Repository:
+            //
+            // MÁS NUEVA
+            // MÁS ANTIGUA
+            // =================================================
+
             adapter.actualizarLista(
                 listaFinal
             )
+
+
+            // =================================================
+            // ACTUALIZAR CONTADOR
+            // =================================================
 
             actualizarContador(
                 listaFinal
             )
 
+
+            // =================================================
+            // QUITAR LOADING
+            // =================================================
+
             mostrarCarga(false)
 
             primeraCarga = false
 
+
         } catch (e: CancellationException) {
 
+            // =================================================
+            // CANCELACIÓN NORMAL
+            // =================================================
+
             throw e
+
 
         } catch (e: Exception) {
 
@@ -225,14 +327,14 @@ class NotificacionesEncargadoFragment : Fragment() {
                 e
             )
 
-            if (
-                !isAdded ||
-                _binding == null
-            ) {
+
+            if (!isAdded || _binding == null) {
                 return
             }
 
+
             mostrarCarga(false)
+
 
             Toast.makeText(
                 requireContext(),
@@ -241,6 +343,7 @@ class NotificacionesEncargadoFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
 
+
         } finally {
 
             cargando = false
@@ -248,40 +351,46 @@ class NotificacionesEncargadoFragment : Fragment() {
     }
 
 
+    // =========================================================
+    // CONTADOR DE NO LEÍDAS
+    // =========================================================
+
     private fun actualizarContador(
         lista: List<Notificacion>
     ) {
 
         val cantidadNoLeidas =
-            lista.count { notificacion ->
-                !notificacion.leida
+            lista.count {
+                !it.leida
             }
+
 
         if (cantidadNoLeidas > 0) {
 
-            binding
-                .txtCantidadNoLeidas
-                .visibility =
+            binding.txtCantidadNoLeidas.visibility =
                 View.VISIBLE
 
-            binding
-                .txtCantidadNoLeidas
-                .text =
+            binding.txtCantidadNoLeidas.text =
                 if (cantidadNoLeidas > 99) {
+
                     "99+"
+
                 } else {
+
                     cantidadNoLeidas.toString()
                 }
 
         } else {
 
-            binding
-                .txtCantidadNoLeidas
-                .visibility =
+            binding.txtCantidadNoLeidas.visibility =
                 View.GONE
         }
     }
 
+
+    // =========================================================
+    // LOADING
+    // =========================================================
 
     private fun mostrarCarga(
         mostrar: Boolean
@@ -290,25 +399,23 @@ class NotificacionesEncargadoFragment : Fragment() {
         val bindingActual =
             _binding ?: return
 
-        bindingActual
-            .progressBarNotificaciones
-            .visibility =
-            if (mostrar) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
 
-        bindingActual
-            .recyclerNotificaciones
-            .visibility =
-            if (mostrar) {
-                View.INVISIBLE
-            } else {
-                View.VISIBLE
-            }
+        if (mostrar) {
+
+            bindingActual.progressBarNotificaciones
+                .visibility = View.VISIBLE
+
+        } else {
+
+            bindingActual.progressBarNotificaciones
+                .visibility = View.GONE
+        }
     }
 
+
+    // =========================================================
+    // ABRIR DETALLE
+    // =========================================================
 
     private fun abrirDetalleNotificacion(
         notificacion: Notificacion
@@ -323,11 +430,14 @@ class NotificacionesEncargadoFragment : Fragment() {
                 )
             }
 
+
         val fragment =
             DetalleNotificacionEncargadoFragment()
 
+
         fragment.arguments =
             datos
+
 
         parentFragmentManager
             .beginTransaction()
