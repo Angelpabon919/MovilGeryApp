@@ -33,6 +33,7 @@ import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.CrearCitaRequest
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
+import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
 
 import retrofit2.Response
 import retrofit2.http.Body
@@ -248,6 +249,11 @@ interface ApiService {
         @Path("id") id: Int,
         @Body datos: MarcarNotificacionLeidaRequest
     ): Response<RespuestaMensaje>
+
+    @POST("notificacion_destinatario/marcar-leida/")
+    suspend fun marcarNotificacionLeidaCompleta(
+        @Body datos: MarcarNotificacionLeidaCompletaRequest
+    ): Response<Map<String, Any>>
 
     @POST("fcm_tokens/")
     suspend fun registrarTokenFCM(

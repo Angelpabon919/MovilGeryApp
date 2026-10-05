@@ -12,9 +12,9 @@ class NotificacionAdapter(
     private val onClick: (Notificacion) -> Unit
 ) : RecyclerView.Adapter<NotificacionAdapter.NotificacionViewHolder>() {
 
-    // =====================================================
+    // ============================================================
     // VIEW HOLDER
-    // =====================================================
+    // ============================================================
 
     inner class NotificacionViewHolder(
         private val binding: ItemNotificacionEncargadoBinding
@@ -22,24 +22,21 @@ class NotificacionAdapter(
 
         fun bind(notificacion: Notificacion) {
 
-            // =================================================
+            // ====================================================
             // ICONO
-            // =================================================
+            // ====================================================
 
             if (notificacion.icono != 0) {
                 binding.imgIconoNotificacion.setImageResource(
                     notificacion.icono
                 )
             } else {
-                binding.imgIconoNotificacion.setImageDrawable(
-                    null
-                )
+                binding.imgIconoNotificacion.setImageDrawable(null)
             }
 
-
-            // =================================================
+            // ====================================================
             // INFORMACIÓN
-            // =================================================
+            // ====================================================
 
             binding.txtTipoNotificacion.text =
                 notificacion.tipo
@@ -53,10 +50,9 @@ class NotificacionAdapter(
             binding.txtFechaNotificacion.text =
                 notificacion.fecha
 
-
-            // =================================================
-            // INDICADOR NO LEÍDA
-            // =================================================
+            // ====================================================
+            // INDICADOR DE NOTIFICACIÓN NO LEÍDA
+            // ====================================================
 
             binding.indicadorNoLeida.visibility =
                 if (notificacion.leida) {
@@ -65,10 +61,9 @@ class NotificacionAdapter(
                     View.VISIBLE
                 }
 
-
-            // =================================================
-            // CLICK
-            // =================================================
+            // ====================================================
+            // CLICK EN LA NOTIFICACIÓN
+            // ====================================================
 
             binding.root.setOnClickListener {
                 onClick(notificacion)
@@ -76,30 +71,27 @@ class NotificacionAdapter(
         }
     }
 
-
-    // =====================================================
+    // ============================================================
     // CREAR VIEW HOLDER
-    // =====================================================
+    // ============================================================
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): NotificacionViewHolder {
 
-        val binding =
-            ItemNotificacionEncargadoBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
+        val binding = ItemNotificacionEncargadoBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
 
         return NotificacionViewHolder(binding)
     }
 
-
-    // =====================================================
-    // CONECTAR DATOS
-    // =====================================================
+    // ============================================================
+    // CONECTAR DATOS CON EL VIEW HOLDER
+    // ============================================================
 
     override fun onBindViewHolder(
         holder: NotificacionViewHolder,
@@ -108,25 +100,22 @@ class NotificacionAdapter(
         holder.bind(lista[position])
     }
 
+    // ============================================================
+    // CANTIDAD DE ELEMENTOS
+    // ============================================================
 
-    // =====================================================
-    // CANTIDAD
-    // =====================================================
+    override fun getItemCount(): Int {
+        return lista.size
+    }
 
-    override fun getItemCount(): Int =
-        lista.size
-
-
-    // =====================================================
+    // ============================================================
     // ACTUALIZAR LISTA
-    // =====================================================
+    // ============================================================
 
     fun actualizarLista(
         nuevaLista: List<Notificacion>
     ) {
-
         lista = nuevaLista
-
         notifyDataSetChanged()
     }
 }

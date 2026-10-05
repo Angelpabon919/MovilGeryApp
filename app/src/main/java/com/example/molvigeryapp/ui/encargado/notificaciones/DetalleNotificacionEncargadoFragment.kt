@@ -1,5 +1,6 @@
 package com.example.molvigeryapp.ui.encargado.notificaciones
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,9 +8,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.molvigeryapp.data.api.RetrofitClient
-import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.Notificacion
+import com.example.molvigeryapp.data.repository.NotificacionesRepository
 import com.example.molvigeryapp.databinding.FragmentDetalleNotificacionEncargadoBinding
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -17,38 +17,23 @@ import kotlinx.coroutines.launch
 
 class DetalleNotificacionEncargadoFragment : Fragment() {
 
-    // =========================================================
-    // VIEW BINDINGss
-    // =========================================================
-
     private var _binding: FragmentDetalleNotificacionEncargadoBinding? =
         null
 
-    private val binding
-        get() = _binding!!
+    private val binding: FragmentDetalleNotificacionEncargadoBinding
+        get() = requireNotNull(_binding)
 
-
-    // =========================================================
-    // NOTIFICACIÓN
-    // =========================================================
 
     private var notificacion: Notificacion? = null
 
 
-    // =========================================================
-    // CREAR FRAGMENT
-    // =========================================================
-
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
 
         recibirNotificacion()
     }
 
-
-    // =========================================================
-    // CREAR VISTA
-    // =========================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,10 +51,6 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
         return binding.root
     }
 
-
-    // =========================================================
-    // VISTA CREADA
-    // =========================================================
 
     override fun onViewCreated(
         view: View,
@@ -95,10 +76,15 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
 
     private fun recibirNotificacion() {
 
-        val args = arguments ?: return
+        val args =
+            arguments ?: return
 
-        val notificacionRecibida =
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+
+        val recibida =
+            if (
+                Build.VERSION.SDK_INT >=
+                Build.VERSION_CODES.TIRAMISU
+            ) {
 
                 args.getSerializable(
                     "notificacion",
@@ -113,13 +99,14 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
                 ) as? Notificacion
             }
 
+
         notificacion =
-            notificacionRecibida
+            recibida
     }
 
 
     // =========================================================
-    // MOSTRAR INFORMACIÓN
+    // MOSTRAR NOTIFICACIÓN
     // =========================================================
 
     private fun mostrarNotificacion() {
@@ -131,10 +118,6 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
         val bindingActual =
             _binding ?: return
 
-
-        // -----------------------------------------------------
-        // ICONO
-        // -----------------------------------------------------
 
         if (actual.icono != 0) {
 
@@ -153,10 +136,6 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
                 )
         }
 
-
-        // -----------------------------------------------------
-        // INFORMACIÓN PRINCIPAL
-        // -----------------------------------------------------
 
         bindingActual
             .txtTipoDetalleNotificacion
@@ -182,13 +161,11 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
             actual.detalle
 
 
-        // -----------------------------------------------------
+        // =====================================================
         // PACIENTE
-        // -----------------------------------------------------
+        // =====================================================
 
-        if (
-            actual.idPaciente != null
-        ) {
+        if (actual.idPaciente != null) {
 
             bindingActual
                 .cardPacienteDetalleNotificacion
@@ -222,10 +199,6 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
         }
 
 
-        // -----------------------------------------------------
-        // ESTADO
-        // -----------------------------------------------------
-
         actualizarEstadoEnPantalla(
             actual.leida
         )
@@ -233,7 +206,7 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
 
 
     // =========================================================
-    // ACTUALIZAR ESTADO EN PANTALLA
+    // ACTUALIZAR ESTADO
     // =========================================================
 
     private fun actualizarEstadoEnPantalla(
@@ -248,11 +221,8 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
             .txtEstadoDetalleNotificacion
             .text =
             if (leida) {
-
                 "Leída"
-
             } else {
-
                 "No leída"
             }
     }
@@ -264,153 +234,92 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
 
     private fun marcarComoLeida() {
 
-        val actual =
-            notificacion ?: return
-
-
-        // -----------------------------------------------------
-        // SI YA ESTÁ LEÍDA NO HACEMOS NINGUNA PETICIÓN
-        // -----------------------------------------------------
+        val actual = notificacion ?: return
 
         if (actual.leida) {
             return
         }
 
-
-        // -----------------------------------------------------
-        // VALIDAR ID DEL DESTINATARIO
-        // -----------------------------------------------------
-
-        val idDestinatario =
-            actual.idNotificacionDestinatario
-
-
-        if (idDestinatario <= 0) {
-            return
-        }
-
-
         viewLifecycleOwner.lifecycleScope.launch {
 
             try {
 
+                val contexto = context
+                    ?: return@launch
+
+                val preferencias =
+                    contexto.getSharedPreferences(
+                        "SESION",
+                        0
+                    )
+
+                val idUsuario =
+                    preferencias.getInt(
+                        "ID_USUARIO",
+                        -1
+                    )
+
+                if (idUsuario <= 0) {
+                    return@launch
+                }
+
                 // =================================================
-                // PETICIÓN AL API
+                // MARCAR CUALQUIER NOTIFICACIÓN
                 // =================================================
 
-                val respuesta =
-                    RetrofitClient.apiService
-                        .marcarNotificacionLeida(
+                val marcada =
+                    NotificacionesRepository
+                        .marcarCualquierNotificacionLeida(
+                            idNotificacion =
+                                actual.idNotificacion,
 
-                            idDestinatario,
-
-                            MarcarNotificacionLeidaRequest(
-                                leida = true
-                            )
+                            idUsuario =
+                                idUsuario
                         )
 
-
-                // =================================================
-                // COMPROBAR RESPUESTA DEL SERVIDOR
-                // =================================================
-
-                if (!respuesta.isSuccessful) {
-
-                    val contexto =
-                        context ?: return@launch
+                if (!marcada) {
 
                     if (!isAdded) {
                         return@launch
                     }
 
                     Toast.makeText(
-                        contexto,
-                        "No se pudo actualizar el estado de la notificación",
+                        requireContext(),
+                        "No se pudo marcar la notificación como leída.",
                         Toast.LENGTH_SHORT
                     ).show()
 
                     return@launch
                 }
 
-
                 // =================================================
-                // LA PETICIÓN FUE EXITOSA
-                // =================================================
-                //
-                // RespuestaMensaje NO tiene la propiedad "leida".
-                //
-                // Como nosotros acabamos de enviar:
-                //
-                //     leida = true
-                //
-                // y el servidor respondió correctamente,
-                // actualizamos el modelo local directamente.
+                // ACTUALIZAR ESTADO LOCAL
                 // =================================================
 
-                notificacion =
+                val actualizada =
                     actual.copy(
                         leida = true
                     )
 
+                notificacion =
+                    actualizada
 
-                // =================================================
-                // COMPROBAR QUE LA VISTA SIGUE EXISTIENDO
-                // =================================================
-
-                val bindingActual =
-                    _binding ?: return@launch
-
-
-                // =================================================
-                // ACTUALIZAR ESTADO EN PANTALLA
-                // =================================================
-
-                bindingActual
-                    .txtEstadoDetalleNotificacion
-                    .text =
+                _binding?.txtEstadoDetalleNotificacion?.text =
                     "Leída"
 
-
-            } catch (
-                e: CancellationException
-            ) {
-
-                // =================================================
-                // CANCELACIÓN NORMAL
-                // =================================================
-                //
-                // Puede ocurrir si el usuario navega rápidamente
-                // y la vista del Fragment se destruye.
-                //
-                // No debemos mostrar un Toast de error.
-                // =================================================
+            } catch (e: CancellationException) {
 
                 throw e
 
-
-            } catch (
-                e: Exception
-            ) {
-
-                e.printStackTrace()
-
-
-                // =================================================
-                // COMPROBAR QUE EL FRAGMENT SIGUE ACTIVO
-                // =================================================
-
-                val contexto =
-                    context ?: return@launch
-
+            } catch (e: Exception) {
 
                 if (!isAdded) {
                     return@launch
                 }
 
-
                 Toast.makeText(
-                    contexto,
-                    "No se pudo actualizar el estado de la notificación",
+                    requireContext(),
+                    "No se pudo marcar la notificación como leída.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -419,7 +328,7 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
 
 
     // =========================================================
-    // BOTÓN VOLVER
+    // VOLVER
     // =========================================================
 
     private fun configurarBotonVolver() {
@@ -432,11 +341,6 @@ class DetalleNotificacionEncargadoFragment : Fragment() {
                     .popBackStack()
             }
     }
-
-
-    // =========================================================
-    // DESTRUIR VISTA
-    // =========================================================
 
     override fun onDestroyView() {
 
