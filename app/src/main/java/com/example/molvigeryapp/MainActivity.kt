@@ -8,11 +8,14 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.molvigeryapp.data.repository.FcmTokenRepository
 import com.example.molvigeryapp.databinding.ActivityMainBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -54,6 +57,7 @@ class MainActivity : AppCompatActivity() {
                 // ==========================================
 
                 6 -> {
+
                     supportFragmentManager
                         .beginTransaction()
                         .replace(
@@ -68,6 +72,7 @@ class MainActivity : AppCompatActivity() {
                 // ==========================================
 
                 5 -> {
+
                     supportFragmentManager
                         .beginTransaction()
                         .replace(
@@ -85,6 +90,11 @@ class MainActivity : AppCompatActivity() {
     // =========================================================
 
     private fun obtenerTokenFCM() {
+
+        Log.d(
+            TAG,
+            "Solicitando token FCM..."
+        )
 
         FirebaseMessaging
             .getInstance()
@@ -123,7 +133,78 @@ class MainActivity : AppCompatActivity() {
                     TAG,
                     "================================="
                 )
+
+                // Registrar automáticamente el token
+                // en Django para el usuario de esta sesión.
+                registrarTokenEnDjango(token)
             }
+    }
+
+    // =========================================================
+    // REGISTRAR TOKEN FCM EN DJANGO
+    // =========================================================
+
+    private fun registrarTokenEnDjango(token: String) {
+
+        val preferencias = getSharedPreferences(
+            "SESION",
+            MODE_PRIVATE
+        )
+
+        val idUsuario = preferencias.getInt(
+            "ID_USUARIO",
+            -1
+        )
+
+        if (idUsuario <= 0) {
+
+            Log.d(
+                TAG,
+                "No hay un ID_USUARIO válido en la sesión."
+            )
+
+            return
+        }
+
+        Log.d(
+            TAG,
+            "Registrando token FCM para usuario: $idUsuario"
+        )
+
+        lifecycleScope.launch {
+
+            try {
+
+                val registrado =
+                    FcmTokenRepository.registrarToken(
+                        idUsuario = idUsuario,
+                        token = token
+                    )
+
+                if (registrado) {
+
+                    Log.d(
+                        TAG,
+                        "✅ TOKEN FCM REGISTRADO CORRECTAMENTE EN DJANGO"
+                    )
+
+                } else {
+
+                    Log.e(
+                        TAG,
+                        "❌ DJANGO RECHAZÓ EL TOKEN FCM"
+                    )
+                }
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    TAG,
+                    "❌ ERROR REGISTRANDO TOKEN FCM EN DJANGO",
+                    e
+                )
+            }
+        }
     }
 
     // =========================================================
@@ -132,10 +213,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun solicitarPermisoNotificaciones() {
 
-        if (
-            Build.VERSION.SDK_INT >=
-            Build.VERSION_CODES.TIRAMISU
-        ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 
             if (
                 ActivityCompat.checkSelfPermission(
@@ -161,22 +239,20 @@ class MainActivity : AppCompatActivity() {
 
     fun cerrarSesion() {
 
-        val preferencias =
-            getSharedPreferences(
-                "SESION",
-                MODE_PRIVATE
-            )
+        val preferencias = getSharedPreferences(
+            "SESION",
+            MODE_PRIVATE
+        )
 
         preferencias
             .edit()
             .clear()
             .apply()
 
-        val intent =
-            Intent(
-                this,
-                LoginActivity::class.java
-            )
+        val intent = Intent(
+            this,
+            LoginActivity::class.java
+        )
 
         intent.flags =
             Intent.FLAG_ACTIVITY_NEW_TASK or

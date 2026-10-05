@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MolviGeryApp</string>
+    <string name="app_name">GerIApp</string>
 
     <string-array name="tipos_documento">
         <item>Selecciona un tipo de documento</item>
