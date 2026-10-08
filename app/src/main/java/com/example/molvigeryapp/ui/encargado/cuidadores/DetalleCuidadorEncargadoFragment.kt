@@ -661,44 +661,9 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
     // =====================================================
 
     private fun mostrarCargandoInicial() {
-
-        val bindingActual =
-            _binding ?: return
-
-
-        bindingActual
-            .progressBarDetalleCuidador
-            .visibility =
-            View.VISIBLE
-
-
-        bindingActual
-            .contenedorAccionesCuidador
-            .visibility =
-            View.GONE
     }
 
-
-    // =====================================================
-    // MOSTRAR PANTALLA COMPLETA
-    // =====================================================
-
     private fun mostrarCargaCompletada() {
-
-        val bindingActual =
-            _binding ?: return
-
-
-        bindingActual
-            .progressBarDetalleCuidador
-            .visibility =
-            View.GONE
-
-
-        bindingActual
-            .contenedorAccionesCuidador
-            .visibility =
-            View.VISIBLE
     }
 
 

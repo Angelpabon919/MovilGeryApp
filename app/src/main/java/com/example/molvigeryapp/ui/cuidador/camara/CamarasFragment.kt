@@ -62,56 +62,37 @@ class CamarasFragment : Fragment() {
             // INICIO
             // =====================================
 
-            navInicio =
-                binding.navInicio,
-
-            iconInicio =
-                binding.iconInicio,
-
-            textInicio =
-                binding.textInicio,
+            navInicio = binding.navInicio,
+            iconInicio = binding.iconInicio,
+            textInicio = binding.textInicio,
 
 
             // =====================================
             // AGENDA
             // =====================================
 
-            navAgenda =
-                binding.navAgenda,
-
-            iconAgenda =
-                binding.iconAgenda,
-
-            textAgenda =
-                binding.textAgenda,
+            navAgenda = binding.navAgenda,
+            iconAgenda = binding.iconAgenda,
+            textAgenda = binding.textAgenda,
+            badgeAgenda = binding.badgeAgenda,
 
 
             // =====================================
             // CÁMARAS
             // =====================================
 
-            navCamaras =
-                binding.navCamaras,
-
-            iconCamaras =
-                binding.iconCamaras,
-
-            textCamaras =
-                binding.textCamaras,
+            navCamaras = binding.navCamaras,
+            iconCamaras = binding.iconCamaras,
+            textCamaras = binding.textCamaras,
 
 
             // =====================================
             // PERFIL
             // =====================================
 
-            navPerfil =
-                binding.navPerfil,
-
-            iconPerfil =
-                binding.iconPerfil,
-
-            textPerfil =
-                binding.textPerfil,
+            navPerfil = binding.navPerfil,
+            iconPerfil = binding.iconPerfil,
+            textPerfil = binding.textPerfil,
 
 
             // =====================================
@@ -120,6 +101,8 @@ class CamarasFragment : Fragment() {
 
             pantallaActual =
                 NavegacionCuidador.Pantalla.CAMARAS,
+
+            lifecycleOwner = viewLifecycleOwner,
 
 
             // =====================================

@@ -18,28 +18,57 @@ object CitasRepository {
 
     suspend fun obtenerCitasDesdeApi(): List<Cita> {
 
-        // Obtener citas del backend
-        val respuestas =
-            RetrofitClient.apiService.getCitas()
+        try {
 
-        // Obtener pacientes del backend
-        val pacientes =
-            RetrofitClient.apiService.getPacientes()
+            val respuesta =
+                RetrofitClient.apiService.getCitas()
 
-        // Convertir las respuestas de la API
-        // al modelo que utiliza la aplicación.
-        return respuestas.mapIndexed { index, citaApi ->
+            if (respuesta.isSuccessful) {
 
-            val paciente =
-                pacientes.firstOrNull { paciente ->
-                    paciente.idPaciente == citaApi.idPaciente
+                val citas = respuesta.body() ?: emptyList()
+
+                val pacientes = try {
+                    RetrofitClient.apiService.getPacientes()
+                } catch (e: Exception) {
+                    emptyList()
                 }
 
-            convertirCita(
-                citaApi = citaApi,
-                paciente = paciente,
-                indice = index
+                return citas.map { cita ->
+                    if (cita.nombrePaciente.isNullOrBlank() && cita.idPaciente != null) {
+                        val paciente = pacientes.firstOrNull { it.idPaciente == cita.idPaciente }
+                        if (paciente != null) {
+                            cita.copy(
+                                nombrePaciente = "${paciente.nombre} ${paciente.apellido}".trim(),
+                                habitacion = paciente.habitacion,
+                                cama = paciente.cama
+                            )
+                        } else {
+                            cita
+                        }
+                    } else {
+                        cita
+                    }
+                }
+
+            } else {
+
+                android.util.Log.e(
+                    "API_ERROR",
+                    "Error HTTP ${respuesta.code()} al obtener citas"
+                )
+
+                return emptyList()
+            }
+
+        } catch (e: Exception) {
+
+            android.util.Log.e(
+                "API_ERROR",
+                "Excepción al obtener citas: ${e.message}",
+                e
             )
+
+            return emptyList()
         }
     }
 
@@ -95,134 +124,6 @@ object CitasRepository {
     fun eliminarCita(
         id: Int
     ) = eliminarCita(id.toString())
-
-
-    // =========================================================
-    // CONVERTIR CITA DE API A MODELO DE LA APP
-    // =========================================================
-
-    private fun convertirCita(
-        citaApi: CitaApiResponse,
-        paciente: Paciente?,
-        indice: Int
-    ): Cita {
-
-        val partesMotivo =
-            separarMotivo(
-                citaApi.motivo
-            )
-
-        return Cita(
-
-            // ID
-            id = citaApi.idCita,
-
-            idCita = citaApi.idCita,
-
-            // Paciente relacionado
-            idPaciente = citaApi.idPaciente,
-
-            // Nombre del paciente
-            nombrePaciente =
-                if (paciente != null) {
-                    "${paciente.nombre} ${paciente.apellido}".trim()
-                } else {
-                    "Paciente no encontrado"
-                },
-
-            // Habitación
-            habitacion = paciente?.habitacion,
-
-            // Cama
-            cama = paciente?.cama,
-
-            // Tipo de cita
-            tipoCita = partesMotivo.first,
-
-            // Especialidad
-            especialidad = partesMotivo.second,
-
-            // Fecha
-            fecha = citaApi.fecha,
-
-            // Hora
-            hora = citaApi.hora,
-
-            // Observaciones
-            observaciones = citaApi.observaciones,
-
-            // Estado
-            estado = citaApi.estado,
-
-            // Lugar
-            lugar = citaApi.lugar,
-
-            // Motivo
-            motivo = citaApi.motivo,
-
-            // Fecha Registro
-            fechaRegistro = citaApi.fechaRegistro,
-
-            // ID Usuario
-            idUsuario = citaApi.idUsuario
-        )
-    }
-
-
-    // =========================================================
-    // SEPARAR MOTIVO
-    // =========================================================
-
-    private fun separarMotivo(
-        motivo: String
-    ): Pair<String, String> {
-
-        if (motivo.isBlank()) {
-            return Pair(
-                "Sin tipo",
-                "Sin especialidad"
-            )
-        }
-
-        return try {
-
-            val partesGuion =
-                motivo.split(
-                    " - ",
-                    limit = 2
-                )
-
-            if (partesGuion.size < 2) {
-                return Pair(
-                    motivo.trim(),
-                    "Sin especialidad"
-                )
-            }
-
-            val tipoCita = partesGuion[0].trim()
-            val resto = partesGuion[1].trim()
-
-            val partesDosPuntos =
-                resto.split(
-                    ":",
-                    limit = 2
-                )
-
-            val especialidad = partesDosPuntos[0].trim()
-
-            Pair(
-                tipoCita,
-                especialidad
-            )
-
-        } catch (e: Exception) {
-
-            Pair(
-                motivo.trim(),
-                "Sin especialidad"
-            )
-        }
-    }
 
 
     // =========================================================

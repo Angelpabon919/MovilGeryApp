@@ -25,6 +25,7 @@ import com.example.molvigeryapp.data.model.NotificacionApi
 import com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest
 import com.example.molvigeryapp.data.model.NotificacionRequest
 import com.example.molvigeryapp.data.model.NotificacionResponse
+import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Usuario
 import okhttp3.ResponseBody
 import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
@@ -138,6 +139,12 @@ interface ApiService {
     @GET("asignacion_paciente_cuidador/")
     suspend fun getAsignacionesPacienteCuidador():
             Response<List<AsignacionPacienteCuidador>>
+
+    @PATCH("asignacion_paciente_cuidador/{id}/")
+    suspend fun actualizarEstadoAsignacion(
+        @Path("id") id: Int,
+        @Body datos: Map<String, String>
+    ): Response<AsignacionPacienteCuidador>
 
 
     // =========================================================
@@ -309,13 +316,15 @@ interface ApiService {
     // CITAS
     // =========================================================
 
-    @GET("citas/")
-    suspend fun getCitas(): List<CitaApiResponse>
-
     @POST("citas/")
     suspend fun crearCita(
         @Body cita: CrearCitaRequest
     ): Response<CitaApiResponse>
+
+    @GET("citas/")
+    suspend fun getCitas():
+    Response<List<Cita>>
+
 
 
     // =========================================================

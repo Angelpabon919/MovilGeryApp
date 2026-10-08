@@ -3,9 +3,14 @@ package com.example.molvigeryapp.ui.cuidador
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.example.molvigeryapp.ui.cuidador.agenda.AgendaNovedadManager
+import kotlinx.coroutines.launch
 
 object NavegacionCuidador {
 
@@ -13,48 +18,26 @@ object NavegacionCuidador {
     private const val GRIS = "#98A2B3"
 
     fun configurar(
-
-        // =========================
-        // INICIO
-        // =========================
-
         navInicio: LinearLayout,
         iconInicio: ImageView,
         textInicio: TextView,
 
-        // =========================
-        // AGENDA
-        // =========================
-
         navAgenda: LinearLayout,
         iconAgenda: ImageView,
         textAgenda: TextView,
-
-        // =========================
-        // CÁMARAS
-        // =========================
+        badgeAgenda: View? = null,
 
         navCamaras: LinearLayout,
         iconCamaras: ImageView,
         textCamaras: TextView,
 
-        // =========================
-        // PERFIL
-        // =========================
-
         navPerfil: LinearLayout,
         iconPerfil: ImageView,
         textPerfil: TextView,
 
-        // =========================
-        // PANTALLA ACTUAL
-        // =========================
-
         pantallaActual: Pantalla,
 
-        // =========================
-        // ACCIONES
-        // =========================
+        lifecycleOwner: LifecycleOwner,
 
         onInicio: () -> Unit,
         onAgenda: () -> Unit,
@@ -62,9 +45,9 @@ object NavegacionCuidador {
         onPerfil: () -> Unit
     ) {
 
-        // =========================================
-        // MARCAR PANTALLA ACTUAL
-        // =========================================
+        // =====================================================
+        // SELECCIONAR PANTALLA ACTUAL
+        // =====================================================
 
         seleccionar(
             iconInicio,
@@ -90,54 +73,117 @@ object NavegacionCuidador {
             pantallaActual == Pantalla.PERFIL
         )
 
-        // =========================================
-        // BOTÓN INICIO
-        // =========================================
+        // =====================================================
+        // ESTADO INICIAL DE LA BURBUJA
+        // =====================================================
+
+        if (pantallaActual == Pantalla.AGENDA) {
+
+            AgendaNovedadManager.marcarComoVista(
+                navAgenda.context
+            )
+
+            badgeAgenda?.visibility = View.GONE
+
+        } else {
+
+            badgeAgenda?.visibility =
+                if (
+                    AgendaNovedadManager.hayNovedad(
+                        navAgenda.context
+                    )
+                ) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
+        }
+
+        // =====================================================
+        // ESCUCHAR CAMBIOS DE LA BURBUJA
+        // =====================================================
+
+        if (badgeAgenda != null) {
+
+            lifecycleOwner.lifecycleScope.launch {
+
+                AgendaNovedadManager.hayNovedad.collect { hayNovedad ->
+
+                    // Si estamos en Agenda, la burbuja
+                    // siempre debe permanecer oculta.
+                    if (pantallaActual == Pantalla.AGENDA) {
+
+                        badgeAgenda.visibility =
+                            View.GONE
+
+                    } else {
+
+                        badgeAgenda.visibility =
+                            if (hayNovedad) {
+                                View.VISIBLE
+                            } else {
+                                View.GONE
+                            }
+                    }
+                }
+            }
+        }
+
+        // =====================================================
+        // NAVEGACIÓN
+        // =====================================================
 
         navInicio.setOnClickListener {
 
-            if (pantallaActual != Pantalla.INICIO) {
+            if (
+                pantallaActual != Pantalla.INICIO
+            ) {
+
                 onInicio()
             }
         }
 
-        // =========================================
-        // BOTÓN AGENDA
-        // =========================================
-
         navAgenda.setOnClickListener {
 
-            if (pantallaActual != Pantalla.AGENDA) {
+            if (
+                pantallaActual != Pantalla.AGENDA
+            ) {
+
+                AgendaNovedadManager.marcarComoVista(
+                    navAgenda.context
+                )
+
+                badgeAgenda?.visibility =
+                    View.GONE
+
                 onAgenda()
             }
         }
 
-        // =========================================
-        // BOTÓN CÁMARAS
-        // =========================================
-
         navCamaras.setOnClickListener {
 
-            if (pantallaActual != Pantalla.CAMARAS) {
+            if (
+                pantallaActual != Pantalla.CAMARAS
+            ) {
+
                 onCamaras()
             }
         }
 
-        // =========================================
-        // BOTÓN PERFIL
-        // =========================================
-
         navPerfil.setOnClickListener {
 
-            if (pantallaActual != Pantalla.PERFIL) {
+            if (
+                pantallaActual != Pantalla.PERFIL
+            ) {
+
                 onPerfil()
             }
         }
     }
 
-    // =====================================================
-    // CAMBIAR COLOR DE OPCIÓN
-    // =====================================================
+    // =========================================================
+    // SELECCIONAR ELEMENTO
+    // =========================================================
 
     private fun seleccionar(
         icono: ImageView,
@@ -145,11 +191,15 @@ object NavegacionCuidador {
         seleccionado: Boolean
     ) {
 
-        val color = if (seleccionado) {
-            Color.parseColor(AZUL)
-        } else {
-            Color.parseColor(GRIS)
-        }
+        val color =
+            if (seleccionado) {
+
+                Color.parseColor(AZUL)
+
+            } else {
+
+                Color.parseColor(GRIS)
+            }
 
         icono.imageTintList =
             ColorStateList.valueOf(color)
@@ -167,10 +217,6 @@ object NavegacionCuidador {
             }
         )
     }
-
-    // =====================================================
-    // PANTALLAS PRINCIPALES
-    // =====================================================
 
     enum class Pantalla {
 
