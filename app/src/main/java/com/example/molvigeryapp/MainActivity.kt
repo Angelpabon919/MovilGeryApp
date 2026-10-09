@@ -12,9 +12,12 @@ import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.repository.FcmTokenRepository
 import com.example.molvigeryapp.databinding.ActivityMainBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
+import com.example.molvigeryapp.ui.cuidador.actualizador.ActualizadorGeriApp
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -22,14 +25,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     companion object {
+
         private const val TAG = "GERIAPP_FCM"
+
         private const val REQUEST_NOTIFICATION_PERMISSION = 1001
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding =
+            ActivityMainBinding.inflate(layoutInflater)
+
         setContentView(binding.root)
 
         // =====================================================
@@ -37,16 +44,41 @@ class MainActivity : AppCompatActivity() {
         // =====================================================
 
         solicitarPermisoNotificaciones()
+
         obtenerTokenFCM()
 
         // =====================================================
         // ROL
         // =====================================================
 
-        val idRol = intent.getIntExtra(
-            "ID_ROL",
-            -1
-        )
+        val idRol =
+            intent.getIntExtra(
+                "ID_ROL",
+                -1
+            )
+
+        // =====================================================
+        // ACTUALIZADOR GENERAL DE GERIAPP
+        // =====================================================
+        //
+        // Por ahora lo utilizamos para detectar nuevas citas
+        // del cuidador.
+        //
+        // Más adelante podremos agregar aquí:
+        // - notificaciones
+        // - eventos
+        // - medicamentos
+        // - etc.
+        //
+
+        if (idRol == 5) {
+
+            iniciarActualizadorGeriApp()
+        }
+
+        // =====================================================
+        // CARGAR FRAGMENTO INICIAL
+        // =====================================================
 
         if (savedInstanceState == null) {
 
@@ -86,6 +118,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     // =========================================================
+    // ACTUALIZADOR GENERAL DE GERIAPP
+    // =========================================================
+
+    private fun iniciarActualizadorGeriApp() {
+
+        lifecycleScope.launch {
+
+            while (isActive) {
+
+                ActualizadorGeriApp.actualizar(
+                    applicationContext
+                )
+
+                delay(
+                    ActualizadorGeriApp.obtenerIntervalo()
+                )
+            }
+        }
+    }
+
+    // =========================================================
     // OBTENER TOKEN FCM
     // =========================================================
 
@@ -112,7 +165,8 @@ class MainActivity : AppCompatActivity() {
                     return@addOnCompleteListener
                 }
 
-                val token = tarea.result
+                val token =
+                    tarea.result
 
                 Log.d(
                     TAG,
@@ -144,17 +198,21 @@ class MainActivity : AppCompatActivity() {
     // REGISTRAR TOKEN FCM EN DJANGO
     // =========================================================
 
-    private fun registrarTokenEnDjango(token: String) {
+    private fun registrarTokenEnDjango(
+        token: String
+    ) {
 
-        val preferencias = getSharedPreferences(
-            "SESION",
-            MODE_PRIVATE
-        )
+        val preferencias =
+            getSharedPreferences(
+                "SESION",
+                MODE_PRIVATE
+            )
 
-        val idUsuario = preferencias.getInt(
-            "ID_USUARIO",
-            -1
-        )
+        val idUsuario =
+            preferencias.getInt(
+                "ID_USUARIO",
+                -1
+            )
 
         if (idUsuario <= 0) {
 
@@ -213,7 +271,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun solicitarPermisoNotificaciones() {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.TIRAMISU
+        ) {
 
             if (
                 ActivityCompat.checkSelfPermission(
@@ -239,20 +300,22 @@ class MainActivity : AppCompatActivity() {
 
     fun cerrarSesion() {
 
-        val preferencias = getSharedPreferences(
-            "SESION",
-            MODE_PRIVATE
-        )
+        val preferencias =
+            getSharedPreferences(
+                "SESION",
+                MODE_PRIVATE
+            )
 
         preferencias
             .edit()
             .clear()
             .apply()
 
-        val intent = Intent(
-            this,
-            LoginActivity::class.java
-        )
+        val intent =
+            Intent(
+                this,
+                LoginActivity::class.java
+            )
 
         intent.flags =
             Intent.FLAG_ACTIVITY_NEW_TASK or

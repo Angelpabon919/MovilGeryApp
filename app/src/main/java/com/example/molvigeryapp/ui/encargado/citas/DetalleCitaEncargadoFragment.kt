@@ -10,8 +10,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
+import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.Paciente
+import com.example.molvigeryapp.data.repository.CitasRepository
 import com.example.molvigeryapp.databinding.FragmentDetalleCitaEncargadoBinding
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -224,8 +226,8 @@ class DetalleCitaEncargadoFragment : Fragment() {
                 // =================================================
 
                 val citas =
-                    RetrofitClient.apiService
-                        .getCitas()
+                    CitasRepository
+                        .obtenerCitasDesdeApi()
 
 
                 if (_binding == null) {
@@ -240,8 +242,8 @@ class DetalleCitaEncargadoFragment : Fragment() {
                 val cita =
                     citas.firstOrNull {
 
-                        it.idCita ==
-                                identificadorCita
+                        it.id == identificadorCita ||
+                                it.idCita == identificadorCita
                     }
 
 
@@ -327,7 +329,7 @@ class DetalleCitaEncargadoFragment : Fragment() {
     // =========================================================
 
     private fun mostrarInformacion(
-        cita: CitaApiResponse,
+        cita: Cita,
         paciente: Paciente?
     ) {
 
@@ -393,7 +395,7 @@ class DetalleCitaEncargadoFragment : Fragment() {
 
         val partesMotivo =
             separarMotivo(
-                cita.motivo
+                cita.motivo ?: ""
             )
 
 
@@ -407,7 +409,7 @@ class DetalleCitaEncargadoFragment : Fragment() {
 
         binding.txtMotivoDetalleCita.text =
             obtenerMotivoLimpio(
-                cita.motivo
+                cita.motivo ?: ""
             )
 
 
@@ -446,7 +448,7 @@ class DetalleCitaEncargadoFragment : Fragment() {
         binding.txtObservacionesDetalleCita.text =
 
             if (
-                cita.observaciones.isBlank()
+                cita.observaciones.isNullOrBlank()
             ) {
 
                 "Sin observaciones registradas"

@@ -266,6 +266,7 @@ class PerfilCuidadorFragment : Fragment() {
             navAgenda = binding.navAgenda,
             iconAgenda = binding.iconAgenda,
             textAgenda = binding.textAgenda,
+            badgeAgenda = binding.badgeAgenda,
 
             navCamaras = binding.navCamaras,
             iconCamaras = binding.iconCamaras,
@@ -277,6 +278,8 @@ class PerfilCuidadorFragment : Fragment() {
 
             pantallaActual =
                 NavegacionCuidador.Pantalla.PERFIL,
+
+            lifecycleOwner = viewLifecycleOwner,
 
             // ==============================
             // INICIO

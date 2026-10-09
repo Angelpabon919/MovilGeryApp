@@ -47,10 +47,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         configurarNavegacion()
     }
 
-    // =====================================================
-    // NAVEGACIÓN CUIDADOR
-    // =====================================================
-
     private fun configurarNavegacion() {
 
         NavegacionCuidador.configurar(
@@ -63,6 +59,9 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             iconAgenda = binding.iconAgenda,
             textAgenda = binding.textAgenda,
 
+            // Burbujita de novedades de Agenda
+            badgeAgenda = binding.badgeAgenda,
+
             navCamaras = binding.navCamaras,
             iconCamaras = binding.iconCamaras,
             textCamaras = binding.textCamaras,
@@ -74,12 +73,14 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             pantallaActual =
                 NavegacionCuidador.Pantalla.INICIO,
 
+            // Necesario para observar la burbujita
+            lifecycleOwner = viewLifecycleOwner,
+
             onInicio = {
                 // Ya estamos en Inicio.
             },
 
             onAgenda = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -90,7 +91,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             },
 
             onCamaras = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -104,28 +104,21 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
-                        R.id.fragmentContainer, PerfilCuidadorFragment()
+                        R.id.fragmentContainer,
+                        PerfilCuidadorFragment()
                     )
                     .commit()
             }
         )
     }
 
-    // =====================================================
-    // BOTÓN EDITAR PACIENTES
-    // =====================================================
-
     private fun setupBotonEditar() {
 
         binding.btnEditPacientes.setOnClickListener {
 
-            if (
-                parentFragmentManager
-                    .backStackEntryCount > 0
-            ) {
+            if (parentFragmentManager.backStackEntryCount > 0) {
 
-                parentFragmentManager
-                    .popBackStack()
+                parentFragmentManager.popBackStack()
 
             } else {
 
@@ -140,56 +133,39 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         }
     }
 
-    // =====================================================
-    // DESPLEGAR MEDICAMENTOS
-    // =====================================================
-
     private fun setupDespliegueMedicamentos() {
 
-        binding.layoutHeaderMedicamentos
-            .setOnClickListener {
+        binding.layoutHeaderMedicamentos.setOnClickListener {
 
-                isExpanded = !isExpanded
+            isExpanded = !isExpanded
 
-                if (isExpanded) {
+            if (isExpanded) {
 
-                    binding
-                        .containerMedicamentosContent
-                        .visibility = View.VISIBLE
+                binding.containerMedicamentosContent.visibility =
+                    View.VISIBLE
 
-                    binding
-                        .btnExpandMedicamentos
-                        .setImageResource(
-                            R.drawable.ic_arrow_up
-                        )
+                binding.btnExpandMedicamentos.setImageResource(
+                    R.drawable.ic_arrow_up
+                )
 
-                } else {
+            } else {
 
-                    binding
-                        .containerMedicamentosContent
-                        .visibility = View.GONE
+                binding.containerMedicamentosContent.visibility =
+                    View.GONE
 
-                    binding
-                        .btnExpandMedicamentos
-                        .setImageResource(
-                            R.drawable.ic_arrow_down
-                        )
-                }
+                binding.btnExpandMedicamentos.setImageResource(
+                    R.drawable.ic_arrow_down
+                )
             }
+        }
     }
-
-    // =====================================================
-    // RECYCLERVIEW PACIENTES
-    // =====================================================
 
     private fun setupRecyclerViewPacientes() {
 
         homeAdapter = HomeAdapter { paciente ->
 
-            // Guardamos el paciente seleccionado
             viewModel.seleccionarPaciente(paciente)
 
-            // Vamos al detalle del paciente
             parentFragmentManager
                 .beginTransaction()
                 .replace(
@@ -207,93 +183,75 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             homeAdapter
     }
 
-    // =====================================================
-    // OBSERVAR PACIENTES
-    // =====================================================
-
     private fun observarDatos() {
 
-        viewModel
-            .pacientesSeleccionadosHome
-            .observe(viewLifecycleOwner) { listaSeleccionados ->
+        viewModel.pacientesSeleccionadosHome.observe(
+            viewLifecycleOwner
+        ) { listaSeleccionados ->
 
-                val lista =
-                    listaSeleccionados ?: emptyList()
+            val lista =
+                listaSeleccionados ?: emptyList()
 
-                listaOriginalPacientes = lista
+            listaOriginalPacientes = lista
 
-                val textoBusqueda =
-                    binding.etSearchPaciente
-                        .text
-                        .toString()
+            val textoBusqueda =
+                binding.etSearchPaciente.text.toString()
 
-                if (textoBusqueda.isNotEmpty()) {
+            if (textoBusqueda.isNotEmpty()) {
 
-                    filtrarLista(textoBusqueda)
+                filtrarLista(textoBusqueda)
 
-                } else {
+            } else {
 
-                    homeAdapter
-                        .actualizarLista(lista)
-                }
+                homeAdapter.actualizarLista(lista)
             }
+        }
     }
-
-    // =====================================================
-    // BUSCADOR
-    // =====================================================
 
     private fun setupBuscador() {
 
-        binding.etSearchPaciente
-            .addTextChangedListener(
-                object : TextWatcher {
+        binding.etSearchPaciente.addTextChangedListener(
 
-                    override fun beforeTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        count: Int,
-                        after: Int
-                    ) {
-                    }
+            object : TextWatcher {
 
-                    override fun onTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        before: Int,
-                        count: Int
-                    ) {
-
-                        filtrarLista(
-                            s?.toString() ?: ""
-                        )
-                    }
-
-                    override fun afterTextChanged(
-                        s: Editable?
-                    ) {
-                    }
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
                 }
-            )
+
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
+
+                    filtrarLista(
+                        s?.toString() ?: ""
+                    )
+                }
+
+                override fun afterTextChanged(
+                    s: Editable?
+                ) {
+                }
+            }
+        )
     }
 
-    // =====================================================
-    // FILTRAR PACIENTES
-    // =====================================================
-
-    private fun filtrarLista(
-        texto: String
-    ) {
+    private fun filtrarLista(texto: String) {
 
         val consulta =
             texto.trim().lowercase()
 
         if (consulta.isEmpty()) {
 
-            homeAdapter
-                .actualizarLista(
-                    listaOriginalPacientes
-                )
+            homeAdapter.actualizarLista(
+                listaOriginalPacientes
+            )
 
         } else {
 
@@ -301,9 +259,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 listaOriginalPacientes.filter { paciente ->
 
                     val nombreCompleto =
-                        "${paciente.nombre ?: ""} " +
-                                "${paciente.apellido ?: ""}"
-                                    .lowercase()
+                        "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}"
+                            .lowercase()
 
                     val documento =
                         paciente.numeroDocumento
@@ -321,14 +278,11 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                             habitacion.contains(consulta)
                 }
 
-            homeAdapter
-                .actualizarLista(listaFiltrada)
+            homeAdapter.actualizarLista(
+                listaFiltrada
+            )
         }
     }
-
-    // =====================================================
-    // DESTRUIR BINDING
-    // =====================================================
 
     override fun onDestroyView() {
 

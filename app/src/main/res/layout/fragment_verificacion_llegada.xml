@@ -68,8 +68,6 @@
 
             <!-- CAMPANA DE NOTIFICACIONES -->
 
-
-
         </LinearLayout>
 
         <!-- TÍTULO -->
@@ -145,10 +143,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tvSubtitulo">
 
-                <!-- IMPORTANTE:
-                     CardView solo puede tener UN hijo directo.
-                     Por eso usamos FrameLayout. -->
-
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
@@ -206,7 +200,7 @@
                         android:background="@drawable/bg_icono_llegada"
                         android:gravity="center"
                         android:src="@drawable/ubicacion_cuidador"
-                        android:textSize="20sp"
+                        android:contentDescription="Ubicación de la sede"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -267,7 +261,7 @@
                         android:background="@drawable/bg_icono_llegada"
                         android:gravity="center"
                         android:src="@drawable/clock"
-                        android:textSize="20sp"
+                        android:contentDescription="Horario programado"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -315,6 +309,105 @@
 
 
             <!-- ================================================= -->
+            <!-- TARJETA DE TURNOS PENDIENTES -->
+            <!-- ================================================= -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardTurnosPendientes"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/cardHorario">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="18dp">
+
+                    <!-- ENCABEZADO DESPLEGABLE -->
+
+                    <LinearLayout
+                        android:id="@+id/layoutTituloTurnos"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:paddingVertical="4dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/IconoTurno"
+                            android:layout_width="42dp"
+                            android:layout_height="42dp"
+                            android:background="@drawable/bg_icono_llegada"
+                            android:gravity="center"
+                            android:src="@drawable/clock"/>
+
+                        <TextView
+                            android:id="@+id/tvTituloTurnos"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="Turnos pendientes"
+                            android:textColor="#202124"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:id="@+id/btnExpandirTurnos"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_arrow_down"
+                            android:contentDescription="Desplegar turnos" />
+
+                    </LinearLayout>
+
+
+                    <!-- CONTENIDO DE LOS TURNOS -->
+
+                    <LinearLayout
+                        android:id="@+id/containerTurnos"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/layoutTituloTurnos">
+
+                        <!-- MENSAJE CUANDO NO HAY TURNOS -->
+
+                        <TextView
+                            android:id="@+id/tvSinTurnos"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="12dp"
+                            android:text="No tienes turnos pendientes"
+                            android:textColor="#6B7280"
+                            android:textSize="14sp"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+
+            <!-- ================================================= -->
             <!-- BOTÓN -->
             <!-- ================================================= -->
 
@@ -332,7 +425,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/cardHorario" />
+                app:layout_constraintTop_toBottomOf="@id/cardTurnosPendientes" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
