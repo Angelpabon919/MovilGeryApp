@@ -13,7 +13,7 @@ import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentAgendaBinding
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
-import com.example.molvigeryapp.ui.cuidador.camara.CamarasFragment
+import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
@@ -188,7 +188,7 @@ class AgendaFragment : Fragment() {
                     .beginTransaction()
                     .replace(
                         R.id.fragmentContainer,
-                        CamarasFragment()
+                        EventosCamaraFragment()
                     )
                     .commit()
             },

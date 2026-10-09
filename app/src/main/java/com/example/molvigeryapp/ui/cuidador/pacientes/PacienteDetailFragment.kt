@@ -42,7 +42,26 @@ class DetallePacienteFragment : Fragment() {
         setupHeader()
         setupViewPagerAndTabs()
         observarPaciente()
+        observarMedicamentosPaciente()
     }
+    private fun observarMedicamentosPaciente() {
+
+        viewModel.formulacionesMedicamentos.observe(viewLifecycleOwner) {
+
+            val idPaciente =
+                arguments?.getInt("ID_PACIENTE", -1) ?: -1
+
+
+            val medicamentos =
+                viewModel.obtenerMedicamentosPaciente(idPaciente)
+
+
+            println("Medicamentos paciente: ${medicamentos.size}")
+
+        }
+
+    }
+
 
     private fun setupHeader() {
         binding.btnVolver.setOnClickListener {

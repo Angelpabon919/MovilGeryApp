@@ -65,7 +65,6 @@
 
 
     <!-- Buscador: Buscar paciente -->
->>>>>>> Stashed changes
     <androidx.cardview.widget.CardView
         android:id="@+id/cardSearch"
         android:layout_width="0dp"
@@ -183,21 +182,70 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
-                android:id="@+id/containerMedicamentosContent"
+                android:id="@+id/layoutListaMedicamentos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:visibility="gone">
+                android:orientation="vertical">
+
 
                 <TextView
+                    android:id="@+id/tvTituloManana"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:padding="12dp"
-                    android:text="Cargando dosis del día..."
-                    android:textColor="#94A3B8"
-                    android:textSize="14sp" />
+                    android:text="🌞 Mañana"
+                    android:textStyle="bold"
+                    android:textColor="#1E293B"
+                    android:textSize="15sp"/>
+
+
+                <TextView
+                    android:id="@+id/tvMedicamentosManana"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Cargando..."
+                    android:textColor="#64748B"/>
+
+
+                <TextView
+                    android:id="@+id/tvTituloTarde"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="🌤 Tarde"
+                    android:textStyle="bold"
+                    android:textColor="#1E293B"
+                    android:textSize="15sp"/>
+
+
+                <TextView
+                    android:id="@+id/tvMedicamentosTarde"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Cargando..."
+                    android:textColor="#64748B"/>
+
+
+                <TextView
+                    android:id="@+id/tvTituloNoche"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="🌙 Noche"
+                    android:textStyle="bold"
+                    android:textColor="#1E293B"
+                    android:textSize="15sp"/>
+
+
+                <TextView
+                    android:id="@+id/tvMedicamentosNoche"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Cargando..."
+                    android:textColor="#64748B"/>
+
 
             </LinearLayout>
 

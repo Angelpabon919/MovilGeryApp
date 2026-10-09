@@ -125,6 +125,11 @@ class AplicacionMedicamentosFragment : Fragment(R.layout.fragment_aplicacion_med
                     requireContext(),
                     android.R.layout.simple_dropdown_item_1line,
                     etiquetasMedicamentos
+
+                )
+                Log.d(
+                    TAG,
+                    "LISTA QUE VA AL SPINNER: $etiquetasMedicamentos"
                 )
                 spinnerMedicamento.setAdapter(adapter)
             }
@@ -219,7 +224,6 @@ class AplicacionMedicamentosFragment : Fragment(R.layout.fragment_aplicacion_med
                     dosis = dosisTexto,
                     via = via,
                     observacion = observacion,
-                    cantidadAplicadaInput = cantidadNum,
                     idElementoPaciente = idElementoReal,
                     cantidadActual = stockActual,
                     idEncargado = 1,
