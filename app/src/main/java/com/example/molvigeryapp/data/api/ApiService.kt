@@ -32,9 +32,14 @@ import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
 import com.example.molvigeryapp.data.model.RespuestaMensaje
 import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.CrearCitaRequest
+import com.example.molvigeryapp.data.model.EventoIa
+import com.example.molvigeryapp.data.model.EvidenciaIa
+import com.example.molvigeryapp.data.model.FormulacionMedicamento
+import com.example.molvigeryapp.data.model.GrupoMedicacion
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
+import com.example.molvigeryapp.data.model.TipoEventoIa
 
 import retrofit2.Response
 import retrofit2.http.Body
@@ -96,6 +101,7 @@ interface ApiService {
     suspend fun asociarNotificacionDestinatario(
         @Body request: NotificacionDestinatarioRequest
     ): Response<ResponseBody>
+
 
     // =========================================================
     // RECOMENDACIONES
@@ -168,6 +174,14 @@ interface ApiService {
 
     @GET("medicamentos/")
     suspend fun getMedicamentos(): Response<List<Medicamento>>
+
+    @GET("formulacion_medicamentos/")
+    suspend fun getFormulacionesMedicamentos():
+            Response<List<FormulacionMedicamento>>
+
+    @GET("grupo_medicacion/")
+    suspend fun getGrupoMedicacion():
+            Response<List<GrupoMedicacion>>
 
 
     // =========================================================
@@ -369,4 +383,25 @@ interface ApiService {
     suspend fun crearHistoriaClinica(
         @Body historia: HistoriaClinica
     ): HistoriaClinica
+    // =========================================================
+// EVENTOS DE INTELIGENCIA ARTIFICIAL
+// =========================================================
+
+    @GET("eventos_ia/")
+    suspend fun getEventosIa(): Response<List<EventoIa>>
+
+    @GET("tipos_evento_ia/")
+    suspend fun getTiposEventoIa(): Response<List<TipoEventoIa>>
+
+
+    // =====================================================
+    // EVIDENCIAS DE INTELIGENCIA ARTIFICIAL
+    // =====================================================
+
+    @GET("evidencias_ia/")
+    suspend fun getEvidenciasIa(): Response<List<EvidenciaIa>>
+
+
+
+
 }

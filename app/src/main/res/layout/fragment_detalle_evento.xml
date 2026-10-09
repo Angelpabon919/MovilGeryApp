@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F9FC">
+
+    <!-- ENCABEZADO -->
+    <LinearLayout
+        android:id="@+id/headerDetalle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#3B60D9"
+        android:padding="20dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageButton
+                android:id="@+id/btnVolverDetalle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_previous"
+                android:contentDescription="Volver a Eventos Cámara"
+                app:tint="#FFFFFF"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Detalle del evento"
+                android:textColor="#FFFFFF"
+                android:textSize="21sp"
+                android:textStyle="bold"/>
+
+            <Space
+                android:layout_width="40dp"
+                android:layout_height="1dp"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Información de la detección"
+            android:textColor="#DCE7FF"
+            android:textSize="14sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- CONTENIDO DESPLAZABLE -->
+    <ScrollView
+        android:id="@+id/scrollDetalle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="16dp"
+        android:clipToPadding="false"
+        android:fillViewport="false"
+        app:layout_constraintTop_toBottomOf="@id/headerDetalle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- TARJETA RESUMEN -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E8EDF5"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="18dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvNombreDetalle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Cargando evento..."
+                        android:textColor="#1E293B"
+                        android:textSize="19sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvRiesgoDetalle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Nivel de riesgo"
+                        android:textColor="#EA580C"
+                        android:textSize="13sp"
+                        android:textStyle="bold"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- INFORMACIÓN DEL EVENTO -->
+
+            <!-- INFORMACIÓN DEL EVENTO -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E8EDF5"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="INFORMACIÓN DE LA DETECCIÓN"
+                        android:textColor="#64748B"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="16dp"/>
+
+                    <TableLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stretchColumns="1">
+
+                        <!-- ID EVENTO -->
+                        <TableRow android:paddingVertical="12dp">
+                            <TextView
+                                android:text="ID del evento"
+                                android:textColor="#64748B"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:id="@+id/tvIdEventoDetalle"
+                                android:text="--"
+                                android:gravity="end"
+                                android:textStyle="bold"
+                                android:textColor="#334155"
+                                android:textSize="13sp"/>
+                        </TableRow>
+
+                        <!-- PACIENTE -->
+                        <TableRow android:paddingVertical="12dp">
+                            <TextView
+                                android:text="Paciente"
+                                android:textColor="#64748B"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:id="@+id/tvPacienteDetalle"
+                                android:text="--"
+                                android:gravity="end"
+                                android:textStyle="bold"
+                                android:textColor="#3B60D9"
+                                android:textSize="13sp"/>
+                        </TableRow>
+
+                        <!-- HABITACIÓN -->
+                        <TableRow android:paddingVertical="12dp">
+                            <TextView
+                                android:text="Habitación"
+                                android:textColor="#64748B"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:id="@+id/tvHabitacionDetalle"
+                                android:text="--"
+                                android:gravity="end"
+                                android:textStyle="bold"
+                                android:textColor="#334155"
+                                android:textSize="13sp"/>
+                        </TableRow>
+
+                        <!-- CÁMARA -->
+                        <TableRow android:paddingVertical="12dp">
+                            <TextView
+                                android:text="Cámara"
+                                android:textColor="#64748B"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:id="@+id/tvCamaraDetalle"
+                                android:text="--"
+                                android:gravity="end"
+                                android:textStyle="bold"
+                                android:textColor="#334155"
+                                android:textSize="13sp"/>
+                        </TableRow>
+
+                        <!-- FECHA Y HORA -->
+                        <TableRow android:paddingVertical="12dp">
+                            <TextView
+                                android:text="Fecha y hora"
+                                android:textColor="#64748B"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:id="@+id/tvFechaHoraDetalle"
+                                android:text="--"
+                                android:gravity="end"
+                                android:textStyle="bold"
+                                android:textColor="#334155"
+                                android:textSize="12sp"/>
+                        </TableRow>
+
+                        <!-- CONFIANZA -->
+                        <TableRow android:paddingVertical="12dp">
+                            <TextView
+                                android:text="Confianza de IA"
+                                android:textColor="#64748B"
+                                android:textSize="13sp"/>
+
+                            <TextView
+                                android:id="@+id/tvConfianzaDetalle"
+                                android:text="--"
+                                android:gravity="end"
+                                android:textStyle="bold"
+                                android:textColor="#3B60D9"
+                                android:textSize="13sp"/>
+                        </TableRow>
+
+                    </TableLayout>
+
+                    <!-- BARRA DE CONFIANZA -->
+                    <ProgressBar
+                        android:id="@+id/progressConfianzaDetalle"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="5dp"
+                        android:layout_marginBottom="12dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="#3B60D9"
+                        android:progressBackgroundTint="#E8EDF5"/>
+
+                    <!-- ESTADO -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Estado"
+                            android:textColor="#64748B"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvEstadoDetalle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textStyle="bold"
+                            android:textColor="#059669"
+                            android:textSize="13sp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <!-- DESCRIPCIÓN DEL TIPO DE EVENTO -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E8EDF5"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="DESCRIPCIÓN DEL EVENTO"
+                        android:textStyle="bold"
+                        android:textColor="#64748B"
+                        android:textSize="13sp"/>
+
+                    <TextView
+                        android:id="@+id/tvDescripcionDetalle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="#F5F8FC"
+                        android:padding="14dp"
+                        android:text="Consultando descripción..."
+                        android:textColor="#475569"
+                        android:textSize="14sp"
+                        android:lineSpacingExtra="4dp"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- EVIDENCIA -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEvidenciaDetalle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E8EDF5"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="EVIDENCIA DEL EVENTO"
+                        android:textStyle="bold"
+                        android:textColor="#64748B"
+                        android:textSize="13sp"/>
+
+                    <!-- INDICADOR DE CARGA -->
+                    <ProgressBar
+                        android:id="@+id/progressEvidencia"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone"/>
+
+                    <!-- IMAGEN DEL BACKEND -->
+                    <ImageView
+                        android:id="@+id/imgEvidenciaDetalle"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:layout_marginTop="14dp"
+                        android:background="#F5F8FC"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="Evidencia fotográfica del evento"
+                        android:visibility="gone"/>
+
+                    <!-- MENSAJE SIN EVIDENCIA -->
+                    <TextView
+                        android:id="@+id/tvSinEvidencia"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:padding="16dp"
+                        android:text="Consultando evidencia..."
+                        android:textColor="#94A3B8"
+                        android:textSize="13sp"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,7 +6,7 @@ data class AplicacionRequest(
     @SerializedName("id_paciente")
     val idPaciente: Int,
 
-    @SerializedName("id_medicamento_medicamento") // <-- Corregido (antes decia id_medicamento)
+    @SerializedName("id_medicamento_medicamento")
     val idMedicamento: Int,
 
     @SerializedName("id_inventario")
@@ -18,7 +18,7 @@ data class AplicacionRequest(
     @SerializedName("fecha_hora")
     val fechaHora: String,
 
-    @SerializedName("dosis_administrada") // <-- Corregido (antes tenia espacio en vez de _)
+    @SerializedName("dosis_administrada")
     val dosisAdministrada: String,
 
     @SerializedName("via_administracion")
@@ -31,5 +31,5 @@ data class AplicacionRequest(
     val observacion: String,
 
     @SerializedName("cantidad_aplicada")
-    val cantidadAplicada: Int
+    val cantidadAplicada: Int = 1
 )
