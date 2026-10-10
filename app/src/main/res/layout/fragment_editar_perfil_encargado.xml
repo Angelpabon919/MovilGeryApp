@@ -16,7 +16,7 @@
     <LinearLayout
         android:id="@+id/headerEditarPerfil"
         android:layout_width="0dp"
-        android:layout_height="155dp"
+        android:layout_height="115dp"
         android:orientation="vertical"
         android:paddingStart="28dp"
         android:paddingEnd="22dp"

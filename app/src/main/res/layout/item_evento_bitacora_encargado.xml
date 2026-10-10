@@ -5,38 +5,39 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="7dp"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="#FFFFFF"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
     app:rippleColor="#193B5BDB"
     app:strokeColor="#E9ECEF"
     app:strokeWidth="1dp">
-
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
-
+        android:paddingStart="14dp"
+        android:paddingTop="13dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="13dp">
 
         <!-- ENCABEZADO -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-
             <!-- ICONO DEL REGISTRO -->
-
             <FrameLayout
-                android:layout_width="46dp"
-                android:layout_height="46dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="@drawable/bg_icono_modulo">
 
                 <ImageView
@@ -50,13 +51,11 @@
 
             </FrameLayout>
 
-
             <!-- TIPO -->
-
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="11dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -65,71 +64,70 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Registro de actividad"
-                    android:textColor="#212529"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="#1F2937"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
+                    android:layout_marginTop="4dp"
                     android:text="Registro de bitácora"
-                    android:textColor="#98A2B3"
-                    android:textSize="11sp" />
+                    android:textColor="#8492A6"
+                    android:textSize="11sp"
+                    android:includeFontPadding="false" />
 
             </LinearLayout>
 
-
             <!-- FLECHA -->
-
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/arrow"
                 android:contentDescription="Ver detalle"
+                android:scaleType="centerInside"
                 app:tint="#98A2B3" />
 
         </LinearLayout>
 
-
         <!-- SEPARADOR -->
-
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="11dp"
             android:background="#F0F2F5" />
 
-
         <!-- DESCRIPCIÓN -->
-
         <TextView
             android:id="@+id/txtDescripcionEventoBitacora"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="11dp"
             android:maxLines="3"
             android:ellipsize="end"
             android:text="Cuidado del paciente"
-            android:textColor="#343A40"
+            android:textColor="#344054"
             android:textSize="14sp"
-            android:textStyle="bold" />
-
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
 
         <!-- PACIENTE -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:src="@drawable/persona_encargado"
-                android:contentDescription="Paciente"
+                android:contentDescription="@null"
+                android:scaleType="centerInside"
                 app:tint="#3B5BDB" />
 
             <TextView
@@ -139,26 +137,28 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:text="Paciente: Carlos Rodríguez"
-                android:textColor="#687078"
-                android:textSize="13sp" />
+                android:textColor="#667085"
+                android:textSize="13sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
 
         </LinearLayout>
 
-
         <!-- FECHA -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="7dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:src="@drawable/calendario"
-                android:contentDescription="Fecha"
+                android:contentDescription="@null"
+                android:scaleType="centerInside"
                 app:tint="#3B5BDB" />
 
             <TextView
@@ -168,31 +168,32 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:text="10/09/2026 · 08:30 AM"
-                android:textColor="#687078"
-                android:textSize="12sp" />
+                android:textColor="#667085"
+                android:textSize="12sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
 
         </LinearLayout>
 
-
         <!-- ESTADO -->
-
         <LinearLayout
             android:id="@+id/contenedorEstadoBitacora"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/bg_nav_selected"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingStart="10dp"
-            android:paddingTop="6dp"
+            android:paddingTop="5dp"
             android:paddingEnd="10dp"
-            android:paddingBottom="6dp"
-            android:orientation="horizontal">
+            android:paddingBottom="5dp">
 
             <ImageView
                 android:id="@+id/iconoEstadoBitacora"
-                android:layout_width="17dp"
-                android:layout_height="17dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:src="@drawable/check_circle"
                 android:contentDescription="Estado"
                 app:tint="#3B5BDB" />
@@ -205,7 +206,8 @@
                 android:text="Actividad registrada"
                 android:textColor="#3B5BDB"
                 android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:includeFontPadding="false" />
 
         </LinearLayout>
 

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:id="@+id/cardCuidadorConflicto"
+
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:cardUseCompatPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="12dp">
+
+        <!-- ICONO DE CONFLICTO -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardIconoConflicto"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:cardBackgroundColor="#FEECEC"
+            app:cardCornerRadius="13dp"
+            app:cardElevation="0dp">
+
+            <TextView
+                android:id="@+id/txtIconoConflicto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="!"
+                android:textColor="#C24141"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false" />
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- INFORMACIÓN DEL CUIDADOR -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="11dp"
+            android:layout_marginEnd="4dp"
+            android:orientation="vertical">
+
+            <!-- NOMBRE -->
+            <TextView
+                android:id="@+id/txtNombreCuidadorConflicto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nombre del cuidador"
+                android:textColor="#1F2937"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
+
+            <!-- ESTADO -->
+            <TextView
+                android:id="@+id/txtEstadoCuidadorConflicto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Ya tiene un turno asignado"
+                android:textColor="#B42318"
+                android:textSize="12sp"
+                android:textStyle="normal"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
+
+            <!-- DETALLE DEL TURNO -->
+            <TextView
+                android:id="@+id/txtDetalleTurnoConflicto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:text="Turno: Tarde · 14:00 - 22:00"
+                android:textColor="#475467"
+                android:textSize="12sp"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
+
+            <!-- FECHA -->
+            <TextView
+                android:id="@+id/txtFechaTurnoConflicto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Fecha: 05/10/2026"
+                android:textColor="#8492A6"
+                android:textSize="12sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
+
+        </LinearLayout>
+
+        <!-- INDICADOR DE CONFLICTO -->
+        <ImageView
+            android:id="@+id/txtIndicadorConflicto"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="4dp"
+            android:gravity="center"
+            android:background="@drawable/warning"
+            android:backgroundTint="#C24141"
+            android:textSize="17sp"
+            android:contentDescription="Conflicto de horario" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

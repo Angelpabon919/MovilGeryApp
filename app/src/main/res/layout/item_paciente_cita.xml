@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="2dp"
+    app:cardCornerRadius="18dp"
     app:cardElevation="2dp"
+    app:cardUseCompatPadding="true"
     app:cardBackgroundColor="#FFFFFF">
 
     <LinearLayout
@@ -15,27 +17,37 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="16dp">
+        android:paddingStart="14dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="16dp">
 
-        <!-- Imagen paciente -->
+        <!-- Imagen del paciente -->
+        <FrameLayout
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:background="@drawable/bg_icono_paciente"
+            android:clipToOutline="true">
 
-        <ImageView
-            android:id="@+id/imgPaciente"
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            android:padding="10dp"
-            android:src="@drawable/img"
-            android:contentDescription="Paciente" />
+            <ImageView
+                android:id="@+id/imgPaciente"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="9dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/person_icon"
+                android:contentDescription="Foto del paciente" />
 
+        </FrameLayout>
 
-        <!-- Información -->
-
+        <!-- Información del paciente -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginStart="14dp">
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/txtNombrePaciente"
@@ -43,39 +55,50 @@
                 android:layout_height="wrap_content"
                 android:text="Rosa Martínez"
                 android:textColor="#1F2937"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:fontFamily="sans"
+                android:includeFontPadding="false" />
 
             <TextView
                 android:id="@+id/txtHabitacionPaciente"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="7dp"
                 android:text="Habitación 204 · Cama 2"
                 android:textColor="#667085"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
 
             <TextView
                 android:id="@+id/txtEpsPaciente"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="5dp"
                 android:text="EPS: Sura"
-                android:textColor="#98A2B3"
-                android:textSize="13sp" />
+                android:textColor="#6478B8"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
 
         </LinearLayout>
 
-
-        <!-- Flecha -->
-
+        <!-- Indicador de navegación -->
         <ImageView
             android:id="@+id/imgIrPaciente"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:padding="7dp"
+            android:layout_width="40dp"
+            android:layout_height="48dp"
+            android:padding="10dp"
             android:src="@drawable/arrow"
-            android:contentDescription="Ver paciente" />
+            android:scaleType="centerInside"
+            android:contentDescription="Ver perfil del paciente"
+            android:clickable="false"
+            android:focusable="false" />
 
     </LinearLayout>
 

@@ -22,10 +22,7 @@ class NotificacionAdapter(
 
         fun bind(notificacion: Notificacion) {
 
-            // ====================================================
             // ICONO
-            // ====================================================
-
             if (notificacion.icono != 0) {
                 binding.imgIconoNotificacion.setImageResource(
                     notificacion.icono
@@ -34,10 +31,7 @@ class NotificacionAdapter(
                 binding.imgIconoNotificacion.setImageDrawable(null)
             }
 
-            // ====================================================
             // INFORMACIÓN
-            // ====================================================
-
             binding.txtTipoNotificacion.text =
                 notificacion.tipo
 
@@ -50,10 +44,7 @@ class NotificacionAdapter(
             binding.txtFechaNotificacion.text =
                 notificacion.fecha
 
-            // ====================================================
-            // INDICADOR DE NOTIFICACIÓN NO LEÍDA
-            // ====================================================
-
+            // INDICADOR DE NO LEÍDA
             binding.indicadorNoLeida.visibility =
                 if (notificacion.leida) {
                     View.GONE
@@ -61,10 +52,26 @@ class NotificacionAdapter(
                     View.VISIBLE
                 }
 
-            // ====================================================
-            // CLICK EN LA NOTIFICACIÓN
-            // ====================================================
+            // ACCESIBILIDAD
+            binding.root.contentDescription =
+                buildString {
+                    append(notificacion.tipo)
+                    append(". ")
+                    append(notificacion.titulo)
+                    append(". ")
+                    append(notificacion.detalle)
+                    append(". ")
+                    append(notificacion.fecha)
+                    append(
+                        if (notificacion.leida) {
+                            ". Leída"
+                        } else {
+                            ". No leída"
+                        }
+                    )
+                }
 
+            // CLIC EN LA TARJETA
             binding.root.setOnClickListener {
                 onClick(notificacion)
             }
@@ -80,17 +87,18 @@ class NotificacionAdapter(
         viewType: Int
     ): NotificacionViewHolder {
 
-        val binding = ItemNotificacionEncargadoBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding =
+            ItemNotificacionEncargadoBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
 
         return NotificacionViewHolder(binding)
     }
 
     // ============================================================
-    // CONECTAR DATOS CON EL VIEW HOLDER
+    // CONECTAR DATOS
     // ============================================================
 
     override fun onBindViewHolder(
@@ -101,12 +109,11 @@ class NotificacionAdapter(
     }
 
     // ============================================================
-    // CANTIDAD DE ELEMENTOS
+    // CANTIDAD
     // ============================================================
 
-    override fun getItemCount(): Int {
-        return lista.size
-    }
+    override fun getItemCount(): Int =
+        lista.size
 
     // ============================================================
     // ACTUALIZAR LISTA
@@ -115,7 +122,9 @@ class NotificacionAdapter(
     fun actualizarLista(
         nuevaLista: List<Notificacion>
     ) {
-        lista = nuevaLista
+        if (lista == nuevaLista) return
+
+        lista = nuevaLista.toList()
         notifyDataSetChanged()
     }
 }

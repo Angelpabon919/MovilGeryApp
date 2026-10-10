@@ -8,11 +8,7 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-
-    <!-- ===================================================== -->
     <!-- ENCABEZADO -->
-    <!-- ===================================================== -->
-
     <LinearLayout
         android:id="@+id/headerNuevaCita"
         android:layout_width="0dp"
@@ -26,28 +22,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-
-        <!-- VOLVER -->
-
         <ImageView
             android:id="@+id/btnVolverNuevaCita"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:layout_marginTop="5dp"
             android:padding="10dp"
             android:src="@drawable/arrow_back"
             android:contentDescription="Volver"
             app:tint="@color/white" />
-
-
-        <!-- TÍTULO -->
 
         <TextView
             android:id="@+id/txtTituloNuevaCita"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginTop="5dp"
             android:layout_marginStart="6dp"
             android:text="Nueva cita"
             android:textColor="@android:color/white"
@@ -56,11 +44,7 @@
 
     </LinearLayout>
 
-
-    <!-- ===================================================== -->
-    <!-- CONTENIDO DEL FORMULARIO -->
-    <!-- ===================================================== -->
-
+    <!-- FORMULARIO DESPLAZABLE -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollNuevaCita"
         android:layout_width="0dp"
@@ -68,36 +52,30 @@
         android:fillViewport="true"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="35dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp"
         android:focusableInTouchMode="true"
         app:layout_constraintTop_toBottomOf="@id/headerNuevaCita"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-
-            <!-- ================================================= -->
-            <!-- INFORMACIÓN -->
-            <!-- ================================================= -->
-
+            <!-- INTRODUCCIÓN -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="PROGRAMAR CITA"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.08" />
-
 
             <TextView
                 android:id="@+id/txtSubtituloNuevaCita"
@@ -105,59 +83,60 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Completa la información de la cita médica."
-                android:textColor="#98A2B3"
+                android:textColor="#8492A6"
                 android:textSize="13sp" />
 
-
-            <!-- ================================================= -->
             <!-- PACIENTE -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="18dp"
                 android:text="PACIENTE"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardPacienteCita"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
+                android:layout_marginTop="8dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="2dp">
-
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="76dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:padding="12dp">
 
+                    <FrameLayout
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:background="@drawable/bg_icono_cuidador"
+                        android:clipToOutline="true">
 
-                    <ImageView
-                        android:id="@+id/imgPacienteCita"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:padding="9dp"
-                        android:src="@drawable/img"
-                        android:contentDescription="Paciente" />
+                        <ImageView
+                            android:id="@+id/imgPacienteCita"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="9dp"
+                            android:src="@drawable/persona_encargado"
+                            android:scaleType="centerInside"
+                            android:contentDescription="Paciente" />
 
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="13dp"
+                        android:layout_marginStart="12dp"
                         android:orientation="vertical">
-
 
                         <TextView
                             android:id="@+id/txtPacienteCita"
@@ -165,9 +144,10 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             android:textColor="#1F2937"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:maxLines="2"
+                            android:ellipsize="end" />
 
                         <TextView
                             android:id="@+id/txtHabitacionCita"
@@ -184,152 +164,126 @@
 
             </androidx.cardview.widget.CardView>
 
-
-            <!-- ================================================= -->
             <!-- TIPO DE CITA -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="18dp"
                 android:text="TIPO DE CITA"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <Spinner
                 android:id="@+id/spinnerTipoCita"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
                 android:spinnerMode="dropdown"
                 android:popupBackground="@drawable/bg_spinner_popup" />
 
-
-            <!-- ================================================= -->
             <!-- ESPECIALIDAD -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:text="ESPECIALIDAD"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <Spinner
                 android:id="@+id/spinnerEspecialidad"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
                 android:spinnerMode="dropdown"
                 android:popupBackground="@drawable/bg_spinner_popup" />
 
-
-            <!-- ================================================= -->
             <!-- MOTIVO -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:text="MOTIVO DE LA CITA"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <EditText
                 android:id="@+id/edtMotivoCita"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="76dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
                 android:gravity="top|start"
                 android:hint="Ej. Control de seguimiento"
                 android:inputType="textCapSentences|textMultiLine"
                 android:maxLines="3"
-                android:padding="14dp"
-                android:textColor="#212529"
-                android:textColorHint="#8A8F98"
-                android:textSize="15sp" />
+                android:padding="12dp"
+                android:textColor="#1F2937"
+                android:textColorHint="#98A2B3"
+                android:textSize="14sp" />
 
-
-            <!-- ================================================= -->
             <!-- LUGAR -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:text="LUGAR"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <EditText
                 android:id="@+id/edtLugarCita"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
                 android:gravity="center_vertical"
                 android:hint="Ej. Hospital Universitario"
                 android:inputType="textCapSentences"
                 android:singleLine="true"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:textColor="#212529"
-                android:textColorHint="#8A8F98"
-                android:textSize="15sp" />
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="#1F2937"
+                android:textColorHint="#98A2B3"
+                android:textSize="14sp" />
 
-
-            <!-- ================================================= -->
             <!-- FECHA -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:text="FECHA"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <LinearLayout
                 android:id="@+id/containerFechaCita"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
-
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
 
                 <TextView
                     android:id="@+id/txtFechaCita"
@@ -338,48 +292,41 @@
                     android:layout_weight="1"
                     android:text="Seleccionar fecha"
                     android:textColor="#667085"
-                    android:textSize="15sp" />
-
+                    android:textSize="14sp" />
 
                 <ImageView
                     android:id="@+id/imgFechaCita"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="21dp"
+                    android:layout_height="21dp"
                     android:src="@drawable/calendario"
                     android:contentDescription="Seleccionar fecha"
-                    app:tint="#667085" />
+                    app:tint="#3B5BDB" />
 
             </LinearLayout>
 
-
-            <!-- ================================================= -->
             <!-- HORA -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:text="HORA"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <LinearLayout
                 android:id="@+id/containerHoraCita"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
-
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
 
                 <TextView
                     android:id="@+id/txtHoraCita"
@@ -388,125 +335,60 @@
                     android:layout_weight="1"
                     android:text="Seleccionar hora"
                     android:textColor="#667085"
-                    android:textSize="15sp" />
-
+                    android:textSize="14sp" />
 
                 <ImageView
                     android:id="@+id/imgHoraCita"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="21dp"
+                    android:layout_height="21dp"
                     android:src="@drawable/calendario"
                     android:contentDescription="Seleccionar hora"
-                    app:tint="#667085" />
+                    app:tint="#3B5BDB" />
 
             </LinearLayout>
 
-
-            <!-- ================================================= -->
             <!-- OBSERVACIONES -->
-            <!-- ================================================= -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:text="OBSERVACIONES"
-                android:textColor="#687078"
+                android:textColor="#475467"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
+                android:letterSpacing="0.06" />
 
             <EditText
                 android:id="@+id/edtObservacionesCita"
                 android:layout_width="match_parent"
-                android:layout_height="110dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="96dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/bg_search"
                 android:gravity="top|start"
                 android:hint="Agregar observaciones..."
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxLines="5"
-                android:padding="14dp"
-                android:textColor="#212529"
-                android:textColorHint="#8A8F98"
-                android:textSize="15sp" />
+                android:padding="12dp"
+                android:textColor="#1F2937"
+                android:textColorHint="#98A2B3"
+                android:textSize="14sp" />
 
-
-            <!-- ================================================= -->
-            <!-- ESTADO -->
-            <!-- ================================================= -->
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardEstadoCita"
-                android:layout_width="match_parent"
+            <!-- ESTADO INTERNO: se conserva para no romper referencias de View Binding.
+                 No se muestra en pantalla. -->
+            <TextView
+                android:id="@+id/txtEstadoCita"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="1dp">
+                android:visibility="gone"
+                android:text="" />
 
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="14dp">
-
-
-                    <ImageView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:src="@drawable/calendario"
-                        android:contentDescription="Estado de la cita"
-                        app:tint="#3B5BDB" />
-
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="10dp"
-                        android:orientation="vertical">
-
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="ESTADO"
-                            android:textColor="#687078"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-
-                        <TextView
-                            android:id="@+id/txtEstadoCita"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text=""
-                            android:textColor="#3B5BDB"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-
-            <!-- ================================================= -->
-            <!-- BOTÓN GUARDAR -->
-            <!-- ================================================= -->
-
+            <!-- GUARDAR -->
             <Button
                 android:id="@+id/btnGuardarCita"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="20dp"
+                android:layout_height="52dp"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="12dp"
                 android:backgroundTint="#3B5BDB"
                 android:text="GUARDAR CITA"
                 android:textColor="@android:color/white"
@@ -517,11 +399,7 @@
 
     </androidx.core.widget.NestedScrollView>
 
-
-    <!-- ===================================================== -->
-    <!-- ESTADO DE CARGA -->
-    <!-- ===================================================== -->
-
+    <!-- CARGA -->
     <FrameLayout
         android:id="@+id/loadingNuevaCita"
         android:layout_width="0dp"
@@ -536,7 +414,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -544,12 +421,10 @@
             android:gravity="center"
             android:orientation="vertical">
 
-
             <ProgressBar
                 android:id="@+id/progressNuevaCita"
                 android:layout_width="42dp"
                 android:layout_height="42dp" />
-
 
             <TextView
                 android:id="@+id/txtLoadingNuevaCita"
@@ -564,11 +439,7 @@
 
     </FrameLayout>
 
-
-    <!-- ===================================================== -->
-    <!-- ESTADO DE ERROR -->
-    <!-- ===================================================== -->
-
+    <!-- ERROR -->
     <LinearLayout
         android:id="@+id/contenedorErrorNuevaCita"
         android:layout_width="0dp"
@@ -583,14 +454,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-
         <ImageView
             android:layout_width="58dp"
             android:layout_height="58dp"
             android:src="@drawable/calendario"
             android:contentDescription="Error"
             app:tint="#98A2B3" />
-
 
         <TextView
             android:id="@+id/txtErrorNuevaCita"

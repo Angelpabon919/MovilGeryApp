@@ -9,7 +9,7 @@
     android:layout_marginEnd="12dp"
     android:layout_marginBottom="12dp"
     app:cardBackgroundColor="#FFFFFF"
-    app:cardCornerRadius="16dp"
+    app:cardCornerRadius="18dp"
     app:cardElevation="2dp"
     app:cardUseCompatPadding="true">
 
@@ -17,59 +17,69 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="15dp">
 
-        <!-- NOMBRE DEL PACIENTE -->
-
+        <!-- NOMBRE -->
         <TextView
             android:id="@+id/txtNombrePaciente"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Carlos Rodríguez"
             android:textColor="#1F2937"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
 
         <!-- HABITACIÓN -->
-
         <TextView
             android:id="@+id/txtHabitacionPaciente"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="9dp"
             android:text="Habitación 12"
             android:textColor="#667085"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
 
         <!-- CAMA -->
-
         <TextView
             android:id="@+id/txtCamaPaciente"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="5dp"
             android:text="Cama 2"
             android:textColor="#667085"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
 
         <!-- EPS -->
-
         <TextView
             android:id="@+id/txtEpsPaciente"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="5dp"
             android:text="EPS Sura"
             android:textColor="#667085"
-            android:textSize="14sp" />
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:includeFontPadding="false" />
 
         <!-- ESTADO -->
-
         <TextView
             android:id="@+id/txtEstadoPaciente"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_estado_activo"
             android:paddingStart="12dp"
             android:paddingTop="5dp"
@@ -78,7 +88,8 @@
             android:text="Activo"
             android:textColor="#3B5BDB"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
 
     </LinearLayout>
 

@@ -193,35 +193,24 @@ class FirebaseMessagingService : FirebaseMessagingService() {
             }
 
         val notificationBuilder =
-            NotificationCompat.Builder(
-                this,
-                CHANNEL_ID
-            )
-                .setSmallIcon(
-                    R.drawable.notifications
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.logo_blanco) // modificacion para notificacion push colocarle el logo
+                .setColor(
+                    androidx.core.content.ContextCompat.getColor(
+                        this,
+                        R.color.geriapp_notification_color
+                    )
                 )
-                .setContentTitle(
-                    titulo
-                )
-                .setContentText(
-                    mensaje
-                )
+                .setContentTitle(titulo)
+                .setContentText(mensaje)
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .bigText(mensaje)
                 )
-                .setPriority(
-                    NotificationCompat.PRIORITY_HIGH
-                )
-                .setCategory(
-                    NotificationCompat.CATEGORY_MESSAGE
-                )
-                .setAutoCancel(
-                    true
-                )
-                .setDefaults(
-                    NotificationCompat.DEFAULT_ALL
-                )
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setAutoCancel(true)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
 
         if (pendingIntent != null) {
 

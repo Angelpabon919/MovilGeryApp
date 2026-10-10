@@ -257,6 +257,7 @@
                 android:textColor="#687078"
                 android:textSize="12sp"
                 android:textStyle="bold"
+                android:visibility="gone"
                 android:letterSpacing="0.08" />
 
             <TextView
@@ -265,6 +266,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
                 android:text="Leída"
+                android:visibility="gone"
                 android:textColor="#3B5BDB"
                 android:textSize="15sp"
                 android:textStyle="bold" />
