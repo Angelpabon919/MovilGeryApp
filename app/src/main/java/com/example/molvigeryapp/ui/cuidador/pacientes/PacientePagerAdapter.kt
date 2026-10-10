@@ -7,13 +7,14 @@ import com.example.molvigeryapp.ui.cuidador.medicamentos.AplicacionMedicamentosF
 
 class PacientePagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
-    override fun getItemCount(): Int = 3
+    override fun getItemCount(): Int = 4
 
     override fun createFragment(position: Int): Fragment {
         return when (position) {
             0 -> AplicacionMedicamentosFragment()
             1 -> BitacoraFragment()
             2 -> RecomendacionesFragment()
+            3 -> CardexFragment()
             else -> AplicacionMedicamentosFragment()
         }
     }

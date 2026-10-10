@@ -1,5 +1,6 @@
 package com.example.molvigeryapp.data.repository
 
+import android.util.Log
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.AplicacionRequest
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
@@ -124,9 +125,22 @@ class PacienteRepository {
     suspend fun getCuidadosPorPaciente(idPaciente: Int): List<CuidadoEnfermeria>? =
         withContext(Dispatchers.IO) {
             try {
-                api.getCuidadosPorPaciente(idPaciente)
+
+                val lista =
+                    api.getCuidadosPorPaciente(idPaciente)
+
+                lista.filter {
+                    it.idPaciente == idPaciente
+                }
+
             } catch (e: Exception) {
-                android.util.Log.e("API_ERROR", "Error al obtener cuidados de enfermería", e)
+
+                android.util.Log.e(
+                    "API_ERROR",
+                    "Error al obtener cuidados de enfermería",
+                    e
+                )
+
                 null
             }
         }
@@ -366,19 +380,54 @@ class PacienteRepository {
     // NOTIFICACIONES
     // =========================================================
 
-    suspend fun crearNotificacion(request: NotificacionRequest): Result<NotificacionResponse> =
-        withContext(Dispatchers.IO) {
-            try {
-                val response = api.crearNotificacion(request)
-                if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!)
-                } else {
-                    Result.failure(Exception("Error al crear notificación: ${response.code()}"))
-                }
-            } catch (e: Exception) {
-                Result.failure(e)
+    suspend fun crearNotificacion(
+        request: NotificacionRequest
+    ): Result<NotificacionResponse> {
+
+        return try {
+
+            val response =
+                api.crearNotificacion(request)
+
+            if (response.isSuccessful &&
+                response.body() != null
+            ) {
+
+                Result.success(
+                    response.body()!!
+                )
+
+            } else {
+
+                val errorBody =
+                    response.errorBody()
+                        ?.string()
+                        ?: "Sin detalle"
+
+                Log.e(
+                    "ERROR_NOTIFICACION_API",
+                    "HTTP ${response.code()} | $errorBody"
+                )
+
+                Result.failure(
+                    Exception(
+                        "Error al crear notificación: " +
+                                "${response.code()} | $errorBody"
+                    )
+                )
             }
+
+        } catch (e: Exception) {
+
+            Log.e(
+                "ERROR_NOTIFICACION_API",
+                "Excepción creando notificación",
+                e
+            )
+
+            Result.failure(e)
         }
+    }
 
     suspend fun asociarNotificacionDestinatario(request: NotificacionDestinatarioRequest): Result<Boolean> =
         withContext(Dispatchers.IO) {

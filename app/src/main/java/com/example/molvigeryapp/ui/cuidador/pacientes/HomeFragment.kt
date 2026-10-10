@@ -147,16 +147,9 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // =====================================================
     private fun observarMedicamentos() {
         viewModel.cargarPacientes()
-        viewModel.cargarFormulacionesMedicamentos()
         viewModel.cargarCatalogoMedicamentos()
-
-        viewModel.formulacionesMedicamentos.observe(viewLifecycleOwner) { lista ->
-            Log.d("MEDICAMENTOS_HOME", "LISTA RECIBIDA DEL LIVE DATA: $lista")
-            viewModel.separarMedicamentosPorHorario(
-                lista,
-                viewModel.gruposMedicacion.value ?: emptyList()
-            )
-        }
+        viewModel.cargarGruposMedicacion()
+        viewModel.cargarFormulacionesMedicamentos()
 
         viewModel.pacientes.observe(viewLifecycleOwner) { listaPacientes ->
             val mapaPacientes = listaPacientes?.associateBy(
@@ -170,18 +163,64 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     { it.nombreMedicamento }
                 ) ?: emptyMap()
 
-                fun mostrarMedicamentos(lista: List<FormulacionMedicamento>): String {
+                fun mostrarMedicamentos(
+                    lista: List<FormulacionMedicamento>
+                ): String {
+
                     if (lista.isEmpty()) {
                         return "Sin medicamentos"
                     }
 
                     return lista.joinToString("\n\n") { med ->
-                        val paciente = mapaPacientes[med.idPaciente] ?: "Paciente ${med.idPaciente}"
-                        val medicamento = mapaMedicamentos[med.idMedicamentos] ?: "Medicamento"
+
+                        val paciente =
+                            mapaPacientes[med.idPaciente]
+                                ?: "Paciente ${med.idPaciente}"
+
+                        val medicamento =
+                            mapaMedicamentos[med.idMedicamentos]
+                                ?: "Medicamento"
+
+                        val grupo = viewModel.gruposMedicacion.value
+                            ?.find { it.idGrupo == med.idGrupo }
+
+                        val horaBase = grupo?.horaAdministracion
+                            ?.substringBefore(":")
+                            ?.toIntOrNull()
+
+                        val horaActual = java.util.Calendar
+                            .getInstance()
+                            .get(java.util.Calendar.HOUR_OF_DAY)
+                        val horaProgramada = when {
+
+                            med.idGrupo == 2 &&
+                                    horaBase != null &&
+                                    horaActual == ((horaBase + 12) % 24) -> {
+                                (horaBase + 12) % 24
+                            }
+
+                            else -> horaBase
+                        }
+
+                        val horaMostrar = when {
+
+                            horaProgramada == null -> "Sin hora"
+
+                            horaProgramada == 0 -> "12:00 a. m."
+
+                            horaProgramada < 12 ->
+                                "${horaProgramada}:00 a. m."
+
+                            horaProgramada == 12 ->
+                                "12:00 p. m."
+
+                            else ->
+                                "${horaProgramada - 12}:00 p. m."
+                        }
 
                         "👤 $paciente\n" +
                                 "💊 $medicamento\n" +
-                                "Dosis: ${med.dosis ?: "N/A"} - Vía: ${med.via ?: "N/A"} - Hora: ${med.horaAdministrada ?: "N/A"}"
+                                "Dosis: ${med.dosis} - Vía: ${med.via} - Hora: $horaMostrar"
                     }
                 }
 

@@ -104,6 +104,15 @@ interface ApiService {
         @Body request: NotificacionDestinatarioRequest
     ): Response<ResponseBody>
 
+    @POST("notificaciones/")
+    suspend fun crearNotificacionStock(
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<NotificacionResponse>
+    @POST("notificacion_destinatario/")
+    suspend fun asociarNotificacionDestinatarioStock(
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+
 
     // =========================================================
     // RECOMENDACIONES

@@ -1,239 +1,593 @@
 package com.example.molvigeryapp.ui.cuidador.medicamentos
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.ElementoPaciente
+import com.example.molvigeryapp.data.model.FormulacionMedicamento
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.launch
 
-class AplicacionMedicamentosFragment : Fragment(R.layout.fragment_aplicacion_medicamentos) {
+class AplicacionMedicamentosFragment :
+    Fragment(R.layout.fragment_aplicacion_medicamentos) {
 
     private val viewModel: PacienteViewModel by activityViewModels()
 
-    private var stockActual = 0
-    private val limiteCritico = 3
-    private var idMedicamentoSeleccionado: Int? = null
-    private var idInventarioSeleccionado: Int? = null
-    private var elementoSeleccionadoActual: ElementoPaciente? = null
-    private var listaElementosReales: List<ElementoPaciente> = emptyList()
-    private var mapaNombresMedicamentos: Map<Int, String> = emptyMap()
+    private lateinit var spinnerMedicamento: AutoCompleteTextView
+    private lateinit var tvPacienteSeleccionado: TextView
+    private lateinit var etCantidadAplicada: TextInputEditText
+    private lateinit var etObservaciones: TextInputEditText
+    private lateinit var cbConfirmarAdministracion: MaterialCheckBox
+    private lateinit var btnVerInformacion: MaterialButton
+    private lateinit var btnRegistrar: MaterialButton
 
-    private val TAG = "DEBUG_MOLVIGERY_APLICACION"
+    private var formulacionSeleccionada: FormulacionMedicamento? = null
+    private var elementoSeleccionado: ElementoPaciente? = null
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    private var medicamentosPendientes:
+            List<FormulacionMedicamento> = emptyList()
+
+    private var elementosPaciente:
+            List<ElementoPaciente> = emptyList()
+
+    private var mapaNombresMedicamentos:
+            Map<Int, String> = emptyMap()
+
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val spinnerMedicamento = view.findViewById<AutoCompleteTextView>(R.id.spinnerMedicamento)
-        val spinnerVia = view.findViewById<AutoCompleteTextView>(R.id.spinnerViaAdministracion)
-        val tvStock = view.findViewById<TextView>(R.id.tvCantidadDisponible)
-        val etDosis = view.findViewById<TextInputEditText>(R.id.etDosis)
-        val etCantidadAplicada = view.findViewById<TextInputEditText>(R.id.etCantidadAplicada)
-        val etObservaciones = view.findViewById<TextInputEditText>(R.id.etObservaciones)
-        val btnRegistrar = view.findViewById<MaterialButton>(R.id.btnRegistrarAplicacion)
+        inicializarVistas(view)
 
-        // Vías de administración estáticas
-        val vias = listOf("Oral", "Intravenosa", "Intramuscular", "Subcutánea", "Tópica")
-        spinnerVia.setAdapter(
+        val paciente = viewModel.pacienteSeleccionado.value
+
+        if (paciente == null || paciente.idPaciente == null) {
+
+            Toast.makeText(
+                requireContext(),
+                "No hay paciente seleccionado",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        val idPaciente = paciente.idPaciente!!
+
+
+        // =====================================================
+        // MOSTRAR PACIENTE
+        // =====================================================
+
+        tvPacienteSeleccionado.text =
+            "${paciente.nombre} ${paciente.apellido}".trim()
+
+
+        // =====================================================
+        // CARGAR INFORMACIÓN NECESARIA
+        // =====================================================
+
+        viewModel.cargarCatalogoMedicamentos()
+        viewModel.cargarElementosDelPaciente(idPaciente)
+        viewModel.cargarFormulacionesMedicamentos()
+        viewModel.cargarGruposMedicacion()
+
+
+        // =====================================================
+        // CATÁLOGO DE MEDICAMENTOS
+        // =====================================================
+
+        viewModel.medicamentosCatalogo.observe(
+            viewLifecycleOwner
+        ) { catalogo ->
+
+            mapaNombresMedicamentos =
+                catalogo?.associateBy(
+                    { it.idMedicamento },
+                    { it.nombreMedicamento }
+                ) ?: emptyMap()
+
+            actualizarSelectorMedicamentos(idPaciente)
+        }
+
+
+        // =====================================================
+        // INVENTARIO / ELEMENTOS DEL PACIENTE
+        // =====================================================
+
+        viewModel.elementosPaciente.observe(
+            viewLifecycleOwner
+        ) { elementos ->
+
+            elementosPaciente =
+                elementos?.filter {
+                    it.idPaciente == idPaciente &&
+                            it.idMedicamentos != null
+                } ?: emptyList()
+
+            actualizarElementoSeleccionado()
+        }
+
+
+        // =====================================================
+        // MEDICAMENTOS QUE CORRESPONDEN AHORA
+        // =====================================================
+
+        viewModel.medicamentosManana.observe(
+            viewLifecycleOwner
+        ) {
+            actualizarSelectorMedicamentos(idPaciente)
+        }
+
+        viewModel.medicamentosTarde.observe(
+            viewLifecycleOwner
+        ) {
+            actualizarSelectorMedicamentos(idPaciente)
+        }
+
+        viewModel.medicamentosNoche.observe(
+            viewLifecycleOwner
+        ) {
+            actualizarSelectorMedicamentos(idPaciente)
+        }
+
+
+        // =====================================================
+        // SELECCIONAR MEDICAMENTO
+        // =====================================================
+
+        spinnerMedicamento.setOnItemClickListener {
+                _, _, position, _ ->
+
+            if (position < medicamentosPendientes.size) {
+
+                formulacionSeleccionada =
+                    medicamentosPendientes[position]
+
+                actualizarElementoSeleccionado()
+            }
+        }
+
+
+        // =====================================================
+        // VER INFORMACIÓN
+        // =====================================================
+
+        btnVerInformacion.setOnClickListener {
+
+            mostrarInformacionMedicamento()
+        }
+        viewModel.registroAplicacionState.observe(
+            viewLifecycleOwner
+        ) { result ->
+
+            result?.onSuccess { mensaje ->
+
+                Toast.makeText(
+                    requireContext(),
+                    mensaje,
+                    Toast.LENGTH_LONG
+                ).show()
+
+                etCantidadAplicada.text?.clear()
+                etObservaciones.text?.clear()
+                cbConfirmarAdministracion.isChecked = false
+
+            }?.onFailure { error ->
+
+                Toast.makeText(
+                    requireContext(),
+                    "Error: ${error.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+
+        // =====================================================
+        // REGISTRAR
+        // =====================================================
+
+        btnRegistrar.setOnClickListener {
+
+            validarRegistro()
+        }
+    }
+
+
+    // =========================================================
+    // INICIALIZAR VISTAS
+    // =========================================================
+
+    private fun inicializarVistas(view: View) {
+
+        spinnerMedicamento =
+            view.findViewById(R.id.spinnerMedicamento)
+
+        tvPacienteSeleccionado =
+            view.findViewById(R.id.tvPacienteSeleccionado)
+
+        etCantidadAplicada =
+            view.findViewById(R.id.etCantidadAplicada)
+
+        etObservaciones =
+            view.findViewById(R.id.etObservaciones)
+
+        cbConfirmarAdministracion =
+            view.findViewById(R.id.cbConfirmarAdministracion)
+
+        btnVerInformacion =
+            view.findViewById(R.id.btnVerInformacionMedicamento)
+
+        btnRegistrar =
+            view.findViewById(R.id.btnRegistrarAplicacion)
+    }
+
+
+    // =========================================================
+    // ACTUALIZAR SELECTOR
+    // =========================================================
+
+    private fun actualizarSelectorMedicamentos(
+        idPaciente: Int
+    ) {
+
+        val manana =
+            viewModel.medicamentosManana.value
+                ?: emptyList()
+
+        val tarde =
+            viewModel.medicamentosTarde.value
+                ?: emptyList()
+
+        val noche =
+            viewModel.medicamentosNoche.value
+                ?: emptyList()
+
+
+        medicamentosPendientes =
+            (manana + tarde + noche)
+                .filter {
+                    it.idPaciente == idPaciente
+                }
+                .distinctBy {
+                    it.idFormulacion
+                }
+
+
+        val nombres =
+            medicamentosPendientes.map { formulacion ->
+
+                mapaNombresMedicamentos[
+                    formulacion.idMedicamentos
+                ] ?: "Medicamento #${formulacion.idMedicamentos}"
+            }
+
+
+        val adapter =
             ArrayAdapter(
                 requireContext(),
                 android.R.layout.simple_dropdown_item_1line,
-                vias
+                nombres
             )
-        )
 
-        fun actualizarVistaStock() {
-            tvStock.text = "$stockActual unidades"
-            if (stockActual <= limiteCritico) {
-                tvStock.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        android.R.color.holo_red_dark
-                    )
-                )
-                if (stockActual <= limiteCritico) {
-                    Toast.makeText(
-                        requireContext(),
-                        "⚠️ Stock crítico: $stockActual unidades restantes",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    val nombreMedi = mapaNombresMedicamentos[idMedicamentoSeleccionado] ?: "Medicamento"
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        try {
-                            com.example.molvigeryapp.data.repository.StockNotificacionesRepository().enviarAlertaStockBajo(
-                                nombreInsumo = nombreMedi,
-                                stockActual = stockActual
-                            )
-                            Log.d(TAG, "Notificación de stock bajo enviada con éxito.")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error al enviar notificación de stock", e)
-                        }
-                    }
+
+        spinnerMedicamento.setAdapter(adapter)
+
+
+        // Si solo hay un medicamento,
+        // lo seleccionamos automáticamente.
+        if (medicamentosPendientes.size == 1) {
+
+            formulacionSeleccionada =
+                medicamentosPendientes.first()
+
+            spinnerMedicamento.setText(
+                nombres.first(),
+                false
+            )
+
+            actualizarElementoSeleccionado()
+        }
+    }
+
+
+    // =========================================================
+    // BUSCAR INVENTARIO DEL MEDICAMENTO
+    // =========================================================
+
+    private fun actualizarElementoSeleccionado() {
+
+        val formulacion =
+            formulacionSeleccionada ?: return
+
+        elementoSeleccionado =
+            elementosPaciente.find {
+                it.idMedicamentos ==
+                        formulacion.idMedicamentos
+            }
+    }
+
+
+    // =========================================================
+    // INFORMACIÓN DEL MEDICAMENTO
+    // =========================================================
+
+    private fun mostrarInformacionMedicamento() {
+
+        val formulacion = formulacionSeleccionada
+
+        if (formulacion == null) {
+
+            Toast.makeText(
+                requireContext(),
+                "Seleccione un medicamento",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+
+        val paciente =
+            viewModel.pacienteSeleccionado.value
+
+
+        val nombrePaciente =
+            "${paciente?.nombre ?: ""} " +
+                    "${paciente?.apellido ?: ""}"
+
+
+        val nombreMedicamento =
+            mapaNombresMedicamentos[
+                formulacion.idMedicamentos
+            ] ?: "Medicamento"
+
+
+        val stock =
+            elementoSeleccionado
+                ?.cantidadActual
+                ?: elementoSeleccionado
+                    ?.cantidad
+                ?: 0
+
+
+        val hora =
+            obtenerHoraProgramada(formulacion)
+
+
+        val mensaje = """
+Paciente: ${nombrePaciente.trim()}
+
+Medicamento: $nombreMedicamento
+
+Dosis: ${formulacion.dosis ?: "No registrada"}
+
+Vía: ${formulacion.via ?: "No registrada"}
+
+Horario: $hora
+
+Presentación: ${formulacion.presentacion ?: "No registrada"}
+
+Stock disponible: $stock unidades
+        """.trimIndent()
+
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Información del medicamento")
+            .setMessage(mensaje)
+            .setPositiveButton("Cerrar", null)
+            .show()
+    }
+
+
+    // =========================================================
+    // OBTENER HORA PROGRAMADA
+    // =========================================================
+
+    private fun obtenerHoraProgramada(
+        formulacion: FormulacionMedicamento
+    ): String {
+
+        val grupo =
+            viewModel.gruposMedicacion.value
+                ?.find {
+                    it.idGrupo == formulacion.idGrupo
                 }
+                ?: return "Sin horario"
+
+
+        val horaBase =
+            grupo.horaAdministracion
+                ?.substringBefore(":")
+                ?.toIntOrNull()
+                ?: return "Sin horario"
+
+
+        val horaActual = 8
+
+
+        val horaProgramada =
+
+            if (
+                formulacion.idGrupo == 2 &&
+                horaActual == ((horaBase + 12) % 24)
+            ) {
+
+                (horaBase + 12) % 24
 
             } else {
-                tvStock.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        android.R.color.darker_gray
-                    )
-                )
+
+                horaBase
             }
+
+
+        return convertirHora12Horas(horaProgramada)
+    }
+
+
+    // =========================================================
+    // CONVERTIR 20 -> 8:00 p. m.
+    // =========================================================
+
+    private fun convertirHora12Horas(
+        hora: Int
+    ): String {
+
+        return when {
+
+            hora == 0 ->
+                "12:00 a. m."
+
+            hora < 12 ->
+                "$hora:00 a. m."
+
+            hora == 12 ->
+                "12:00 p. m."
+
+            else ->
+                "${hora - 12}:00 p. m."
+        }
+    }
+
+
+    // =========================================================
+    // VALIDACIÓN ANTES DE REGISTRAR
+    // =========================================================
+
+    private fun validarRegistro() {
+
+        val formulacion = formulacionSeleccionada
+
+        if (formulacion == null) {
+            Toast.makeText(
+                requireContext(),
+                "Seleccione un medicamento",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val elemento = elementoSeleccionado
+
+        if (elemento == null) {
+            Toast.makeText(
+                requireContext(),
+                "El medicamento no está disponible en el inventario del paciente",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val cantidadAplicada =
+            etCantidadAplicada.text
+                ?.toString()
+                ?.trim()
+                ?.toIntOrNull()
+
+        if (cantidadAplicada == null || cantidadAplicada <= 0) {
+            Toast.makeText(
+                requireContext(),
+                "Ingrese una cantidad válida",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val stockActual =
+            elemento.cantidadActual
+                ?: elemento.cantidad
+                ?: 0
+
+        if (cantidadAplicada > stockActual) {
+            Toast.makeText(
+                requireContext(),
+                "La cantidad supera el stock disponible",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        if (!cbConfirmarAdministracion.isChecked) {
+            Toast.makeText(
+                requireContext(),
+                "Debe confirmar la administración",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val idMedicamento = formulacion.idMedicamentos
+
+        if (idMedicamento == null) {
+            Toast.makeText(
+                requireContext(),
+                "Medicamento inválido",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+
+
+        val idElemento = elemento.idElemento
+
+        if (idElemento == null) {
+            Toast.makeText(
+                requireContext(),
+                "No se encontró el elemento del paciente",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
         }
 
         val paciente = viewModel.pacienteSeleccionado.value
-        val idPaciente = paciente?.idPaciente ?: 1
 
-        Log.d(TAG, "Iniciando fragmento para idPaciente: $idPaciente")
+        val nombrePaciente =
+            "${paciente?.nombre ?: ""} ${paciente?.apellido ?: ""}".trim()
 
-        // Cargar catálogo de medicamentos y elementos del paciente desde la API
-        viewModel.cargarCatalogoMedicamentos()
-        viewModel.cargarElementosDelPaciente(idPaciente)
+        val nombreMedicamento =
+            mapaNombresMedicamentos[idMedicamento]
+                ?: "Medicamento"
 
-        // Observar catálogo para obtener los nombres reales
-        viewModel.medicamentosCatalogo.observe(viewLifecycleOwner) { catalogo ->
-            mapaNombresMedicamentos =
-                catalogo?.associateBy({ it.idMedicamento }, { it.nombreMedicamento }) ?: emptyMap()
+        val observacion =
+            etObservaciones.text
+                ?.toString()
+                ?.trim()
+                ?: ""
 
-            // Observar elementos asignados al paciente
-            viewModel.elementosPaciente.observe(viewLifecycleOwner) { elementos ->
-                // Filtrar solo los registros que correspondan a medicamentos válidos
-                listaElementosReales =
-                    elementos?.filter { it.idMedicamentos != null } ?: emptyList()
+        viewModel.registrarAplicacionMedicamento(
+            idTratamientoMedicamento = idMedicamento,
+            idUsuario = 1,
 
-                // Armar las etiquetas extrayendo la cantidad real sin importar cuál campo devuelva la API
-                val etiquetasMedicamentos = listaElementosReales.map { elemento ->
-                    val nombreReal = mapaNombresMedicamentos[elemento.idMedicamentos]
-                        ?: "Medicamento #${elemento.idMedicamentos}"
+            dosis = formulacion.dosis ?: "",
+            via = formulacion.via ?: "",
 
-                    val stockDisponible = elemento.cantidadActual ?: elemento.cantidad ?: 0
-                    "$nombreReal (Disp: $stockDisponible)"
-                }
+            observacion = observacion,
 
-                val adapter = ArrayAdapter(
-                    requireContext(),
-                    android.R.layout.simple_dropdown_item_1line,
-                    etiquetasMedicamentos
+            idInventario = elemento.idInventario,
+            idElementoPaciente = idElemento,
 
-                )
-                Log.d(
-                    TAG,
-                    "LISTA QUE VA AL SPINNER: $etiquetasMedicamentos"
-                )
-                spinnerMedicamento.setAdapter(adapter)
-            }
-        }
+            cantidadActual = stockActual,
+            cantidadAplicada = cantidadAplicada,
 
-        // Al seleccionar una opción del desplegable
-        // Al seleccionar una opción del desplegable
-        spinnerMedicamento.setOnItemClickListener { _, _, position, _ ->
-            if (position < listaElementosReales.size) {
-                val elemento = listaElementosReales[position]
-                elementoSeleccionadoActual = elemento
-                idMedicamentoSeleccionado = elemento.idMedicamentos
+            idEncargado = 1,
+            nombreMedicamento = nombreMedicamento,
+            nombrePaciente = nombrePaciente,
 
-
-                // PRIORIDAD OBLIGATORIA: Probamos con todas las posibles variantes del campo de inventario
-                idInventarioSeleccionado = elemento.idInventario
-
-                // Asignación de la propiedad stock
-                stockActual = elemento.cantidadActual ?: elemento.cantidad ?: 0
-                actualizarVistaStock()
-                Log.d(
-                    TAG,
-                    "SELECCIÓN OK -> Paciente ID: ${elemento.idPaciente} | Medicamento ID: $idMedicamentoSeleccionado | Inventario Target enviado: $idInventarioSeleccionado | Stock: $stockActual"
-                )
-            }
-        }
-
-        // Respuesta tras registrar la aplicación
-        viewModel.registroAplicacionState.observe(viewLifecycleOwner) { result ->
-            result?.onSuccess { mensaje ->
-                Log.d(TAG, "ÉXITO al aplicar medicamento: $mensaje")
-                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show()
-
-                // Recargar el stock actualizado desde el backend
-                viewModel.cargarElementosDelPaciente(idPaciente)
-
-                etDosis.text?.clear()
-                etCantidadAplicada?.text?.clear()
-                etObservaciones.text?.clear()
-                spinnerMedicamento.text?.clear()
-                spinnerVia.text?.clear()
-                idMedicamentoSeleccionado = null
-                idInventarioSeleccionado = null
-                elementoSeleccionadoActual = null
-                stockActual = 0
-                tvStock.text = "0 unidades"
-            }?.onFailure { error ->
-                Log.e(TAG, "❌ ERROR AL APLICAR MEDICAMENTO: ${error.message}", error)
-                Toast.makeText(requireContext(), "Error: ${error.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-
-        // Acción al pulsar el botón de registro
-        btnRegistrar.setOnClickListener {
-            val dosisTexto = etDosis.text.toString().trim()
-            val cantidadTexto = etCantidadAplicada?.text?.toString()?.trim() ?: ""
-            val cantidadNum = cantidadTexto.toIntOrNull()
-            val via = spinnerVia.text.toString().trim()
-            val observacion = etObservaciones.text.toString().trim()
-
-            if (dosisTexto.isEmpty()) {
-                Toast.makeText(requireContext(), "Por favor ingrese la dosis", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            if (cantidadNum == null || cantidadNum <= 0) {
-                Toast.makeText(requireContext(), "Por favor ingrese una cantidad válida a descontar", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val elemento = elementoSeleccionadoActual
-
-            if (elemento != null && idMedicamentoSeleccionado != null) {
-                val nombreMedicamento = mapaNombresMedicamentos[idMedicamentoSeleccionado]
-                    ?: "Medicamento #${idMedicamentoSeleccionado}"
-
-                val pacienteActual = viewModel.pacienteSeleccionado.value
-                val nombrePacienteReal = pacienteActual?.nombre ?: "Paciente"
-
-                // Se asegura de tomar idInventario prioritariamente (ej: 20 para prueba jose)
-                val targetInventarioId = idInventarioSeleccionado ?: elemento.idInventario?:0
-                val idElementoReal = elemento.idElemento?:0
-
-                Log.d(
-                    TAG,
-                    "Enviando POST -> Dosis=$dosisTexto, CantidadDescontar=$cantidadNum, Vía=$via, idMedicamento=$idMedicamentoSeleccionado, idInventarioTarget=$targetInventarioId, idElementoweb=$idElementoReal"
-                )
-
-                viewModel.registrarAplicacionMedicamento(
-                    idTratamientoMedicamento = idMedicamentoSeleccionado!!,
-                    idUsuario = 1,
-                    dosis = dosisTexto,
-                    via = via,
-                    observacion = observacion,
-                    idElementoPaciente = idElementoReal,
-                    cantidadActual = stockActual,
-                    idEncargado = 1,
-                    nombreMedicamento = nombreMedicamento,
-                    nombrePaciente = nombrePacienteReal,
-                    context = requireContext()
-                )
-            } else {
-                Toast.makeText(requireContext(), "Seleccione un medicamento", Toast.LENGTH_SHORT).show()
-            }
-        }
+            context = requireContext()
+        )
     }
 }

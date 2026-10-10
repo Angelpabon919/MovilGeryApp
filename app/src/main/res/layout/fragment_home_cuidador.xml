@@ -13,6 +13,7 @@
     <!-- HEADER AZUL -->
     <!-- ===================================================== -->
 
+
     <View
         android:id="@+id/viewHeaderBackground"
         android:layout_width="0dp"
@@ -21,6 +22,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <TextView
         android:id="@+id/tvAppName"
@@ -34,6 +36,7 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <TextView
         android:id="@+id/tvUserWelcome"
@@ -77,12 +80,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvUserWelcome">
 
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp">
+
 
             <ImageView
                 android:layout_width="20dp"
@@ -94,7 +99,6 @@
                 android:id="@+id/etSearchPaciente"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
                 android:background="@null"
                 android:hint="Buscar paciente..."
                 android:imeOptions="actionSearch"

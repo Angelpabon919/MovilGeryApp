@@ -24,17 +24,13 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="20dp">
 
-            <TextView
+            <ImageView
                 android:id="@+id/btnVolver"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_centerVertical="true"
-                android:clickable="true"
-                android:focusable="true"
-                android:text="‹ Volver"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:src="@drawable/arrow_back"
+                app:tint="#FFFFFF" />
 
             <Button
                 android:id="@+id/btnHistoriaClinica"
@@ -49,6 +45,7 @@
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
+                android:layout_marginTop="18dp"
                 app:cornerRadius="18dp"
                 app:strokeColor="#FFFFFF" />
         </RelativeLayout>
@@ -64,8 +61,8 @@
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:padding="12dp"
-                android:background="@drawable/bg_spinner_border"
-                android:src="@drawable/ic_avatar_placeholder"
+                android:background="@drawable/bg_badge_warning"
+                android:src="@drawable/person_icon"
                 app:tint="#2563EB" />
 
             <TextView
