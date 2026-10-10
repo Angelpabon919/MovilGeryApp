@@ -21,6 +21,7 @@ import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.repository.PacienteRepository
+import com.example.molvigeryapp.data.repository.StockNotificacionesRepository
 import kotlinx.coroutines.launch
 
 class PacienteViewModel(
@@ -211,171 +212,530 @@ class PacienteViewModel(
             }
         }
     }
-
     fun registrarAplicacionMedicamento(
         idTratamientoMedicamento: Int,
         idUsuario: Int,
         dosis: String,
         via: String,
         observacion: String,
+
+        idInventario: Int?,
         idElementoPaciente: Int,
+
         cantidadActual: Int,
+        cantidadAplicada: Int,
+
         idEncargado: Int = 1,
         nombreMedicamento: String = "Medicamento",
         nombrePaciente: String = "Paciente",
         context: Context
     ) {
-        viewModelScope.launch {
-            try {
-                val cantidadADescontar = dosis.toIntOrNull() ?: 1
-                val listaInventario = repository.obtenerInventario()
 
-                val inventarioEncontrado = listaInventario.find { inv ->
-                    inv.idElemento == idElementoPaciente || inv.idMedicamentos == idTratamientoMedicamento
+        viewModelScope.launch {
+
+            try {
+
+                // =============================================
+                // VALIDAR STOCK
+                // =============================================
+
+                if (cantidadAplicada <= 0) {
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception("La cantidad aplicada debe ser mayor a 0")
+                        )
+                    return@launch
                 }
 
-                val idInventarioValido = inventarioEncontrado?.idInventario ?: 1
+                if (cantidadAplicada > cantidadActual) {
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception("No hay suficiente stock disponible")
+                        )
+                    return@launch
+                }
 
-                val fechaActual = java.text.SimpleDateFormat(
-                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                    java.util.Locale.getDefault()
-                ).format(java.util.Date())
 
-                val idPaciente = _pacienteSeleccionado.value?.idPaciente ?: 1
+                // =============================================
+                // CALCULAR NUEVO STOCK
+                // =============================================
 
-                val request = AplicacionRequest(
-                    idPaciente = idPaciente,
-                    idMedicamento = idTratamientoMedicamento,
-                    idInventario = idInventarioValido,
-                    idUsuario = idUsuario,
-                    fechaHora = fechaActual,
-                    dosisAdministrada = dosis,
-                    viaAdministracion = via,
-                    estado = true,
-                    observacion = observacion,
-                    cantidadAplicada = cantidadADescontar
-                )
+                val stockRestante =
+                    (cantidadActual - cantidadAplicada)
+                        .coerceAtLeast(0)
 
-                val result = repository.registrarAplicacionMedicamento(request)
 
-                if (result.isSuccess) {
-                    val stockRestante = if (cantidadActual >= cantidadADescontar) cantidadActual - cantidadADescontar else 0
-                    try {
-                        repository.actualizarStockInventario(idInventarioValido, stockRestante)
-                    } catch (e: Exception) {
-                        Log.e("INVENTARIO_UPDATE", "Error al actualizar stock local ", e)
-                    }
+                // =============================================
+                // FECHA ACTUAL
+                // =============================================
 
-                    if (stockRestante <= 3) {
-                        val notificationHelper = NotificationHelper(context)
-                        notificationHelper.enviarNotificacionStockBajo(
-                            nombreMedicamento = nombreMedicamento,
-                            nombrePaciente = nombrePaciente,
-                            cantidadRestante = stockRestante
+                val fechaActual =
+                    java.text.SimpleDateFormat(
+                        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                        java.util.Locale.getDefault()
+                    ).format(java.util.Date())
+
+
+                val idPaciente =
+                    _pacienteSeleccionado.value?.idPaciente
+
+                if (idPaciente == null) {
+
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception("No hay paciente seleccionado")
                         )
 
-                        try {
-                            val notificacionReq = NotificacionRequest(
-                                titulo = "⚠️ Stock Bajo: $nombreMedicamento",
-                                mensaje = "El medicamento $nombreMedicamento para el paciente $nombrePaciente se está agotando. Quedan $stockRestante unidades.",
-                                fecha_creacion = fechaActual,
-                                enviar_correo = false
-                            )
-                            val respNotif = repository.crearNotificacion(notificacionReq)
-                            respNotif.getOrNull()?.let { notifCreada ->
-                                val destinatarioReq = NotificacionDestinatarioRequest(
-                                    id_notificacion = notifCreada.id_notificacion,
-                                    id_usuario = idEncargado,
-                                    leido = false
-                                )
-                                repository.asociarNotificacionDestinatario(destinatarioReq)
-                            }
-                        } catch (e: Exception) {
-                            Log.e("NOTIF_ERROR", "Error al registrar notificación", e)
+                    return@launch
+                }
+                // =============================================
+// BUSCAR INVENTARIO CORRECTO
+// =============================================
+
+                val listaInventario =
+                    repository.obtenerInventario()
+
+                val inventarioEncontrado =
+                    if (idInventario != null) {
+
+                        listaInventario.find {
+                            it.idInventario == idInventario
                         }
+
+                    } else {
+
+                        // 1. Primero buscar por el elemento exacto del paciente
+                        listaInventario.find {
+                            it.idElemento == idElementoPaciente &&
+                                    it.idPaciente == idPaciente
+                        }
+
+                        // 2. Si no aparece, buscar por paciente + medicamento
+                            ?: listaInventario.find {
+                                it.idPaciente == idPaciente &&
+                                        it.idMedicamentos == idTratamientoMedicamento
+                            }
                     }
 
-                    _registroAplicacionState.value = Result.success("Aplicación registrada con éxito")
-                    cargarElementosPaciente(idPaciente)
-                } else {
-                    _registroAplicacionState.value = Result.failure(
-                        result.exceptionOrNull() ?: Exception("Error al registrar aplicación")
-                    )
+                val idInventarioValido =
+                    idInventario
+                        ?: inventarioEncontrado?.idInventario
+
+                if (idInventarioValido == null) {
+
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception(
+                                "No se encontró un inventario asociado al medicamento"
+                            )
+                        )
+
+                    return@launch
                 }
+
+
+                // =============================================
+                // REGISTRAR APLICACIÓN
+                // =============================================
+
+                val request = AplicacionRequest(
+
+                    idPaciente = idPaciente,
+
+                    idMedicamento =
+                        idTratamientoMedicamento,
+
+                    idInventario =
+                        idInventarioValido,
+
+                    idUsuario =
+                        idUsuario,
+
+                    fechaHora =
+                        fechaActual,
+
+                    dosisAdministrada =
+                        dosis,
+
+                    viaAdministracion =
+                        via,
+
+                    estado =
+                        true,
+
+                    observacion =
+                        observacion,
+
+                    cantidadAplicada =
+                        cantidadAplicada
+                )
+
+
+                val resultadoAplicacion =
+                    repository.registrarAplicacionMedicamento(
+                        request
+                    )
+
+
+                if (resultadoAplicacion.isFailure) {
+
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            resultadoAplicacion.exceptionOrNull()
+                                ?: Exception(
+                                    "Error al registrar la aplicación"
+                                )
+                        )
+
+                    return@launch
+                }
+
+
+                // =============================================
+                // ACTUALIZAR INVENTARIO
+                // =============================================
+
+                val inventarioActualizado =
+                    repository.actualizarStockInventario(
+                        idInventarioValido,
+                        stockRestante
+                    )
+
+
+                // =============================================
+                // ACTUALIZAR ELEMENTO DEL PACIENTE
+                // =============================================
+
+                val elementoActualizado =
+                    repository.actualizarCantidadElemento(
+                        idElementoPaciente,
+                        stockRestante
+                    )
+
+
+                Log.d(
+                    "MEDICAMENTO_STOCK",
+                    """
+                Aplicación registrada
+                Medicamento: $nombreMedicamento
+                Stock anterior: $cantidadActual
+                Cantidad aplicada: $cantidadAplicada
+                Stock restante: $stockRestante
+                Inventario actualizado: $inventarioActualizado
+                Elemento actualizado: $elementoActualizado
+                """.trimIndent()
+                )
+
+
+                // =============================================
+                // COMPROBAR ACTUALIZACIONES
+                // =============================================
+
+                if (!inventarioActualizado ||
+                    !elementoActualizado
+                ) {
+
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception(
+                                "La aplicación fue registrada, " +
+                                        "pero no se pudo actualizar todo el inventario"
+                            )
+                        )
+
+                    return@launch
+                }
+
+
+                // =============================================
+// STOCK BAJO
+// =============================================
+
+                if (stockRestante <= 3) {
+
+                    try {
+
+                        val notificacionEnviada =
+                            StockNotificacionesRepository()
+                                .enviarAlertaStockBajo(
+                                    nombreInsumo = nombreMedicamento,
+                                    stockActual = stockRestante
+                                )
+
+                        if (!notificacionEnviada) {
+                            Log.e(
+                                "NOTIF_ERROR",
+                                "No se pudo enviar la alerta de stock bajo"
+                            )
+                        }
+
+                    } catch (e: Exception) {
+
+                        Log.e(
+                            "NOTIF_ERROR",
+                            "Error al enviar alerta de stock bajo",
+                            e
+                        )
+                    }
+                }
+
+                // =============================================
+                // RECARGAR STOCK
+                // =============================================
+
+                cargarElementosPaciente(
+                    idPaciente
+                )
+
+
+                // =============================================
+                // ÉXITO
+                // =============================================
+
+                _registroAplicacionState.value =
+                    Result.success(
+                        "Aplicación registrada. Stock: " +
+                                "$cantidadActual → $stockRestante"
+                    )
+
+
             } catch (e: Exception) {
-                _registroAplicacionState.value = Result.failure(e)
+
+                Log.e(
+                    "APLICACION_MEDICAMENTO",
+                    "Error registrando medicamento",
+                    e
+                )
+
+                _registroAplicacionState.value =
+                    Result.failure(e)
             }
         }
     }
-
     fun cargarCatalogoMedicamentos() {
         viewModelScope.launch {
             val lista = repository.getMedicamentos()
             _medicamentosCatalogo.value = lista
         }
     }
+    fun actualizarMedicamentosPorPacientesSeleccionados() {
 
-    fun cargarFormulacionesMedicamentos() {
-        viewModelScope.launch {
-            try {
-                val listaMedicamentos = repository.getFormulacionesMedicamentos() ?: emptyList()
-                val grupos = _gruposMedicacion.value ?: emptyList()
-                _formulacionesMedicamentos.value = listaMedicamentos
-                separarMedicamentosPorHorario(listaMedicamentos, grupos)
-            } catch (e: Exception) {
-                Log.e("FORMULACION_ERROR", "Error cargando formulaciones", e)
-                _formulacionesMedicamentos.value = emptyList()
-                separarMedicamentosPorHorario(emptyList(), emptyList())
+        val formulaciones =
+            _formulacionesMedicamentos.value ?: emptyList()
+
+        val grupos =
+            _gruposMedicacion.value ?: emptyList()
+
+        val idsSeleccionados =
+            _pacientesSeleccionadosHome.value
+                ?.mapNotNull { it.idPaciente }
+                ?: emptyList()
+
+        val formulacionesSeleccionadas =
+            formulaciones.filter { formulacion ->
+
+                formulacion.idPaciente != null &&
+                        formulacion.idPaciente in idsSeleccionados &&
+                        formulacion.actualAdministrado != false
             }
-        }
-    }
 
-    fun cargarGruposMedicacion() {
-        viewModelScope.launch {
-            try {
-                val lista = repository.getGrupoMedicacion()
-                _gruposMedicacion.value = lista ?: emptyList()
-            } catch (e: Exception) {
-                Log.e("GRUPO_MEDICACION_ERROR", "Error cargando grupos de medicación", e)
-                _gruposMedicacion.value = emptyList()
-            }
-        }
+        separarMedicamentosPorHorario(
+            formulacionesSeleccionadas,
+            grupos
+        )
     }
-
     fun separarMedicamentosPorHorario(
         lista: List<FormulacionMedicamento>,
         grupos: List<GrupoMedicacion> = emptyList()
     ) {
-        val horaActual = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
 
-        val medicamentosConGrupo = lista.filter { medicamento ->
-            grupos.any { it.idGrupo == medicamento.idGrupo }
+        val horaActual = 8
+
+        val medicamentosAhora = lista.filter { medicamento ->
+
+            val grupo = grupos.find {
+                it.idGrupo == medicamento.idGrupo
+            } ?: return@filter false
+
+            val horaBase = grupo.horaAdministracion
+                ?.substringBefore(":")
+                ?.toIntOrNull()
+                ?: return@filter false
+
+            when (medicamento.idGrupo) {
+
+                // Ayunas -> hora configurada, actualmente 07:00
+                1 -> {
+                    horaActual == horaBase
+                }
+
+                // Cada 12 horas -> hora base y 12 horas después
+                // Si base es 08:00 => 08:00 y 20:00
+                2 -> {
+                    val segundaHora = (horaBase + 12) % 24
+
+                    horaActual == horaBase ||
+                            horaActual == segundaHora
+                }
+
+                // Cada 24 horas -> una vez al día
+                3 -> {
+                    horaActual == horaBase
+                }
+
+                // Anticoagulados -> hora configurada
+                4 -> {
+                    horaActual == horaBase
+                }
+
+                else -> {
+                    horaActual == horaBase
+                }
+            }
         }
 
-        val manana = medicamentosConGrupo.filter {
-            val hora = it.horaAdministrada?.substringBefore(":")?.toIntOrNull() ?: 0
-            hora in 6..11
+
+        val manana = medicamentosAhora.filter { medicamento ->
+
+            val grupo = grupos.find {
+                it.idGrupo == medicamento.idGrupo
+            } ?: return@filter false
+
+            val horaBase = grupo.horaAdministracion
+                ?.substringBefore(":")
+                ?.toIntOrNull()
+                ?: return@filter false
+
+            val horaCorrespondiente =
+                if (
+                    medicamento.idGrupo == 2 &&
+                    horaActual == ((horaBase + 12) % 24)
+                ) {
+                    (horaBase + 12) % 24
+                } else {
+                    horaBase
+                }
+
+            horaCorrespondiente in 6..11
         }
 
-        val tarde = medicamentosConGrupo.filter {
-            val hora = it.horaAdministrada?.substringBefore(":")?.toIntOrNull() ?: 0
-            hora in 12..17
+
+        val tarde = medicamentosAhora.filter { medicamento ->
+
+            val grupo = grupos.find {
+                it.idGrupo == medicamento.idGrupo
+            } ?: return@filter false
+
+            val horaBase = grupo.horaAdministracion
+                ?.substringBefore(":")
+                ?.toIntOrNull()
+                ?: return@filter false
+
+            val horaCorrespondiente =
+                if (
+                    medicamento.idGrupo == 2 &&
+                    horaActual == ((horaBase + 12) % 24)
+                ) {
+                    (horaBase + 12) % 24
+                } else {
+                    horaBase
+                }
+
+            horaCorrespondiente in 12..17
         }
 
-        val noche = medicamentosConGrupo.filter {
-            val hora = it.horaAdministrada?.substringBefore(":")?.toIntOrNull() ?: 0
-            hora >= 18 || hora < 6
+
+        val noche = medicamentosAhora.filter { medicamento ->
+
+            val grupo = grupos.find {
+                it.idGrupo == medicamento.idGrupo
+            } ?: return@filter false
+
+            val horaBase = grupo.horaAdministracion
+                ?.substringBefore(":")
+                ?.toIntOrNull()
+                ?: return@filter false
+
+            val horaCorrespondiente =
+                if (
+                    medicamento.idGrupo == 2 &&
+                    horaActual == ((horaBase + 12) % 24)
+                ) {
+                    (horaBase + 12) % 24
+                } else {
+                    horaBase
+                }
+
+            horaCorrespondiente >= 18 ||
+                    horaCorrespondiente < 6
         }
+
 
         medicamentosManana.value = manana
         medicamentosTarde.value = tarde
         medicamentosNoche.value = noche
 
-        Log.d(
-            "MEDICAMENTOS_HOME",
-            "HORA CELULAR: $horaActual | MAÑANA: $manana | TARDE: $tarde | NOCHE: $noche"
+
+        android.util.Log.d(
+            "HORARIO_FINAL",
+            "HORA=$horaActual | MAÑANA=$manana | TARDE=$tarde | NOCHE=$noche"
         )
     }
+
+    fun cargarFormulacionesMedicamentos() {
+
+        viewModelScope.launch {
+
+            try {
+
+                val lista = repository.getFormulacionesMedicamentos()
+                val listaMedicamentos = lista ?: emptyList()
+
+                _formulacionesMedicamentos.value = listaMedicamentos
+
+                actualizarMedicamentosPorPacientesSeleccionados()
+
+            } catch (e: Exception) {
+
+                android.util.Log.e(
+                    "FORMULACION_ERROR",
+                    "Error cargando formulaciones",
+                    e
+                )
+
+                _formulacionesMedicamentos.value = emptyList()
+
+                medicamentosManana.value = emptyList()
+                medicamentosTarde.value = emptyList()
+                medicamentosNoche.value = emptyList()
+            }
+        }
+    }
+    fun cargarGruposMedicacion() {
+
+        viewModelScope.launch {
+
+            try {
+
+                val lista = repository.getGrupoMedicacion()
+
+                _gruposMedicacion.value = lista ?: emptyList()
+
+                actualizarMedicamentosPorPacientesSeleccionados()
+
+            } catch (e: Exception) {
+
+                android.util.Log.e(
+                    "GRUPO_MEDICACION_ERROR",
+                    "Error cargando grupos",
+                    e
+                )
+
+                _gruposMedicacion.value = emptyList()
+            }
+        }
+    }
+
 
     fun cargarTiposInsumos() {
         viewModelScope.launch {

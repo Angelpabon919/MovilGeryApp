@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
@@ -16,66 +15,135 @@ class CardexFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val pacienteViewModel: PacienteViewModel by activityViewModels()
+
     private var cuidadoActual: CuidadoEnfermeria? = null
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentCardexBinding.inflate(inflater, container, false)
+
+        _binding =
+            FragmentCardexBinding.inflate(
+                inflater,
+                container,
+                false
+            )
+
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. Escuchar la selección del paciente por ID
-        pacienteViewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
+        // =============================================
+        // CARDEX SOLO LECTURA
+        // =============================================
+
+        configurarSoloLectura()
+
+        // =============================================
+        // ESCUCHAR PACIENTE SELECCIONADO
+        // =============================================
+
+        pacienteViewModel.pacienteSeleccionado.observe(
+            viewLifecycleOwner
+        ) { paciente ->
+
             val idPaciente = paciente?.idPaciente
+
             if (idPaciente != null) {
+
+                // Realiza el GET de cuidados del paciente
                 pacienteViewModel.cargarCuidados(idPaciente)
+
             } else {
+
                 limpiarCampos()
             }
         }
 
-        // 2. Mapear la respuesta de la API a los campos
-        pacienteViewModel.cuidados.observe(viewLifecycleOwner) { listaCuidados ->
-            // Tomamos sólo un registro filtrado por id_paciente
-            cuidadoActual = listaCuidados?.firstOrNull()
-            cuidadoActual?.let { c ->
-                binding.etBanoPaciente.setText(c.banoPaciente ?: "")
-                binding.etPesoTalla.setText(c.pesoTalla ?: "")
-                binding.etControlGlucemia.setText(c.controlGlucemia ?: "")
-                binding.etCuraciones.setText(c.curaciones ?: "")
-                binding.etLiquidos.setText(c.liquidosAdministradosEliminados ?: "")
-                binding.etControlDeposicion.setText(c.controlDeposicion ?: "")
-                binding.etAdminMedicamentos.setText(c.administracionMedicamentos ?: "")
+        // =============================================
+        // MOSTRAR DATOS RECIBIDOS DEL GET
+        // =============================================
+
+        pacienteViewModel.cuidados.observe(
+            viewLifecycleOwner
+        ) { listaCuidados ->
+
+            cuidadoActual =
+                listaCuidados?.firstOrNull()
+
+            if (cuidadoActual == null) {
+
+                limpiarCampos()
+
+            } else {
+
+                cuidadoActual?.let { cuidado ->
+
+                    binding.etBanoPaciente.setText(
+                        cuidado.banoPaciente ?: ""
+                    )
+
+                    binding.etPesoTalla.setText(
+                        cuidado.pesoTalla ?: ""
+                    )
+
+                    binding.etControlGlucemia.setText(
+                        cuidado.controlGlucemia ?: ""
+                    )
+
+                    binding.etCuraciones.setText(
+                        cuidado.curaciones ?: ""
+                    )
+
+                    binding.etLiquidos.setText(
+                        cuidado.liquidosAdministradosEliminados
+                            ?: ""
+                    )
+
+                    binding.etControlDeposicion.setText(
+                        cuidado.controlDeposicion ?: ""
+                    )
+
+                    binding.etAdminMedicamentos.setText(
+                        cuidado.administracionMedicamentos
+                            ?: ""
+                    )
+                }
             }
-        }
-
-        // 3. Botón de guardado
-        binding.btnGuardarCardex.setOnClickListener {
-            val idPaciente = pacienteViewModel.pacienteSeleccionado.value?.idPaciente
-
-            val cuidadoAGuardar = CuidadoEnfermeria(
-                idCuidado = cuidadoActual?.idCuidado,
-                banoPaciente = binding.etBanoPaciente.text.toString().trim(),
-                pesoTalla = binding.etPesoTalla.text.toString().trim(),
-                controlGlucemia = binding.etControlGlucemia.text.toString().trim(),
-                curaciones = binding.etCuraciones.text.toString().trim(),
-                liquidosAdministradosEliminados = binding.etLiquidos.text.toString().trim(),
-                controlDeposicion = binding.etControlDeposicion.text.toString().trim(),
-                administracionMedicamentos = binding.etAdminMedicamentos.text.toString().trim(),
-                idPaciente = idPaciente
-            )
-
-            pacienteViewModel.guardarCuidado(cuidadoAGuardar)
-            Toast.makeText(requireContext(), "Guardando registro...", Toast.LENGTH_SHORT).show()
         }
     }
 
+    // =============================================
+    // DEJAR TODOS LOS CAMPOS SOLO LECTURA
+    // =============================================
+
+    private fun configurarSoloLectura() {
+
+        binding.etBanoPaciente.isEnabled = false
+        binding.etPesoTalla.isEnabled = false
+        binding.etControlGlucemia.isEnabled = false
+        binding.etCuraciones.isEnabled = false
+        binding.etLiquidos.isEnabled = false
+        binding.etControlDeposicion.isEnabled = false
+        binding.etAdminMedicamentos.isEnabled = false
+
+        // Ya no se guarda desde esta pantalla
+    }
+
+    // =============================================
+    // LIMPIAR CAMPOS
+    // =============================================
+
     private fun limpiarCampos() {
+
         binding.etBanoPaciente.setText("")
         binding.etPesoTalla.setText("")
         binding.etControlGlucemia.setText("")

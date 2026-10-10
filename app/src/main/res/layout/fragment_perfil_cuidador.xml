@@ -68,17 +68,6 @@
                     android:background="@drawable/bg_notifi"
                     android:contentDescription="Notificaciones" />
 
-                <TextView
-                    android:id="@+id/txtNotificacionesPerfil"
-                    android:layout_width="22dp"
-                    android:layout_height="13dp"
-                    android:layout_gravity="top|end"
-                    android:background="@drawable/bg_badge"
-                    android:gravity="center"
-                    android:text="3"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
             </FrameLayout>
         </LinearLayout>
 

@@ -100,6 +100,7 @@ class DetallePacienteFragment : Fragment() {
                 0 -> "Aplicación de medicamentos"
                 1 -> "Bitácora"
                 2 -> "Recomendaciones"
+                3 -> "cardex"
                 else -> ""
             }
         }.attach()

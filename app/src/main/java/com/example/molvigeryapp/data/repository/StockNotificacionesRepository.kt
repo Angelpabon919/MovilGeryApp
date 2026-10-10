@@ -1,9 +1,7 @@
 package com.example.molvigeryapp.data.repository
 
-import com.example.molvigeryapp.data.api.RetrofitClient
-import com.example.molvigeryapp.data.model.NotificacionRequest
-import com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest
 import android.util.Log
+import com.example.molvigeryapp.data.api.RetrofitClient
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -18,46 +16,111 @@ class StockNotificacionesRepository {
         nombreInsumo: String,
         stockActual: Int
     ): Boolean {
+
         return try {
-            // Generar la fecha actual en formato requerido
-            val fechaActual = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(Date())
 
-            // 1. Crear la notificación general usando los campos exactos del modelo
-            val requestNotificacion = NotificacionRequest(
-                titulo = "¡Alerta de Stock Bajo!",
-                mensaje = "El insumo '$nombreInsumo' ha alcanzado un nivel crítico con solo $stockActual unidades.",
-                fecha_creacion = fechaActual,
-                enviar_correo = false // Directo a la app, sin correos
-            )
+            val fechaActual =
+                SimpleDateFormat(
+                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    Locale.getDefault()
+                ).format(Date())
 
-            val respuestaNotif = RetrofitClient.apiService.crearNotificacion(requestNotificacion)
+            // 1. Crear la notificación con todos los campos que exige Django
+            val requestNotificacion =
+                mapOf<String, Any>(
+                    "titulo" to "¡Alerta de Stock Bajo!",
+                    "mensaje" to
+                            "El insumo '$nombreInsumo' ha alcanzado un nivel crítico con solo $stockActual unidades.",
+                    "fecha_creacion" to fechaActual,
+                    "enviar_correo" to false,
+                    "tipo" to "inventario",
+                    "fecha_hora" to fechaActual,
+                    "estado" to true
+                )
 
-            if (respuestaNotif.isSuccessful && respuestaNotif.body() != null) {
-                // Obtenemos el id correcto del modelo NotificacionResponse
-                val idNotificacionCreada = respuestaNotif.body()!!.id_notificacion
-
-                // 2. Traemos todos los usuarios para filtrar los roles 6 (Encargado) y 7 (Administrador)
-                val listaUsuarios = RetrofitClient.apiService.getUsuarios()
-
-                val idsDestinatarios = listaUsuarios.filter { usuario ->
-                    usuario.idRol == 6 || usuario.idRol == 7
-                }.mapNotNull { it.idUsuario }
-
-                // 3. Asociamos la notificación a cada usuario encontrado
-                for (idUsuario in idsDestinatarios) {
-                    val requestDestinatario = NotificacionDestinatarioRequest(
-                        id_notificacion = idNotificacionCreada,
-                        id_usuario = idUsuario,
-                        leido = false
+            val respuestaNotif =
+                RetrofitClient.apiService
+                    .crearNotificacionStock(
+                        requestNotificacion
                     )
-                    RetrofitClient.apiService.asociarNotificacionDestinatario(requestDestinatario)
+
+            if (
+                respuestaNotif.isSuccessful &&
+                respuestaNotif.body() != null
+            ) {
+
+                val idNotificacionCreada =
+                    respuestaNotif.body()!!.id_notificacion
+
+                // 2. Obtener todos los usuarios
+                val listaUsuarios =
+                    RetrofitClient.apiService
+                        .getUsuarios()
+
+                // 3. Filtrar:
+                // rol 6 = Encargado
+                // rol 7 = Administrador
+                val idsDestinatarios =
+                    listaUsuarios
+                        .filter { usuario ->
+                            usuario.idRol == 6 ||
+                                    usuario.idRol == 7
+                        }
+                        .mapNotNull { usuario ->
+                            usuario.idUsuario
+                        }
+
+                // 4. Asociar la misma notificación a cada destinatario
+                for (idUsuario in idsDestinatarios) {
+
+                    val requestDestinatario =
+                        mapOf<String, Any>(
+                            "id_notificacion" to idNotificacionCreada,
+                            "id_usuario" to idUsuario,
+                            "leida" to false
+                        )
+
+                    val respuestaDestinatario =
+                        RetrofitClient.apiService
+                            .asociarNotificacionDestinatarioStock(
+                                requestDestinatario
+                            )
+
+                    if (!respuestaDestinatario.isSuccessful) {
+
+                        Log.e(
+                            TAG,
+                            "Error asociando notificación al usuario $idUsuario | HTTP ${respuestaDestinatario.code()}"
+                        )
+                    }
                 }
+
                 true
+
             } else {
+
+                val error =
+                    respuestaNotif
+                        .errorBody()
+                        ?.string()
+                        ?: "Sin detalle"
+
+                Log.e(
+                    TAG,
+                    "Error creando notificación stock | HTTP ${respuestaNotif.code()} | $error"
+                )
+
                 false
             }
+
         } catch (e: Exception) {
-            Log.e(TAG, "Error al enviar alerta de stock", e)
+
+            Log.e(
+                TAG,
+                "Error al enviar alerta de stock",
+                e
+            )
+
             false
         }
     }

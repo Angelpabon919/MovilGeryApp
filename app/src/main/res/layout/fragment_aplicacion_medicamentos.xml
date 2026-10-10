@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -12,12 +13,13 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- TÍTULO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Registro de Medicación"
+            android:text="Aplicación de medicamento"
             android:textColor="#0F172A"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
@@ -25,18 +27,19 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="20dp"
-            android:text="Descuenta automáticamente del inventario al guardar"
+            android:text="Registra los medicamentos programados para el paciente"
             android:textColor="#64748B"
             android:textSize="13sp" />
 
-        <!-- Card con Formulario -->
+        <!-- CARD PRINCIPAL -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="18dp"
             app:cardElevation="2dp"
-            app:strokeWidth="0dp">
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -44,11 +47,53 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <!-- Selección de Medicamento -->
+                <!-- PACIENTE ACTUAL + INFORMACIÓN -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Medicamento prescrito *"
+                    android:text="Paciente"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="18dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvPacienteSeleccionado"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Paciente seleccionado"
+                        android:textColor="#0F172A"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVerInformacionMedicamento"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="Ver información"
+                        android:textAllCaps="false"
+                        android:textColor="#2563EB"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <!-- MEDICAMENTO PENDIENTE -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Medicamento pendiente *"
                     android:textColor="#334155"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -57,8 +102,7 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginTop="6dp">
 
                     <AutoCompleteTextView
                         android:id="@+id/spinnerMedicamento"
@@ -66,89 +110,14 @@
                         android:layout_height="wrap_content"
                         android:hint="Seleccione un medicamento"
                         android:inputType="none" />
+
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Stock / Alerta de Cantidad Disponible -->
-                <LinearLayout
-                    android:id="@+id/layoutStockInfo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:background="#F1F5F9"
-                    android:orientation="horizontal"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Stock en inventario:"
-                        android:textColor="#475569"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/tvCantidadDisponible"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="-- unidades"
-                        android:textColor="#1E293B"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Campo Dosis Administrada -->
+                <!-- CANTIDAD -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dosis administrada *"
-                    android:textColor="#334155"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="16dp">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etDosis"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Ej. 1 Tableta, 5ml, 500mg"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Campo Vía de Administración -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Vía de administración *"
-                    android:textColor="#334155"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="16dp">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/spinnerViaAdministracion"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Seleccione la vía"
-                        android:inputType="none" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Campo Cantidad a Descontar (NUEVO CAMPO) -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Cantidad a descontar *"
+                    android:text="Cantidad aplicada *"
                     android:textColor="#334155"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -165,15 +134,16 @@
                         android:id="@+id/etCantidadAplicada"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Ej. 1, 2, 5"
+                        android:hint="Ej. 1"
                         android:inputType="number" />
+
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Observaciones -->
+                <!-- OBSERVACIONES -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Observaciones / Novedades"
+                    android:text="Observaciones"
                     android:textColor="#334155"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -183,31 +153,46 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:layout_marginBottom="24dp">
+                    android:layout_marginBottom="14dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etObservaciones"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="top"
-                        android:hint="Paciente ingirió el medicamento con alimentos..."
-                        android:lines="3" />
+                        android:hint="Agregar una novedad si es necesario"
+                        android:minLines="3"
+                        android:maxLines="4" />
+
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Botón de Registro -->
+                <!-- CONFIRMACIÓN -->
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/cbConfirmarAdministracion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    android:text="Confirmo que el medicamento fue administrado"
+                    android:textColor="#334155"
+                    android:textSize="14sp"
+                    app:buttonTint="#2563EB" />
+
+                <!-- REGISTRAR -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRegistrarAplicacion"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"
                     android:backgroundTint="#2563EB"
-                    android:text="Registrar Aplicación"
+                    android:text="Registrar aplicación"
                     android:textAllCaps="false"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     app:cornerRadius="12dp" />
 
             </LinearLayout>
+
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
+
 </ScrollView>
