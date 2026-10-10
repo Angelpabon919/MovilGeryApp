@@ -20,6 +20,7 @@ import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.Camara
 import com.example.molvigeryapp.data.model.Inventario
 import com.example.molvigeryapp.data.model.NotificacionApi
 import com.example.molvigeryapp.data.model.NotificacionDestinatarioRequest
@@ -36,6 +37,7 @@ import com.example.molvigeryapp.data.model.EventoIa
 import com.example.molvigeryapp.data.model.EvidenciaIa
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
 import com.example.molvigeryapp.data.model.GrupoMedicacion
+import com.example.molvigeryapp.data.model.Habitacion
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
@@ -401,7 +403,19 @@ interface ApiService {
     @GET("evidencias_ia/")
     suspend fun getEvidenciasIa(): Response<List<EvidenciaIa>>
 
+    // ==========================================
+// OBTENER CÁMARAS DESDE EL BACKEND
+// ==========================================
 
+    @GET("camaras/")
+    suspend fun getCamaras(): List<Camara>
+
+    // ==========================================
+// OBTENER HABITACIONES DESDE EL BACKEND
+// ==========================================
+
+    @GET("habitaciones/")
+    suspend fun getHabitaciones(): List<Habitacion>
 
 
 }

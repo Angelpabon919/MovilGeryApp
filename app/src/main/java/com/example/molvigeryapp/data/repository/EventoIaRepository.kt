@@ -1,8 +1,11 @@
 package com.example.molvigeryapp.data.repository
 
 import com.example.molvigeryapp.data.api.RetrofitClient
+import com.example.molvigeryapp.data.model.Camara
 import com.example.molvigeryapp.data.model.EventoIa
 import com.example.molvigeryapp.data.model.EvidenciaIa
+import com.example.molvigeryapp.data.model.Habitacion
+import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.TipoEventoIa
 import retrofit2.Response
 
@@ -19,7 +22,17 @@ class EventoIaRepository {
           suspend fun obtenerEvidencias(): Response<List<EvidenciaIa>> {
                 return apiService.getEvidenciasIa()
 
-
-
         }
+    suspend fun obtenerPacientes(): List<Paciente> {
+        return apiService.getPacientes()
+    }
+    suspend fun obtenerCamaras(): List<Camara> {
+        return apiService.getCamaras()
+
+
+    }
+    suspend fun obtenerHabitaciones(): List<Habitacion> {
+        return apiService.getHabitaciones()
+    }
+
 }
