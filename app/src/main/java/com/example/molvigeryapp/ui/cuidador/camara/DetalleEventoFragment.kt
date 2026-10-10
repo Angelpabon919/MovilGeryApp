@@ -131,6 +131,11 @@ class DetalleEventoFragment : Fragment() {
                 )
                 return@launch
             }
+            cargarNombrePaciente(view, evento.id_paciente)
+            // CONSULTAR NOMBRE REAL DE LA CÁMARA
+            cargarNombreCamara(view, evento.id_camara)
+            // CONSULTAR NÚMERO REAL DE LA HABITACIÓN
+            cargarNumeroHabitacion(view, evento.id_habitacion)
 
             // 2. CONSULTAR TIPO Y DESCRIPCIÓN
             try {
@@ -162,6 +167,137 @@ class DetalleEventoFragment : Fragment() {
             cargarEvidencia(view, evento.id_evento)
         }
     }
+    // =====================================================
+    // NUEVO: OBTENER NOMBRE COMPLETO DEL PACIENTE
+    // =====================================================
+
+    private suspend fun cargarNombrePaciente(
+        view: View,
+        idPaciente: Int
+    ) {
+
+        try {
+
+            // Consultar la lista real desde GET pacientes/
+            val pacientes = repository.obtenerPacientes()
+
+            // Buscar al paciente relacionado con el evento
+            val paciente = pacientes.find {
+                it.idPaciente == idPaciente
+            }
+
+            val nombreCompleto = paciente?.let {
+                "${it.nombre} ${it.apellido}".trim()
+            }.orEmpty()
+
+            view.findViewById<TextView>(
+                R.id.tvPacienteDetalle
+            ).text = if (nombreCompleto.isNotEmpty()) {
+                nombreCompleto
+            } else {
+                "ID $idPaciente"
+            }
+
+        } catch (e: CancellationException) {
+            throw e
+
+        } catch (e: Exception) {
+
+            // Si falla la consulta, conservar el ID
+            view.findViewById<TextView>(
+                R.id.tvPacienteDetalle
+            ).text = "ID $idPaciente"
+        }
+    }
+
+    // =====================================================
+    // OBTENER NOMBRE REAL DE LA CÁMARA
+    // =====================================================
+
+    private suspend fun cargarNombreCamara(
+        view: View,
+        idCamara: Int
+    ) {
+
+        try {
+
+            // Consultar las cámaras desde el backend
+            val camaras = repository.obtenerCamaras()
+
+            // Buscar la cámara relacionada con el evento
+            val camara = camaras.find {
+                it.idCamara == idCamara
+            }
+
+            val nombreCamara = camara?.nombre
+                ?.trim()
+                .orEmpty()
+
+            view.findViewById<TextView>(
+                R.id.tvCamaraDetalle
+            ).text = if (nombreCamara.isNotEmpty()) {
+                nombreCamara
+            } else {
+                "Cámara $idCamara"
+            }
+
+        } catch (e: CancellationException) {
+            throw e
+
+        } catch (e: Exception) {
+
+            // Si falla la consulta, conservar el ID
+            view.findViewById<TextView>(
+                R.id.tvCamaraDetalle
+            ).text = "Cámara $idCamara"
+        }
+    }
+
+    // =====================================================
+    // OBTENER NÚMERO REAL DE LA HABITACIÓN
+    // =====================================================
+
+    private suspend fun cargarNumeroHabitacion(
+        view: View,
+        idHabitacion: Int
+    ) {
+
+        try {
+
+            // Consultar habitaciones desde el backend
+            val habitaciones = repository.obtenerHabitaciones()
+
+            // Buscar habitación relacionada con el evento
+            val habitacion = habitaciones.find {
+                it.idHabitacion == idHabitacion
+            }
+
+            val numeroHabitacion = habitacion?.numero
+                ?.trim()
+                .orEmpty()
+
+            view.findViewById<TextView>(
+                R.id.tvHabitacionDetalle
+            ).text = if (numeroHabitacion.isNotEmpty()) {
+                "Habitación $numeroHabitacion"
+            } else {
+                "Habitación ID $idHabitacion"
+            }
+
+        } catch (e: CancellationException) {
+            throw e
+
+        } catch (e: Exception) {
+
+            // Si falla la consulta, conservar el ID
+            view.findViewById<TextView>(
+                R.id.tvHabitacionDetalle
+            ).text = "Habitación ID $idHabitacion"
+        }
+    }
+
+
+
 
     // =====================================================
     // MOSTRAR INFORMACIÓN DEL EVENTO

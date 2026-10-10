@@ -8,7 +8,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.R
+import com.example.molvigeryapp.data.model.Camara
 import com.example.molvigeryapp.data.model.EventoIa
+import com.example.molvigeryapp.data.model.Habitacion
+import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.TipoEventoIa
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -23,6 +26,13 @@ class EventoIaAdapter(
 
     // Tipos obtenidos desde tipos_evento_ia/
     private var tiposEventos = mapOf<Int, TipoEventoIa>()
+
+    private var pacientes = mapOf<Int, Paciente>()
+
+    private var camaras = mapOf<Int, Camara>()
+
+    private var habitaciones = mapOf<Int, Habitacion>()
+
 
     // =====================================================
     // ACTUALIZAR LISTA DE EVENTOS
@@ -44,7 +54,41 @@ class EventoIaAdapter(
 
         notifyDataSetChanged()
     }
+    fun actualizarPacientes(nuevosPacientes: List<Paciente>) {
 
+        pacientes = nuevosPacientes
+            .filter { it.idPaciente != null }
+            .associateBy { it.idPaciente!! }
+
+        // Refrescar las tarjetas cuando lleguen los nombres
+        notifyDataSetChanged()
+    }
+    // =====================================================
+// ACTUALIZAR CÁMARAS
+// =====================================================
+
+    fun actualizarCamaras(nuevasCamaras: List<Camara>) {
+
+        camaras = nuevasCamaras.associateBy {
+            it.idCamara
+        }
+
+        // Actualizar las tarjetas con los nombres reales
+        notifyDataSetChanged()
+    }
+    // =====================================================
+// ACTUALIZAR HABITACIONES
+// =====================================================
+
+    fun actualizarHabitaciones(nuevasHabitaciones: List<Habitacion>) {
+
+        habitaciones = nuevasHabitaciones.associateBy {
+            it.idHabitacion
+        }
+
+        // Refrescar las tarjetas con los números reales
+        notifyDataSetChanged()
+    }
     // =====================================================
     // CREAR TARJETAS
     // =====================================================
@@ -137,16 +181,53 @@ class EventoIaAdapter(
                 convertirFechaColombia(evento.fecha_hora)
 
             // Identificación del paciente
+            val paciente = pacientes[evento.id_paciente]
+            val nombreCompleto = paciente?.let{
+                "${it.nombre} ${it.apellido}".trim()
+            }.orEmpty()
+
             tvPacienteEvento.text =
-                "ID ${evento.id_paciente}"
+                    if (nombreCompleto.isNotEmpty()){
+                        nombreCompleto
+                    }else{
+                        "paciente ID ${evento.id_paciente}"
+                    }
+            // =====================================================
+            // NÚMERO REAL DE LA HABITACIÓN
+            // =====================================================
 
-            // Habitación
+            val habitacion = habitaciones[evento.id_habitacion]
+
+            val numeroHabitacion = habitacion?.numero
+                ?.trim()
+                .orEmpty()
+
             tvHabitacionEvento.text =
-                "Hab. ${evento.id_habitacion}"
+                if (numeroHabitacion.isNotEmpty()) {
+                    "Habitación $numeroHabitacion"
+                } else {
+                    "Hab. ${evento.id_habitacion}"
+                }
 
-            // Cámara
+
+
+            // =====================================================
+            // NOMBRE REAL DE LA CÁMARA
+            // =====================================================
+
+            val camara = camaras[evento.id_camara]
+
+            val nombreCamara = camara?.nombre
+                ?.trim()
+                .orEmpty()
+
             tvCamaraEvento.text =
-                "Cam. ${evento.id_camara}"
+                if (nombreCamara.isNotEmpty()) {
+                    nombreCamara
+                } else {
+                    "Cam. ${evento.id_camara}"
+                }
+
 
             // Porcentaje de confianza
             tvConfianzaEvento.text =

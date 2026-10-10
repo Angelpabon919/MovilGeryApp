@@ -15,10 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.EventoIa
-import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
-import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
-import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
 class EventosCamaraFragment : Fragment() {
 
@@ -75,11 +72,14 @@ class EventosCamaraFragment : Fragment() {
         configurarRecyclerView()
         configurarBotones(view)
         observarDatos()
-        configurarNavegacion(view)
 
         // Obtener nombres, descripciones y riesgos
         // desde tipos_evento_ia/
         viewModel.obtenerTiposEventos()
+        viewModel.obtenerPacientes()
+        viewModel.obtenerCamaras()
+        viewModel.obtenerHabitaciones()
+
     }
 
     // =====================================================
@@ -182,7 +182,23 @@ class EventosCamaraFragment : Fragment() {
             // y nivel de riesgo obtenidos desde la API
             adapter.actualizarTiposEventos(tipos)
         }
+        // -------------------------------------------------
+        // NUEVO: PACIENTES
+        // -------------------------------------------------
 
+        viewModel.pacientes.observe(viewLifecycleOwner) { pacientes ->
+
+            // Relacionaremos id_paciente con nombre y apellido
+            adapter.actualizarPacientes(pacientes)
+        }
+        viewModel.camaras.observe(viewLifecycleOwner) { camaras ->
+
+            adapter.actualizarCamaras(camaras)
+        }
+        viewModel.habitaciones.observe(viewLifecycleOwner) { habitaciones ->
+
+            adapter.actualizarHabitaciones(habitaciones)
+        }
         // -------------------------------------------------
         // INDICADOR DE CARGA
         // -------------------------------------------------
@@ -236,85 +252,6 @@ class EventosCamaraFragment : Fragment() {
                 View.GONE
             }
     }
-
-    // =====================================================
-    // NAVEGACIÓN INFERIOR DE GERIAPP
-    // =====================================================
-
-    private fun configurarNavegacion(view: View) {
-
-        NavegacionCuidador.configurar(
-
-            // INICIO
-            navInicio = view.findViewById(R.id.navInicio),
-            iconInicio = view.findViewById(R.id.iconInicio),
-            textInicio = view.findViewById(R.id.textInicio),
-
-            // AGENDA
-            navAgenda = view.findViewById(R.id.navAgenda),
-            iconAgenda = view.findViewById(R.id.iconAgenda),
-            textAgenda = view.findViewById(R.id.textAgenda),
-            badgeAgenda = view.findViewById(R.id.badgeAgenda),
-
-            // CÁMARAS
-            navCamaras = view.findViewById(R.id.navCamaras),
-            iconCamaras = view.findViewById(R.id.iconCamaras),
-            textCamaras = view.findViewById(R.id.textCamaras),
-
-            // PERFIL
-            navPerfil = view.findViewById(R.id.navPerfil),
-            iconPerfil = view.findViewById(R.id.iconPerfil),
-            textPerfil = view.findViewById(R.id.textPerfil),
-
-            // PANTALLA ACTUAL
-            pantallaActual =
-                NavegacionCuidador.Pantalla.CAMARAS,
-
-            lifecycleOwner = viewLifecycleOwner,
-
-            // IR A INICIO
-            onInicio = {
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        HomeFragment()
-                    )
-                    .commit()
-            },
-
-            // IR A AGENDA
-            onAgenda = {
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        AgendaFragment()
-                    )
-                    .commit()
-            },
-
-            // YA ESTAMOS EN CÁMARAS
-            onCamaras = {
-                // No es necesario navegar
-            },
-
-            // IR A PERFIL
-            onPerfil = {
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        PerfilCuidadorFragment()
-                    )
-                    .commit()
-            }
-        )
-    }
-
     // =====================================================
     // INICIAR ACTUALIZACIÓN AUTOMÁTICA
     // =====================================================
