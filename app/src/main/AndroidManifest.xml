@@ -12,9 +12,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/logo_geriapp1"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/logo_geriapp1"
         android:supportsRtl="true"
         android:theme="@style/Theme.MolviGeryApp"
         android:name=".GerIAppApplication"
@@ -30,6 +30,15 @@
             </intent-filter>
 
         </service>
+
+        <!-- PERSONALIZACION DE NOTIFICAIONES ENCARGADO -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/logo_blanco" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/geriapp_notification_color" />
 
         <activity
             android:name=".MainActivity"

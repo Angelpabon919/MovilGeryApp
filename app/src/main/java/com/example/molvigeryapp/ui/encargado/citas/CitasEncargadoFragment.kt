@@ -1,3 +1,4 @@
+
 package com.example.molvigeryapp.ui.encargado.citas
 
 import android.graphics.Color
@@ -7,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -30,97 +32,45 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import android.widget.Toast
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class CitasEncargadoFragment : Fragment() {
 
-    // =========================================================
-    // VIEW BINDING
-    // =========================================================
-
     private var _binding: FragmentCitasEncargadoBinding? = null
-
-    private val binding
-        get() = requireNotNull(_binding)
-
-
-    // =========================================================
-    // ADAPTERS
-    // =========================================================
+    private val binding get() = requireNotNull(_binding)
 
     private lateinit var pacienteAdapter: PacienteCitaAdapter
-
     private lateinit var citaAdapter: CitaAdapter
 
-
-    // =========================================================
-    // LISTAS
-    // =========================================================
-
     private var listaPacientes: List<Paciente> = emptyList()
-
     private var listaCitas: List<Cita> = emptyList()
 
-
-    // =========================================================
-    // CONTROL DE CARGA
-    // =========================================================
-
-    /**
-     * Evita que se ejecuten varias solicitudes al mismo tiempo.
-     */
     private var cargandoDatos = false
 
-
-    // =========================================================
-    // INTERVALO DE ACTUALIZACIÓN
-    // =========================================================
-
     companion object {
-
-        /**
-         * Actualización automática cada 2 segundos.
-         */
         private const val INTERVALO_ACTUALIZACION = 2_000L
-
         private const val TAG = "CITAS_ENCARGADO"
     }
-
-
-    // =========================================================
-    // CREAR VISTA
-    // =========================================================
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-        _binding =
-            FragmentCitasEncargadoBinding.inflate(
-                inflater,
-                container,
-                false
-            )
-
+        _binding = FragmentCitasEncargadoBinding.inflate(
+            inflater,
+            container,
+            false
+        )
         return binding.root
     }
-
-
-    // =========================================================
-    // VISTA CREADA
-    // =========================================================
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         WindowInsetsEncargado.aplicar(
             root = binding.root,
@@ -128,48 +78,16 @@ class CitasEncargadoFragment : Fragment() {
             menuInferior = binding.bottomNavigationCitas
         )
 
-
-        // =====================================================
-        // CONFIGURACIONES
-        // =====================================================
-
         configurarPacientes()
-
         configurarCitas()
-
         configurarBuscador()
-
         configurarPestanas()
-
         configurarNotificaciones()
-
         configurarNavegacion()
 
-
-        // =====================================================
-        // ESTADO INICIAL
-        // =====================================================
-
         mostrarPacientes()
-
-
-        // =====================================================
-        // CARGA INICIAL
-        // =====================================================
-
         cargarDatos()
-
-
-        // =====================================================
-        // ACTUALIZACIÓN AUTOMÁTICA
-        // =====================================================
-
         iniciarActualizacionAutomatica()
-
-
-        // =====================================================
-        // CONTADOR DE NOTIFICACIONES
-        // =====================================================
 
         ContadorNotificaciones.iniciar(
             fragment = this,
@@ -177,630 +95,355 @@ class CitasEncargadoFragment : Fragment() {
         )
     }
 
-
     // =========================================================
-    // CONFIGURAR PACIENTES
+    // PACIENTES
     // =========================================================
 
     private fun configurarPacientes() {
-
-        pacienteAdapter =
-            PacienteCitaAdapter(
-                emptyList(),
-                onPacienteClick = { paciente ->
-
-                    abrirPaciente(
-                        paciente
-                    )
-                }
-            )
+        pacienteAdapter = PacienteCitaAdapter(
+            emptyList(),
+            onPacienteClick = { paciente ->
+                abrirPaciente(paciente)
+            }
+        )
 
         binding.recyclerPacientesCita.apply {
-
-            layoutManager =
-                LinearLayoutManager(
-                    requireContext()
-                )
-
-            adapter =
-                pacienteAdapter
-
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = pacienteAdapter
             setHasFixedSize(false)
-
-            isNestedScrollingEnabled =
-                false
+            isNestedScrollingEnabled = false
         }
     }
 
+    private fun actualizarListaPacientes() {
+        if (_binding == null) return
 
-    // =========================================================
-    // CARGAR DATOS
-    // =========================================================
+        val textoBusqueda = binding.edtBuscarPaciente.text
+            .toString()
+            .trim()
+            .lowercase(Locale.getDefault())
 
-    /**
-     * Consulta pacientes y citas directamente desde la API.
-     *
-     * Se conserva la lógica original.
-     */
-    private fun cargarDatos(
-        mostrarError: Boolean = true
-    ) {
+        val pacientesFiltrados = if (textoBusqueda.isBlank()) {
+            listaPacientes
+        } else {
+            listaPacientes.filter { paciente ->
+                "${paciente.nombre} ${paciente.apellido}"
+                    .trim()
+                    .lowercase(Locale.getDefault())
+                    .contains(textoBusqueda)
+            }
+        }
 
-        if (_binding == null) {
+        pacienteAdapter.actualizarLista(pacientesFiltrados)
+    }
+
+    private fun abrirPaciente(paciente: Paciente) {
+        if (!isAdded) return
+
+        val idPaciente = paciente.idPaciente
+        if (idPaciente == null || idPaciente <= 0) {
+            Toast.makeText(
+                requireContext(),
+                "El paciente no tiene un identificador válido.",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
-        /**
-         * Si ya existe una carga en curso, no iniciamos otra.
-         */
-        if (cargandoDatos) {
-            return
+        val datos = Bundle().apply {
+            putInt("idPaciente", idPaciente)
+            putString("nombrePaciente", paciente.nombre)
+            putString("apellidoPaciente", paciente.apellido)
+            putInt("habitacionPaciente", paciente.habitacion ?: -1)
+            putInt("camaPaciente", paciente.cama ?: -1)
         }
+
+        val fragment = NuevaCitaEncargadoFragment().apply {
+            arguments = datos
+        }
+
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    // =========================================================
+    // CITAS
+    // =========================================================
+
+    private fun configurarCitas() {
+        citaAdapter = CitaAdapter(emptyList()) { cita ->
+            abrirDetalleCita(cita)
+        }
+
+        binding.recyclerCitasEncargado.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = citaAdapter
+            setHasFixedSize(false)
+            isNestedScrollingEnabled = false
+        }
+    }
+
+    private fun ordenarCitasPorFechaRegistro(
+        citas: List<Cita>
+    ): List<Cita> {
+
+        fun convertirFechaRegistro(fecha: String?): Long? {
+            if (fecha.isNullOrBlank()) return null
+
+            val formatos = listOf(
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd"
+            )
+
+            for (patron in formatos) {
+                try {
+                    val formato = SimpleDateFormat(
+                        patron,
+                        Locale.getDefault()
+                    ).apply {
+                        isLenient = false
+                        timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    }
+
+                    val fechaParseada = formato.parse(fecha)
+                    if (fechaParseada != null) {
+                        return fechaParseada.time
+                    }
+                } catch (_: Exception) {
+                    // Probar el siguiente formato.
+                }
+            }
+
+            return null
+        }
+
+        return citas.withIndex()
+            .sortedWith(
+                compareByDescending<IndexedValue<Cita>> {
+                    convertirFechaRegistro(it.value.fechaRegistro)
+                        ?: Long.MIN_VALUE
+                }.thenBy { it.index }
+            )
+            .map { it.value }
+    }
+
+    private fun cargarDatos(mostrarError: Boolean = true) {
+        if (_binding == null || cargandoDatos) return
 
         cargandoDatos = true
 
         viewLifecycleOwner.lifecycleScope.launch {
-
             try {
+                val pacientes = RetrofitClient.apiService.getPacientes()
 
-                // =================================================
-                // PACIENTES
-                // =================================================
+                if (!isActive || _binding == null) return@launch
 
-                val pacientes =
-                    RetrofitClient.apiService
-                        .getPacientes()
-
-
-                if (!isActive || _binding == null) {
-                    return@launch
-                }
-
-
-                listaPacientes =
-                    pacientes
-
-
+                listaPacientes = pacientes
                 actualizarListaPacientes()
 
+                val citas = CitasRepository.obtenerCitasDesdeApi()
 
-                // =================================================
-                // CITAS
-                // =================================================
+                if (!isActive || _binding == null) return@launch
 
-                val citas =
-                    CitasRepository
-                        .obtenerCitasDesdeApi()
-
-
-                if (!isActive || _binding == null) {
-                    return@launch
-                }
-
-
-                listaCitas =
-                    citas
-
-
-                citaAdapter.actualizarLista(
-                    citas
-                )
-
-
-                actualizarEstadoListaCitas()
-
+                listaCitas = ordenarCitasPorFechaRegistro(citas)
+                actualizarListaCitas()
 
             } catch (e: CancellationException) {
-
-                /**
-                 * La cancelación es normal cuando el Fragment
-                 * deja de estar activo.
-                 */
                 throw e
-
-
             } catch (e: Exception) {
+                Log.e(TAG, "Error actualizando pacientes y citas", e)
 
-                Log.e(
-                    TAG,
-                    "Error actualizando datos",
-                    e
-                )
-
-
-                if (
-                    mostrarError &&
-                    _binding != null
-                ) {
-
-                    val contexto =
-                        context ?: return@launch
-
-
-                    Toast.makeText(
-                        contexto,
-                        "No se pudieron actualizar las citas",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                if (mostrarError && _binding != null) {
+                    context?.let { contexto ->
+                        Toast.makeText(
+                            contexto,
+                            "No se pudieron actualizar las citas",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
-
             } finally {
-
                 cargandoDatos = false
             }
         }
     }
 
+    private fun actualizarListaCitas() {
+        if (_binding == null) return
 
-    // =========================================================
-    // ACTUALIZAR PACIENTES
-    // =========================================================
+        actualizarListaCitasFiltradas()
+    }
 
-    private fun actualizarListaPacientes() {
+    //permite buscar entre las citas
 
-        if (_binding == null) {
-            return
-        }
+    private fun actualizarListaCitasFiltradas() {
+        if (_binding == null) return
 
+        val textoBusqueda = binding.edtBuscarPaciente.text
+            .toString()
+            .trim()
+            .lowercase(Locale.getDefault())
 
-        val textoBusqueda =
-            binding.edtBuscarPaciente
-                .text
-                .toString()
-                .trim()
-                .lowercase()
-
-
-        val pacientesFiltrados =
-
-            if (textoBusqueda.isBlank()) {
-
-                listaPacientes
-
-            } else {
-
-                listaPacientes.filter { paciente ->
-
-                    val nombreCompleto =
-                        "${paciente.nombre} ${paciente.apellido}"
-                            .trim()
-                            .lowercase()
-
-
-                    nombreCompleto.contains(
-                        textoBusqueda
-                    )
+        val citasFiltradas = if (textoBusqueda.isBlank()) {
+            listaCitas
+        } else {
+            listaCitas.filter { cita ->
+                listOfNotNull(
+                    cita.nombrePaciente,
+                    cita.tipoCita,
+                    cita.especialidad,
+                    cita.motivo
+                ).any { dato ->
+                    dato.lowercase(Locale.getDefault())
+                        .contains(textoBusqueda)
                 }
             }
-
-
-        pacienteAdapter.actualizarLista(
-            pacientesFiltrados
-        )
-    }
-
-
-    // =========================================================
-    // ABRIR PACIENTE
-    // =========================================================
-
-    private fun abrirPaciente(
-        paciente: Paciente
-    ) {
-
-        if (!isAdded) {
-            return
         }
 
+        citaAdapter.actualizarLista(citasFiltradas)
 
-        val datos =
-            Bundle()
-
-
-        datos.putInt(
-            "idPaciente",
-            paciente.idPaciente ?: -1
-        )
-
-
-        datos.putString(
-            "nombrePaciente",
-            paciente.nombre
-        )
-
-
-        datos.putString(
-            "apellidoPaciente",
-            paciente.apellido
-        )
-
-
-        datos.putInt(
-            "habitacionPaciente",
-            paciente.habitacion ?: -1
-        )
-
-
-        datos.putInt(
-            "camaPaciente",
-            paciente.cama ?: -1
-        )
-
-
-        val fragment =
-            NuevaCitaEncargadoFragment()
-
-
-        fragment.arguments =
-            datos
-
-
-        parentFragmentManager
-            .beginTransaction()
-            .replace(
-                R.id.fragmentContainer,
-                fragment
-            )
-            .addToBackStack(null)
-            .commit()
+        binding.txtSinCitas.visibility =
+            if (citasFiltradas.isEmpty()) View.VISIBLE else View.GONE
     }
-
-
-    // =========================================================
-    // CONFIGURAR CITAS
-    // =========================================================
-
-    private fun configurarCitas() {
-
-        citaAdapter =
-            CitaAdapter(
-                emptyList()
-            ) { cita ->
-
-                abrirDetalleCita(
-                    cita
-                )
-            }
-
-
-        binding.recyclerCitasEncargado.apply {
-
-            layoutManager =
-                LinearLayoutManager(
-                    requireContext()
-                )
-
-            adapter =
-                citaAdapter
-
-            setHasFixedSize(false)
-
-            isNestedScrollingEnabled =
-                false
-        }
-    }
-
-
-    // =========================================================
-    // MOSTRAR CITAS
-    // =========================================================
-
-    private fun mostrarCitas() {
-
-        if (_binding == null) {
-            return
-        }
-
-
-        binding.contenedorPacientesCitas.visibility =
-            View.GONE
-
-
-        binding.contenedorCitasProgramadas.visibility =
-            View.VISIBLE
-
-
-        actualizarListaCitas()
-
-        actualizarPestanaCitas()
-    }
-
-
-    // =========================================================
-    // ACTUALIZAR LISTA DE CITAS
-    // =========================================================
-
-    private fun actualizarListaCitas() {
-
-        if (_binding == null) {
-            return
-        }
-
-
-        citaAdapter.actualizarLista(
-            listaCitas
-        )
-
-
-        actualizarEstadoListaCitas()
-    }
-
-
-    // =========================================================
-    // ESTADO LISTA DE CITAS
-    // =========================================================
 
     private fun actualizarEstadoListaCitas() {
+        if (_binding == null) return
 
-        if (_binding == null) {
-            return
-        }
-
-
-        if (listaCitas.isEmpty()) {
-
-            binding.txtSinCitas.visibility =
-                View.VISIBLE
-
-        } else {
-
-            binding.txtSinCitas.visibility =
-                View.GONE
-        }
+        binding.txtSinCitas.visibility =
+            if (listaCitas.isEmpty()) View.VISIBLE else View.GONE
     }
-
 
     // =========================================================
     // PESTAÑAS
     // =========================================================
 
     private fun configurarPestanas() {
-
         binding.tabPacientesCitas.setOnClickListener {
-
             mostrarPacientes()
         }
 
-
         binding.tabCitasCitas.setOnClickListener {
-
             mostrarCitas()
         }
     }
 
-
-    // =========================================================
-    // MOSTRAR PACIENTES
-    // =========================================================
-
     private fun mostrarPacientes() {
+        if (_binding == null) return
 
-        if (_binding == null) {
-            return
-        }
-
-
-        binding.contenedorPacientesCitas.visibility =
-            View.VISIBLE
-
-
-        binding.contenedorCitasProgramadas.visibility =
-            View.GONE
-
+        binding.contenedorPacientesCitas.visibility = View.VISIBLE
+        binding.contenedorCitasProgramadas.visibility = View.GONE
 
         actualizarPestanaPacientes()
     }
 
+    private fun mostrarCitas() {
+        if (_binding == null) return
 
-    // =========================================================
-    // ESTADO VISUAL - PACIENTES
-    // =========================================================
+        binding.contenedorPacientesCitas.visibility = View.GONE
+        binding.contenedorCitasProgramadas.visibility = View.VISIBLE
+
+        actualizarListaCitasFiltradas()
+        actualizarPestanaCitas()
+    }
 
     private fun actualizarPestanaPacientes() {
-
-        if (_binding == null) {
-            return
-        }
-
+        if (_binding == null) return
 
         binding.tabPacientesCitas.setBackgroundResource(
             R.drawable.bg_tab_seleccionada
         )
+        binding.tabCitasCitas.background = null
 
+        binding.iconTabPacientesCitas.setColorFilter(Color.WHITE)
+        binding.textTabPacientesCitas.setTextColor(Color.WHITE)
+        binding.textTabPacientesCitas.setTypeface(null, Typeface.BOLD)
 
-        binding.tabCitasCitas.background =
-            null
+        val colorInactivo = Color.rgb(152, 162, 179)
 
-
-        binding.iconTabPacientesCitas.setColorFilter(
-            Color.WHITE
-        )
-
-
-        binding.textTabPacientesCitas.setTextColor(
-            Color.WHITE
-        )
-
-
-        binding.textTabPacientesCitas.setTypeface(
-            null,
-            Typeface.BOLD
-        )
-
-
-        binding.iconTabCitasCitas.setColorFilter(
-            Color.rgb(
-                152,
-                162,
-                179
-            )
-        )
-
-
-        binding.textTabCitasCitas.setTextColor(
-            Color.rgb(
-                152,
-                162,
-                179
-            )
-        )
-
-
-        binding.textTabCitasCitas.setTypeface(
-            null,
-            Typeface.NORMAL
-        )
+        binding.iconTabCitasCitas.setColorFilter(colorInactivo)
+        binding.textTabCitasCitas.setTextColor(colorInactivo)
+        binding.textTabCitasCitas.setTypeface(null, Typeface.NORMAL)
     }
 
-
-    // =========================================================
-    // ESTADO VISUAL - CITAS
-    // =========================================================
-
     private fun actualizarPestanaCitas() {
-
-        if (_binding == null) {
-            return
-        }
-
+        if (_binding == null) return
 
         binding.tabCitasCitas.setBackgroundResource(
             R.drawable.bg_tab_seleccionada
         )
+        binding.tabPacientesCitas.background = null
 
+        binding.iconTabCitasCitas.setColorFilter(Color.WHITE)
+        binding.textTabCitasCitas.setTextColor(Color.WHITE)
+        binding.textTabCitasCitas.setTypeface(null, Typeface.BOLD)
 
-        binding.tabPacientesCitas.background =
-            null
+        val colorInactivo = Color.rgb(152, 162, 179)
 
-
-        binding.iconTabCitasCitas.setColorFilter(
-            Color.WHITE
-        )
-
-
-        binding.textTabCitasCitas.setTextColor(
-            Color.WHITE
-        )
-
-
-        binding.textTabCitasCitas.setTypeface(
-            null,
-            Typeface.BOLD
-        )
-
-
-        binding.iconTabPacientesCitas.setColorFilter(
-            Color.rgb(
-                152,
-                162,
-                179
-            )
-        )
-
-
-        binding.textTabPacientesCitas.setTextColor(
-            Color.rgb(
-                152,
-                162,
-                179
-            )
-        )
-
-
-        binding.textTabPacientesCitas.setTypeface(
-            null,
-            Typeface.NORMAL
-        )
+        binding.iconTabPacientesCitas.setColorFilter(colorInactivo)
+        binding.textTabPacientesCitas.setTextColor(colorInactivo)
+        binding.textTabPacientesCitas.setTypeface(null, Typeface.NORMAL)
     }
-
 
     // =========================================================
     // BUSCADOR
     // =========================================================
 
     private fun configurarBuscador() {
-
-        binding.edtBuscarPaciente
-            .addTextChangedListener {
-
-                actualizarListaPacientes()
-            }
+        binding.edtBuscarPaciente.addTextChangedListener {
+            actualizarListaPacientes()
+            actualizarListaCitasFiltradas()
+        }
     }
-
 
     // =========================================================
     // DETALLE DE CITA
     // =========================================================
 
-    private fun abrirDetalleCita(
-        cita: Cita
-    ) {
 
-        if (!isAdded) {
+    private fun abrirDetalleCita(cita: Cita) {
+        if (!isAdded) return
+
+        // Usar el identificador que Gson recibe desde "id_cita".
+        val identificador = cita.id
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+        if (identificador == null) {
+            Log.e(
+                TAG,
+                "La cita seleccionada no tiene un ID válido. " +
+                        "id=${cita.id}, idCita=${cita.idCita}, cita=$cita"
+            )
+
+            Toast.makeText(
+                requireContext(),
+                "No se encontró el identificador de esta cita.",
+                Toast.LENGTH_LONG
+            ).show()
+
             return
         }
 
+        val datos = Bundle().apply {
+            putString("idCita", identificador)
+            putInt("idPaciente", cita.idPaciente ?: -1)
+            putString("nombrePaciente", cita.nombrePaciente)
+            putString("fechaCita", cita.fecha)
+            putString("horaCita", cita.hora)
+        }
 
-        val datos =
-            Bundle()
+        val fragment = DetalleCitaEncargadoFragment().apply {
+            arguments = datos
+        }
 
-
-        // =====================================================
-        // ID REAL DEL BACKEND
-        // =====================================================
-
-        datos.putString(
-            "idCita",
-            cita.idCita
-        )
-
-
-        // =====================================================
-        // ID DEL PACIENTE
-        // =====================================================
-
-        datos.putInt(
-            "idPaciente",
-            cita.idPaciente ?: -1
-        )
-
-
-        // =====================================================
-        // DATOS QUE YA TENEMOS
-        // =====================================================
-
-        datos.putString(
-            "nombrePaciente",
-            cita.nombrePaciente
-        )
-
-
-        datos.putString(
-            "fechaCita",
-            cita.fecha
-        )
-
-
-        datos.putString(
-            "horaCita",
-            cita.hora
-        )
-
-
-        val fragment =
-            DetalleCitaEncargadoFragment()
-
-
-        fragment.arguments =
-            datos
-
-
-        parentFragmentManager
-            .beginTransaction()
-            .replace(
-                R.id.fragmentContainer,
-                fragment
-            )
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()
     }
@@ -811,199 +454,106 @@ class CitasEncargadoFragment : Fragment() {
     // =========================================================
 
     private fun iniciarActualizacionAutomatica() {
-
         viewLifecycleOwner.lifecycleScope.launch {
-
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (isActive) {
+                    delay(INTERVALO_ACTUALIZACION)
 
-                    delay(
-                        INTERVALO_ACTUALIZACION
-                    )
+                    if (!isActive) break
 
-
-                    if (!isActive) {
-                        break
-                    }
-
-
-                    cargarDatos(
-                        mostrarError = false
-                    )
+                    cargarDatos(mostrarError = false)
                 }
             }
         }
     }
-
 
     // =========================================================
     // NOTIFICACIONES
     // =========================================================
 
     private fun configurarNotificaciones() {
+        binding.btnNotificacionesCitas.setOnClickListener {
+            if (!isAdded) return@setOnClickListener
 
-        binding.btnNotificacionesCitas
-            .setOnClickListener {
-
-                if (!isAdded) {
-                    return@setOnClickListener
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        NotificacionesEncargadoFragment()
-                    )
-                    .addToBackStack(null)
-                    .commit()
-            }
+            parentFragmentManager.beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    NotificacionesEncargadoFragment()
+                )
+                .addToBackStack(null)
+                .commit()
+        }
     }
-
 
     // =========================================================
     // MENÚ INFERIOR
     // =========================================================
 
     private fun configurarNavegacion() {
-
         NavegacionEncargado.configurar(
+            navInicio = binding.navInicioCitas,
+            iconInicio = binding.iconInicioCitas,
+            textInicio = binding.textInicioCitas,
 
-            navInicio =
-                binding.navInicioCitas,
+            navAsignarTurno = binding.navAsignarTurnoCitas,
+            iconAsignarTurno = binding.iconAsignarTurnoCitas,
+            textAsignarTurno = binding.textAsignarTurnoCitas,
 
-            iconInicio =
-                binding.iconInicioCitas,
+            navCitas = binding.navCitasCitas,
+            iconCitas = binding.iconCitasCitas,
+            textCitas = binding.textCitasCitas,
 
-            textInicio =
-                binding.textInicioCitas,
+            navPerfil = binding.navPerfilCitas,
+            iconPerfil = binding.iconPerfilCitas,
+            textPerfil = binding.textPerfilCitas,
 
-
-            navAsignarTurno =
-                binding.navAsignarTurnoCitas,
-
-            iconAsignarTurno =
-                binding.iconAsignarTurnoCitas,
-
-            textAsignarTurno =
-                binding.textAsignarTurnoCitas,
-
-
-            navCitas =
-                binding.navCitasCitas,
-
-            iconCitas =
-                binding.iconCitasCitas,
-
-            textCitas =
-                binding.textCitasCitas,
-
-
-            navPerfil =
-                binding.navPerfilCitas,
-
-            iconPerfil =
-                binding.iconPerfilCitas,
-
-            textPerfil =
-                binding.textPerfilCitas,
-
-
-            pantallaActual =
-                NavegacionEncargado.Pantalla.CITAS,
-
+            pantallaActual = NavegacionEncargado.Pantalla.CITAS,
 
             onInicio = {
-
-                abrirSeccion(
-                    HomeEncargadoFragment()
-                )
+                abrirSeccion(HomeEncargadoFragment())
             },
-
 
             onAsignarTurno = {
-
-                abrirSeccion(
-                    AsignarTurnoEncargadoFragment()
-                )
+                abrirSeccion(AsignarTurnoEncargadoFragment())
             },
-
 
             onCitas = {
                 // Ya estamos en Citas.
             },
 
-
             onPerfil = {
-
-                abrirSeccion(
-                    PerfilEncargadoFragment()
-                )
+                abrirSeccion(PerfilEncargadoFragment())
             }
         )
     }
 
+    private fun abrirSeccion(fragment: Fragment) {
+        if (!isAdded) return
 
-    // =========================================================
-    // CAMBIO DE SECCIÓN
-    // =========================================================
-
-    private fun abrirSeccion(
-        fragment: Fragment
-    ) {
-
-        if (!isAdded) {
-            return
-        }
-
-
-        parentFragmentManager
-            .beginTransaction()
-            .replace(
-                R.id.fragmentContainer,
-                fragment
-            )
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()
     }
 
-
     // =========================================================
-    // ACTUALIZAR AL VOLVER A LA PANTALLA
+    // ACTUALIZAR AL VOLVER
     // =========================================================
 
     override fun onResume() {
-
         super.onResume()
 
-
         if (_binding != null) {
-
-            /**
-             * Actualización inmediata al regresar desde:
-             * NuevaCitaEncargadoFragment
-             * DetalleCitaEncargadoFragment
-             * u otra pantalla.
-             */
-            cargarDatos(
-                mostrarError = false
-            )
+            cargarDatos(mostrarError = false)
         }
     }
-
 
     // =========================================================
     // DESTRUIR VISTA
     // =========================================================
 
     override fun onDestroyView() {
-
-        super.onDestroyView()
-
         _binding = null
+        super.onDestroyView()
     }
 }

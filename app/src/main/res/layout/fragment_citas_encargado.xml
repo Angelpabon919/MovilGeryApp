@@ -290,7 +290,7 @@
                     android:nestedScrollingEnabled="false"
                     android:clipToPadding="false"
                     android:overScrollMode="never"
-                    android:paddingBottom="10dp"
+                    android:paddingBottom="2dp"
                     tools:listitem="@layout/item_paciente_cita" />
 
             </LinearLayout>

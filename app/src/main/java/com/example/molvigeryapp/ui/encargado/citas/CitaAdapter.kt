@@ -1,3 +1,4 @@
+
 package com.example.molvigeryapp.ui.encargado.citas
 
 import android.view.LayoutInflater
@@ -11,113 +12,89 @@ class CitaAdapter(
     private val onCitaClick: (Cita) -> Unit
 ) : RecyclerView.Adapter<CitaAdapter.CitaViewHolder>() {
 
-
-    // =====================================================
-    // VIEW HOLDER
-    // =====================================================
-
     inner class CitaViewHolder(
         private val binding: ItemCitaEncargadoBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-
         fun bind(cita: Cita) {
 
+            // Nombre del paciente
             binding.txtNombrePacienteCita.text =
                 cita.nombrePaciente
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Paciente no disponible"
 
+            // Habitación y cama
+            binding.txtUbicacionPacienteCita.text = buildString {
+                append("Habitación ${cita.habitacion ?: "N/A"}")
+                append(" · ")
+                append("Cama ${cita.cama ?: "N/A"}")
+            }
 
-            binding.txtUbicacionPacienteCita.text =
-                "Habitación ${
-                    cita.habitacion ?: "N/A"
-                } · Cama ${
-                    cita.cama ?: "N/A"
-                }"
-
-
+            // Tipo de cita
             binding.txtTipoCita.text =
                 cita.tipoCita
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Cita médica"
 
-
+            // Especialidad
             binding.txtEspecialidadCita.text =
-                cita.especialidad
+                cita.obtenerEspecialidad()
 
-
+            // Fecha
             binding.txtFechaCita.text =
                 cita.fecha
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Sin fecha"
 
-
+            // Hora
             binding.txtHoraCita.text =
                 cita.hora
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Sin hora"
 
-
+            // Estado
             binding.txtEstadoCita.text =
                 cita.estado
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Sin estado"
 
-
+            // Abrir el detalle de la cita seleccionada
             binding.root.setOnClickListener {
+                val posicion = bindingAdapterPosition
 
-                onCitaClick(cita)
+                if (posicion != RecyclerView.NO_POSITION) {
+                    onCitaClick(listaCitas[posicion])
+                }
             }
         }
     }
-
-
-    // =====================================================
-    // CREAR VIEW HOLDER
-    // =====================================================
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): CitaViewHolder {
 
-        val binding =
-            ItemCitaEncargadoBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
+        val binding = ItemCitaEncargadoBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
 
         return CitaViewHolder(binding)
     }
-
-
-    // =====================================================
-    // ASIGNAR DATOS
-    // =====================================================
 
     override fun onBindViewHolder(
         holder: CitaViewHolder,
         position: Int
     ) {
-
-        holder.bind(
-            listaCitas[position]
-        )
+        holder.bind(listaCitas[position])
     }
 
+    override fun getItemCount(): Int = listaCitas.size
 
-    // =====================================================
-    // CANTIDAD
-    // =====================================================
-
-    override fun getItemCount(): Int {
-
-        return listaCitas.size
-    }
-
-
-    // =====================================================
-    // ACTUALIZAR LISTA
-    // =====================================================
-
-    fun actualizarLista(
-        nuevaLista: List<Cita>
-    ) {
-
-        listaCitas = nuevaLista
-
+    fun actualizarLista(nuevaLista: List<Cita>) {
+        listaCitas = nuevaLista.toList()
         notifyDataSetChanged()
     }
 }

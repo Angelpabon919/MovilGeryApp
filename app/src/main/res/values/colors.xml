@@ -18,5 +18,10 @@
     <color name="colo_boton">#3B5BDB</color>
     <color name="activo">#F5E8D5</color>
 
+    <color name="azul_principal">#3B5BDB</color>
+    <color name="gris_estado_inactivo">#667085</color>
+
+    <color name="geriapp_notification_color">#3B5BDB</color>
+
 
 </resources>

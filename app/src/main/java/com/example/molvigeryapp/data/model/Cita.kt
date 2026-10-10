@@ -52,4 +52,27 @@ data class Cita(
     @SerializedName("id_usuario")
     val idUsuario: Int? = null
 
-) : Serializable
+) : Serializable {
+
+    fun obtenerEspecialidad(): String {
+        val especialidadActual = especialidad
+
+        if (!especialidadActual.isNullOrBlank()) {
+            return especialidadActual
+        }
+
+        val texto = motivo.orEmpty()
+        val separador = " - "
+
+        if (!texto.contains(separador)) {
+            return "Especialidad no disponible"
+        }
+
+        val resto = texto.substringAfter(separador)
+        val resultado = resto.substringBefore(":").trim()
+
+        return resultado.ifEmpty {
+            "Especialidad no disponible"
+        }
+    }
+}
