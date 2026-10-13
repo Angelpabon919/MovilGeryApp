@@ -7,13 +7,11 @@
     android:layout_height="match_parent"
     android:background="@color/color_background">
 
-    <!-- ===================================================== -->
     <!-- ENCABEZADO AZUL -->
-    <!-- ===================================================== -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerAgenda"
-        android:layout_width="0dp"
+        android:layout_width="415dp"
         android:layout_height="145dp"
         android:background="@drawable/bg_rounded"
         android:paddingStart="20dp"
@@ -21,6 +19,26 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- NUEVA CAMPANITA -->
+
+        <ImageView
+            android:id="@+id/btnNotificationAgenda"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="35dp"
+            android:layout_marginEnd="12dp"
+            android:padding="8dp"
+            android:background="@drawable/bg_notifi"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+
+            android:src="@drawable/notifications"
+            android:contentDescription="Abrir notificaciones"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
             android:id="@+id/tvTituloAgenda"
@@ -30,8 +48,10 @@
             android:textColor="@color/white"
             android:textSize="28sp"
             android:textStyle="bold"
+            android:gravity="start"
+            android:layout_marginStart="15dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnNotificationAgenda"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/tvSubtituloAgenda"
             app:layout_constraintVertical_chainStyle="packed" />
@@ -44,6 +64,8 @@
             android:text="Pacientes con citas programadas"
             android:textColor="@color/white"
             android:textSize="15sp"
+            android:gravity="start"
+            android:layout_marginStart="15dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvTituloAgenda"
@@ -51,10 +73,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-    <!-- ===================================================== -->
     <!-- TÍTULO DE LA LISTA -->
-    <!-- ===================================================== -->
 
     <TextView
         android:id="@+id/tvListaAgenda"
@@ -71,10 +90,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
-    <!-- ===================================================== -->
     <!-- LISTA DE PACIENTES -->
-    <!-- ===================================================== -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPacientesAgenda"
@@ -90,10 +106,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
-    <!-- ===================================================== -->
     <!-- MENSAJE CUANDO NO HAY CITAS -->
-    <!-- ===================================================== -->
 
     <TextView
         android:id="@+id/tvSinCitas"
@@ -111,10 +124,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
-    <!-- ===================================================== -->
     <!-- CARGANDO -->
-    <!-- ===================================================== -->
 
     <ProgressBar
         android:id="@+id/progressAgenda"
@@ -126,10 +136,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="@id/rvPacientesAgenda" />
 
-
-    <!-- ===================================================== -->
     <!-- NAVEGACIÓN INFERIOR DEL CUIDADOR -->
-    <!-- ===================================================== -->
 
     <androidx.cardview.widget.CardView
         android:id="@+id/bottomNavigationCuidador"
@@ -153,9 +160,7 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp">
 
-            <!-- ================================================= -->
             <!-- INICIO -->
-            <!-- ================================================= -->
 
             <LinearLayout
                 android:id="@+id/navInicio"
@@ -187,10 +192,7 @@
 
             </LinearLayout>
 
-
-            <!-- ================================================= -->
             <!-- AGENDA -->
-            <!-- ================================================= -->
 
             <LinearLayout
                 android:id="@+id/navAgenda"
@@ -237,10 +239,7 @@
 
             </LinearLayout>
 
-
-            <!-- ================================================= -->
             <!-- CÁMARAS -->
-            <!-- ================================================= -->
 
             <LinearLayout
                 android:id="@+id/navCamaras"
@@ -272,10 +271,7 @@
 
             </LinearLayout>
 
-
-            <!-- ================================================= -->
             <!-- PERFIL -->
-            <!-- ================================================= -->
 
             <LinearLayout
                 android:id="@+id/navPerfil"

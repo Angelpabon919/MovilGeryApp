@@ -18,7 +18,7 @@ data class AsignacionPacienteCuidador(
     val fechaInicio: String,
 
     @SerializedName("fecha_fin")
-    val fechaFin: String,
+    val fechaFin: String? = null,
 
     @SerializedName("estado")
     val estado: String,

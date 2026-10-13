@@ -426,5 +426,22 @@ interface ApiService {
     @GET("habitaciones/")
     suspend fun getHabitaciones(): List<Habitacion>
 
+    // =========================================================
+    // RECUPERACIÓN DE CONTRASEÑA
+    // =========================================================
 
+    @POST("usuarios/recuperar-password/")
+    suspend fun solicitarRecuperacion(
+        @Body datos: Map<String, String>
+    ): Response<RespuestaMensaje>
+
+    @POST("usuarios/verificar-codigo/")
+    suspend fun verificarCodigoRecuperacion(
+        @Body datos: Map<String, String>
+    ): Response<RespuestaMensaje>
+
+    @POST("usuarios/cambiar-password-recuperacion/")
+    suspend fun cambiarContrasenaRecuperacion(
+        @Body datos: Map<String, String>
+    ): Response<RespuestaMensaje>
 }

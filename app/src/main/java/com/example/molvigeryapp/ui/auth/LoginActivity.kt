@@ -3,11 +3,14 @@ package com.example.molvigeryapp.ui.auth
 import android.content.Intent
 import retrofit2.HttpException
 import android.os.Bundle
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.MainActivity
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.LoginRequest
 import com.example.molvigeryapp.databinding.ActivityLoginBinding
@@ -22,6 +25,46 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        // Mostrar y ocultar contraseña
+        binding.btnMostrarContrasena.setOnClickListener {
+
+            val campoContrasena = binding.etContrasena
+            val posicionCursor = campoContrasena.selectionStart
+
+            if (campoContrasena.transformationMethod
+                        is PasswordTransformationMethod
+            ) {
+                // Mostrar contraseña
+                campoContrasena.transformationMethod =
+                    HideReturnsTransformationMethod.getInstance()
+
+                binding.btnMostrarContrasena.setImageResource(
+                    R.drawable.ic_visibility
+                )
+
+                binding.btnMostrarContrasena.contentDescription =
+                    "Ocultar contraseña"
+
+            } else {
+                // Ocultar contraseña
+                campoContrasena.transformationMethod =
+                    PasswordTransformationMethod.getInstance()
+
+                binding.btnMostrarContrasena.setImageResource(
+                    R.drawable.ic_visibility_off
+                )
+
+                binding.btnMostrarContrasena.contentDescription =
+                    "Mostrar contraseña"
+            }
+
+            // Mantener el cursor en su posición
+            campoContrasena.setSelection(
+                posicionCursor.coerceIn(0, campoContrasena.text.length)
+            )
+        }
 
         val preferences = getSharedPreferences("SESION", MODE_PRIVATE)
         val sesionIniciada = preferences.getBoolean("SESION_INICIADA", false)
