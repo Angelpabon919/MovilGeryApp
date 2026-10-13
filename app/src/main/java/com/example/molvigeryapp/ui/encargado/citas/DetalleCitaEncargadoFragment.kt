@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
+import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Cita
@@ -280,12 +282,80 @@ class DetalleCitaEncargadoFragment : Fragment() {
 
 
                 // =================================================
+                // OBTENER CUIDADOR ASIGNADO AL PACIENTE
+                // =================================================
+
+                var cuidadorAsignado: Usuario? = null
+
+                try {
+                    val respuestaAsignaciones =
+                        RetrofitClient.apiService
+                            .getAsignacionesPacienteCuidador()
+
+                    val asignaciones =
+                        if (respuestaAsignaciones.isSuccessful) {
+                            respuestaAsignaciones.body().orEmpty()
+                        } else {
+                            emptyList()
+                        }
+
+                    // Buscar primero una asignación activa
+                    // correspondiente al paciente de la cita.
+                    val asignacion =
+                        asignaciones.firstOrNull { asignacion ->
+                            asignacion.idPaciente == cita.idPaciente &&
+                                    asignacion.estado.equals(
+                                        "Activo",
+                                        ignoreCase = true
+                                    )
+                        } ?: asignaciones.firstOrNull { asignacion ->
+                            asignacion.idPaciente == cita.idPaciente
+                        }
+
+                    if (asignacion != null) {
+                        val usuarios =
+                            RetrofitClient.apiService.getUsuarios()
+
+                        cuidadorAsignado =
+                            usuarios.firstOrNull { usuario ->
+                                usuario.idUsuario == asignacion.idUsuario &&
+                                        usuario.idRol == 3
+                            }
+                    }
+
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(
+                        TAG,
+                        "Error consultando el cuidador asignado",
+                        e
+                    )
+                }
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                // =================================================
                 // MOSTRAR INFORMACIÓN
                 // =================================================
 
                 mostrarInformacion(
                     cita = cita,
-                    paciente = paciente
+                    paciente = paciente,
+                    cuidador = cuidadorAsignado
+                )
+
+
+                // =================================================
+                // MOSTRAR INFORMACIÓN
+                // =================================================
+
+                mostrarInformacion(
+                    cita = cita,
+                    paciente = paciente,
+                    cuidador = cuidadorAsignado
                 )
 
 
@@ -330,7 +400,8 @@ class DetalleCitaEncargadoFragment : Fragment() {
 
     private fun mostrarInformacion(
         cita: Cita,
-        paciente: Paciente?
+        paciente: Paciente?,
+        cuidador: Usuario?
     ) {
 
         if (_binding == null) {
@@ -460,25 +531,22 @@ class DetalleCitaEncargadoFragment : Fragment() {
 
 
         // =====================================================
-        // CUIDADOR
+        // CUIDADOR ASIGNADO
         // =====================================================
-        //
-        // Actualmente CitaApiResponse NO contiene:
-        //
-        // id_cuidador
-        // nombre_cuidador
-        // telefono_cuidador
-        //
-        // Por eso no inventamos información.
-        //
-        // =====================================================
+
+        val nombreCuidador = cuidador
+            ?.let {
+                "${it.nombres} ${it.apellidos}".trim()
+            }
+            ?.takeIf { it.isNotBlank() }
 
         binding.txtCuidadorDetalleCita.text =
-            "No asignado"
-
+            nombreCuidador ?: "No asignado"
 
         binding.txtTelefonoCuidadorDetalleCita.text =
-            "No disponible"
+            cuidador?.telefono
+                ?.takeIf { it.isNotBlank() }
+                ?: "No disponible"
 
 
         // =====================================================

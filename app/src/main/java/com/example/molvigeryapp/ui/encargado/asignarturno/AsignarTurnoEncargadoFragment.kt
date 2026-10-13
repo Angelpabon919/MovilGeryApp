@@ -590,7 +590,7 @@ class AsignarTurnoEncargadoFragment : Fragment() {
             val cuidadores =
                 usuarios.filter {
 
-                    it.idRol == 5 &&
+                    it.idRol == 3 &&
                             it.estado
                 }
 

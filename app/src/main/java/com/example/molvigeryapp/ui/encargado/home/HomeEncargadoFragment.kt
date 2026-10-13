@@ -317,7 +317,7 @@ class HomeEncargadoFragment : Fragment() {
                     usuarios
                         .filter { usuario ->
 
-                            usuario.idRol == 5
+                            usuario.idRol == 3
                         }
                         .map { usuario ->
 

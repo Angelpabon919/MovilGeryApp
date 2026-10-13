@@ -7,6 +7,7 @@ import com.example.molvigeryapp.data.model.Notificacion
 import com.example.molvigeryapp.data.model.NotificacionApi
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import java.text.SimpleDateFormat
+import com.example.molvigeryapp.utils.FechaNotificacionUtils
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -26,10 +27,38 @@ object NotificacionesRepository {
         }
 
         val notificaciones =
-            RetrofitClient.apiService.getNotificaciones()
+            try {
+                RetrofitClient.apiService.getNotificaciones()
+            } catch (e: Exception) {
+                android.util.Log.e(
+                    "NOTIFICACIONES_API",
+                    "Falló GET notificaciones/",
+                    e
+                )
+                throw e
+            }
+
+        android.util.Log.d(
+            "NOTIFICACIONES_API",
+            "GET notificaciones/: ${notificaciones.size} registros"
+        )
 
         val destinatarios =
-            RetrofitClient.apiService.getNotificacionesDestinatarios()
+            try {
+                RetrofitClient.apiService.getNotificacionesDestinatarios()
+            } catch (e: Exception) {
+                android.util.Log.e(
+                    "NOTIFICACIONES_API",
+                    "Falló GET notificacion_destinatario/",
+                    e
+                )
+                throw e
+            }
+
+        android.util.Log.d(
+            "NOTIFICACIONES_API",
+            "GET notificacion_destinatario/: ${destinatarios.size} registros"
+        )
 
         return convertirNotificaciones(
             notificaciones = notificaciones,
@@ -139,19 +168,11 @@ object NotificacionesRepository {
 
             // =================================================
             // ORDENAR DE MÁS NUEVA A MÁS ANTIGUA
-            //
-            // Primero:
-            // fechaHora DESC
-            //
-            // Segundo:
-            // idNotificacion DESC
-            //
-            // El ID sirve como desempate.
             // =================================================
 
             .sortedWith(
                 compareByDescending<Notificacion> {
-                    obtenerFechaOriginal(it.fechaHora)
+                    FechaNotificacionUtils.fechaOrdenamiento(it.fechaHora)
                 }.thenByDescending {
                     it.idNotificacion
                 }
@@ -368,18 +389,11 @@ object NotificacionesRepository {
     private fun formatearFecha(
         fechaOriginal: String
     ): String {
-
-        val fecha =
-            parsearFecha(fechaOriginal)
+        val fecha = FechaNotificacionUtils.parsearFecha(fechaOriginal)
 
         return if (fecha != null) {
-
-            calcularTiempoTranscurrido(
-                fecha
-            )
-
+            FechaNotificacionUtils.tiempoTranscurrido(fecha)
         } else {
-
             "Fecha no disponible"
         }
     }

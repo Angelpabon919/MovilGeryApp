@@ -237,73 +237,73 @@ class VerificacionLlegadaFragment : Fragment() {
     // CARGAR TURNOS PENDIENTES
     // =========================================================
 
+    // se hace correccion donde se cambia el metodo cargarTurnosPendientes y se empieza a usar
+    // viewLifecycleOwner.lifecycleScope para que compruebe que la vista sigue disponible antes de actualizarla
     private fun cargarTurnosPendientes() {
+        val propietarioVista = viewLifecycleOwner
 
-        lifecycleScope.launch {
-
+        propietarioVista.lifecycleScope.launch {
             try {
+                val preferences = requireContext().getSharedPreferences(
+                    "SESION",
+                    Context.MODE_PRIVATE
+                )
 
-                val preferences =
-                    requireContext().getSharedPreferences(
-                        "SESION",
-                        Context.MODE_PRIVATE
-                    )
-
-                val idUsuario =
-                    preferences.getInt(
-                        "ID_USUARIO",
-                        -1
-                    )
+                val idUsuario = preferences.getInt("ID_USUARIO", -1)
 
                 if (idUsuario <= 0) {
-
-                    mostrarSinTurnos()
-
+                    if (_binding != null && propietarioVista.lifecycle.currentState.isAtLeast(
+                            androidx.lifecycle.Lifecycle.State.STARTED
+                        )
+                    ) {
+                        mostrarSinTurnos()
+                    }
                     return@launch
                 }
 
-                val datos =
-                    withContext(Dispatchers.IO) {
+                val datos = withContext(Dispatchers.IO) {
+                    val asignaciones = RetrofitClient.apiService.getAsignacionesTurno()
+                    val turnos = RetrofitClient.apiService.getTurnos()
+                    Pair(asignaciones, turnos)
+                }
 
-                        val asignaciones =
-                            RetrofitClient.apiService
-                                .getAsignacionesTurno()
-
-                        val turnos =
-                            RetrofitClient.apiService
-                                .getTurnos()
-
-                        Pair(
-                            asignaciones,
-                            turnos
-                        )
-                    }
-
-                val asignaciones =
-                    datos.first
-
-                val turnos =
-                    datos.second
-
-                val turnosPendientes =
-                    obtenerTurnosPendientes(
-                        idUsuario,
-                        asignaciones,
-                        turnos
+                // La vista pudo destruirse mientras se consultaba la API.
+                if (_binding == null ||
+                    !propietarioVista.lifecycle.currentState.isAtLeast(
+                        androidx.lifecycle.Lifecycle.State.STARTED
                     )
+                ) {
+                    return@launch
+                }
 
-                mostrarTurnos(
-                    turnosPendientes
+                val turnosPendientes = obtenerTurnosPendientes(
+                    idUsuario,
+                    datos.first,
+                    datos.second
                 )
 
+                mostrarTurnos(turnosPendientes)
+
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
+                android.util.Log.e(
+                    "VERIFICACION_LLEGADA",
+                    "Error cargando turnos pendientes",
+                    e
+                )
 
-                e.printStackTrace()
-
-                mostrarSinTurnos()
+                if (_binding != null &&
+                    propietarioVista.lifecycle.currentState.isAtLeast(
+                        androidx.lifecycle.Lifecycle.State.STARTED
+                    )
+                ) {
+                    mostrarSinTurnos()
+                }
             }
         }
     }
+
 
     // =========================================================
     // FILTRAR TURNOS
@@ -461,40 +461,32 @@ class VerificacionLlegadaFragment : Fragment() {
     // MOSTRAR TURNOS
     // =========================================================
 
-    private fun mostrarTurnos(
-        turnosPendientes:
-        List<Pair<AsignacionTurnoUsuario, Turno>>
-    ) {
 
-        binding.containerTurnos.removeAllViews()
+    // Tambien se protege
+    // ya que es una funcion que actualiza vistas asi que debe verificar que el binding existe antes de utilizarlas
+    private fun mostrarTurnos(
+        turnosPendientes: List<Pair<AsignacionTurnoUsuario, Turno>>
+    ) {
+        val safeBinding = _binding ?: return
+
+        safeBinding.containerTurnos.removeAllViews()
 
         if (turnosPendientes.isEmpty()) {
-
             mostrarSinTurnos()
-
             return
         }
 
-        binding.tvSinTurnos.visibility =
-            View.GONE
+        safeBinding.tvSinTurnos.visibility = View.GONE
 
         turnosPendientes.forEach { datos ->
-
-            val asignacion =
-                datos.first
-
-            val turno =
+            val tarjeta = crearTarjetaTurno(
+                datos.first,
                 datos.second
-
-            val tarjeta =
-                crearTarjetaTurno(
-                    asignacion,
-                    turno
-                )
-
-            binding.containerTurnos.addView(
-                tarjeta
             )
+
+            // La vista puede haberse destruido mientras se construia la tarjeta
+            val bindingActual = _binding ?: return
+            bindingActual.containerTurnos.addView(tarjeta)
         }
     }
 
@@ -672,15 +664,19 @@ class VerificacionLlegadaFragment : Fragment() {
     // SIN TURNOS
     // =========================================================
 
+
+    // se portege
+    // ounque se ejecute la vista esta destruida, es mejor o mas conveniente protegerla
+    // para asi evitar accesos accidentales al binding
     private fun mostrarSinTurnos() {
+        val safeBinding = _binding ?: return
 
-        binding.containerTurnos.removeAllViews()
+        safeBinding.containerTurnos.removeAllViews()
 
-        binding.tvSinTurnos.visibility =
-            View.VISIBLE
+        safeBinding.tvSinTurnos.visibility = View.VISIBLE
 
-        binding.containerTurnos.addView(
-            binding.tvSinTurnos
+        safeBinding.containerTurnos.addView(
+            safeBinding.tvSinTurnos
         )
     }
 
