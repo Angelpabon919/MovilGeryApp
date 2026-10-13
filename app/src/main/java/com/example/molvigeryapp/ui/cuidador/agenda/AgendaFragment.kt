@@ -14,6 +14,7 @@ import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentAgendaBinding
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
+import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
@@ -28,7 +29,6 @@ class AgendaFragment : Fragment() {
         AgendaViewModelFactory(PacienteRepository())
     }
 
-
     // =========================================================
     // CREAR VISTA
     // =========================================================
@@ -39,16 +39,14 @@ class AgendaFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding =
-            FragmentAgendaBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+        _binding = FragmentAgendaBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         return binding.root
     }
-
 
     // =========================================================
     // VISTA CREADA
@@ -58,42 +56,45 @@ class AgendaFragment : Fragment() {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
+        configurarBotonNotificaciones()
         configurarRecyclerView()
-
         observarDatos()
-
         configurarNavegacion()
 
+        // Obtener el ID del cuidador que inició sesión.
+        val preferences = requireActivity().getSharedPreferences(
+            "SESION",
+            Context.MODE_PRIVATE
+        )
 
-        // =====================================================
-        // OBTENER ID DEL CUIDADOR QUE INICIÓ SESIÓN
-        // =====================================================
+        val idUsuario = preferences.getInt(
+            "ID_USUARIO",
+            -1
+        )
 
-        val preferences =
-            requireActivity().getSharedPreferences(
-                "SESION",
-                Context.MODE_PRIVATE
-            )
-
-        val idUsuario =
-            preferences.getInt(
-                "ID_USUARIO",
-                -1
-            )
-
-
-        // =====================================================
-        // CARGAR AGENDA DEL CUIDADOR
-        // =====================================================
-
+        // Cargar la agenda del cuidador.
         viewModel.cargarAgenda(idUsuario)
     }
 
+    // =========================================================
+    // NOTIFICACIONES
+    // =========================================================
+
+    private fun configurarBotonNotificaciones() {
+        binding.btnNotificationAgenda.setOnClickListener {
+
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    NotificacionesFragment()
+                )
+                .addToBackStack("notificaciones_cuidador")
+                .commit()
+        }
+    }
 
     // =========================================================
     // NAVEGACIÓN INFERIOR
@@ -103,60 +104,27 @@ class AgendaFragment : Fragment() {
 
         NavegacionCuidador.configurar(
 
-            // =================================================
-            // INICIO
-            // =================================================
-
             navInicio = binding.navInicio,
             iconInicio = binding.iconInicio,
             textInicio = binding.textInicio,
-
-
-            // =================================================
-            // AGENDA
-            // =================================================
 
             navAgenda = binding.navAgenda,
             iconAgenda = binding.iconAgenda,
             textAgenda = binding.textAgenda,
             badgeAgenda = binding.badgeAgenda,
 
-
-            // =================================================
-            // CÁMARAS
-            // =================================================
-
             navCamaras = binding.navCamaras,
             iconCamaras = binding.iconCamaras,
             textCamaras = binding.textCamaras,
-
-
-            // =================================================
-            // PERFIL
-            // =================================================
 
             navPerfil = binding.navPerfil,
             iconPerfil = binding.iconPerfil,
             textPerfil = binding.textPerfil,
 
-
-            // =================================================
-            // PANTALLA ACTUAL
-            // =================================================
-
-            pantallaActual =
-                NavegacionCuidador.Pantalla.AGENDA,
-
-            lifecycleOwner =
-                viewLifecycleOwner,
-
-
-            // =================================================
-            // ACCIÓN INICIO
-            // =================================================
+            pantallaActual = NavegacionCuidador.Pantalla.AGENDA,
+            lifecycleOwner = viewLifecycleOwner,
 
             onInicio = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -166,24 +134,11 @@ class AgendaFragment : Fragment() {
                     .commit()
             },
 
-
-            // =================================================
-            // ACCIÓN AGENDA
-            // =================================================
-
             onAgenda = {
-
                 // Ya estamos en Agenda.
-
             },
 
-
-            // =================================================
-            // ACCIÓN CÁMARAS
-            // =================================================
-
             onCamaras = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -193,13 +148,7 @@ class AgendaFragment : Fragment() {
                     .commit()
             },
 
-
-            // =================================================
-            // ACCIÓN PERFIL
-            // =================================================
-
             onPerfil = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -211,57 +160,46 @@ class AgendaFragment : Fragment() {
         )
     }
 
-
     // =========================================================
     // CONFIGURAR RECYCLERVIEW
     // =========================================================
 
     private fun configurarRecyclerView() {
 
-        adapter =
-            AgendaPacienteAdapter { paciente ->
+        adapter = AgendaPacienteAdapter { paciente ->
 
-                val idPaciente =
-                    paciente.idPaciente
+            val idPaciente = paciente.idPaciente
 
+            if (idPaciente != null) {
 
-                if (idPaciente != null) {
+                val fragment = CitasPacienteFragment.newInstance(
+                    paciente
+                )
 
-                    val fragment =
-                        CitasPacienteFragment.newInstance(
-                            paciente
-                        )
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(
+                        R.id.fragmentContainer,
+                        fragment
+                    )
+                    .addToBackStack(null)
+                    .commit()
 
-                    parentFragmentManager
-                        .beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            fragment
-                        )
-                        .addToBackStack(null)
-                        .commit()
+            } else {
 
-                } else {
-
-                    Toast.makeText(
-                        requireContext(),
-                        "No se pudo identificar al paciente.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                Toast.makeText(
+                    requireContext(),
+                    "No se pudo identificar al paciente.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-
+        }
 
         binding.rvPacientesAgenda.layoutManager =
-            LinearLayoutManager(
-                requireContext()
-            )
+            LinearLayoutManager(requireContext())
 
-
-        binding.rvPacientesAgenda.adapter =
-            adapter
+        binding.rvPacientesAgenda.adapter = adapter
     }
-
 
     // =========================================================
     // OBSERVAR DATOS
@@ -269,43 +207,26 @@ class AgendaFragment : Fragment() {
 
     private fun observarDatos() {
 
-
-        // =====================================================
-        // PACIENTES CON CITAS
-        // =====================================================
-
+        // Pacientes con citas.
         viewModel.pacientesConCitas.observe(
             viewLifecycleOwner
         ) { pacientes ->
 
-            adapter.submitList(
-                pacientes
-            )
-
+            adapter.submitList(pacientes)
 
             if (pacientes.isEmpty()) {
 
-                binding.tvSinCitas.visibility =
-                    View.VISIBLE
-
-                binding.rvPacientesAgenda.visibility =
-                    View.GONE
+                binding.tvSinCitas.visibility = View.VISIBLE
+                binding.rvPacientesAgenda.visibility = View.GONE
 
             } else {
 
-                binding.tvSinCitas.visibility =
-                    View.GONE
-
-                binding.rvPacientesAgenda.visibility =
-                    View.VISIBLE
+                binding.tvSinCitas.visibility = View.GONE
+                binding.rvPacientesAgenda.visibility = View.VISIBLE
             }
         }
 
-
-        // =====================================================
-        // BURBUJA DE NOVEDADES
-        // =====================================================
-
+        // Burbuja de novedades de Agenda.
         viewModel.citas.observe(
             viewLifecycleOwner
         ) {
@@ -314,35 +235,19 @@ class AgendaFragment : Fragment() {
                 requireContext()
             )
 
-            binding.badgeAgenda.visibility =
-                View.GONE
+            binding.badgeAgenda.visibility = View.GONE
         }
 
-
-        // =====================================================
-        // CARGANDO
-        // =====================================================
-
+        // Indicador de carga.
         viewModel.cargando.observe(
             viewLifecycleOwner
         ) { cargando ->
 
             binding.progressAgenda.visibility =
-                if (cargando) {
-
-                    View.VISIBLE
-
-                } else {
-
-                    View.GONE
-                }
+                if (cargando) View.VISIBLE else View.GONE
         }
 
-
-        // =====================================================
-        // ERROR
-        // =====================================================
-
+        // Mensajes de error.
         viewModel.error.observe(
             viewLifecycleOwner
         ) { mensaje ->
@@ -358,15 +263,13 @@ class AgendaFragment : Fragment() {
         }
     }
 
-
     // =========================================================
     // LIMPIAR BINDING
     // =========================================================
 
     override fun onDestroyView() {
 
-        binding.rvPacientesAgenda.adapter =
-            null
+        binding.rvPacientesAgenda.adapter = null
 
         _binding = null
 

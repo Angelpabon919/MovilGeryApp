@@ -51,14 +51,18 @@
 
     <ImageView
         android:id="@+id/btnNotification"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:padding="15dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="35dp"
+        android:layout_marginEnd="15dp"
+        android:padding="11dp"
         android:background="@drawable/bg_notifi"
-        android:contentDescription="Notificaciones"
         android:src="@drawable/notifications"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvAppName" />
+        android:contentDescription="Abrir notificaciones"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- ===================================================== -->
     <!-- BUSCADOR -->

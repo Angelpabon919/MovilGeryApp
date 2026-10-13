@@ -7,8 +7,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.util.Log
+
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPerfilCuidadorBinding
@@ -16,7 +19,9 @@ import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
 import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
+import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+
 import kotlinx.coroutines.launch
 
 class PerfilCuidadorFragment : Fragment() {
@@ -27,7 +32,7 @@ class PerfilCuidadorFragment : Fragment() {
 
     private var _binding: FragmentPerfilCuidadorBinding? = null
 
-    private val binding
+    private val binding: FragmentPerfilCuidadorBinding
         get() = _binding!!
 
     // =====================================================
@@ -55,12 +60,11 @@ class PerfilCuidadorFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding =
-            FragmentPerfilCuidadorBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+        _binding = FragmentPerfilCuidadorBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         return binding.root
     }
@@ -73,10 +77,7 @@ class PerfilCuidadorFragment : Fragment() {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         cargarDatosPerfil()
         configurarNotificaciones()
@@ -91,11 +92,10 @@ class PerfilCuidadorFragment : Fragment() {
 
     private fun cargarDatosPerfil() {
 
-        val idUsuario =
-            preferenciasSesion.getInt(
-                "ID_USUARIO",
-                -1
-            )
+        val idUsuario = preferenciasSesion.getInt(
+            "ID_USUARIO",
+            -1
+        )
 
         if (idUsuario == -1) {
 
@@ -112,10 +112,9 @@ class PerfilCuidadorFragment : Fragment() {
 
             try {
 
-                val usuario =
-                    repository.obtenerUsuarioPorId(
-                        idUsuario
-                    )
+                val usuario = repository.obtenerUsuarioPorId(
+                    idUsuario
+                )
 
                 if (usuario == null) {
 
@@ -129,36 +128,33 @@ class PerfilCuidadorFragment : Fragment() {
                 }
 
                 val nombreCompleto =
-                    "${usuario.nombres} ${usuario.apellidos}"
-                        .trim()
+                    "${usuario.nombres} ${usuario.apellidos}".trim()
 
                 // Nombre debajo de la foto
-                binding.txtNombrePerfil.text =
-                    nombreCompleto
+                binding.txtNombrePerfil.text = nombreCompleto
 
                 // Nombre completo
-                binding.txtNombreCompletoPerfil.text =
-                    nombreCompleto
+                binding.txtNombreCompletoPerfil.text = nombreCompleto
 
                 // Documento
                 binding.txtDocumentoPerfil.text =
                     "${usuario.tipoDocumento ?: "CC"} ${usuario.numeroDocumento}"
 
                 // Correo
-                binding.txtCorreoPerfil.text =
-                    usuario.correo
+                binding.txtCorreoPerfil.text = usuario.correo
 
                 // Teléfono
-                binding.txtTelefonoPerfil.text =
-                    usuario.telefono
+                binding.txtTelefonoPerfil.text = usuario.telefono
 
             } catch (e: Exception) {
 
-                android.util.Log.e(
+                Log.e(
                     "PERFIL_CUIDADOR",
                     "Error inesperado al cargar el perfil",
                     e
                 )
+
+                if (!isAdded) return@launch
 
                 Toast.makeText(
                     requireContext(),
@@ -175,33 +171,36 @@ class PerfilCuidadorFragment : Fragment() {
 
     private fun configurarNotificaciones() {
 
+        // Abrir la pantalla de notificaciones al pulsar
+        // la campanita del encabezado.
         binding.btnNotificacionesPerfil.setOnClickListener {
+
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    NotificacionesFragment()
+                )
+                .addToBackStack("notificaciones_cuidador")
+                .commit()
+        }
+
+        // Se conserva el comportamiento original
+        // del interruptor de notificaciones.
+        binding.switchNotificaciones.setOnCheckedChangeListener {
+                _, activado ->
+
+            val mensaje = if (activado) {
+                "Notificaciones activadas"
+            } else {
+                "Notificaciones desactivadas"
+            }
 
             Toast.makeText(
                 requireContext(),
-                "Sin notificaciones pendientes",
+                mensaje,
                 Toast.LENGTH_SHORT
             ).show()
-        }
-
-        binding.switchNotificaciones.setOnCheckedChangeListener { _, activado ->
-
-            if (activado) {
-
-                Toast.makeText(
-                    requireContext(),
-                    "Notificaciones activadas",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-            } else {
-
-                Toast.makeText(
-                    requireContext(),
-                    "Notificaciones desactivadas",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
         }
     }
 
@@ -237,11 +236,10 @@ class PerfilCuidadorFragment : Fragment() {
                 .clear()
                 .apply()
 
-            val intent =
-                Intent(
-                    requireContext(),
-                    LoginActivity::class.java
-                )
+            val intent = Intent(
+                requireContext(),
+                LoginActivity::class.java
+            )
 
             intent.flags =
                 Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -276,8 +274,7 @@ class PerfilCuidadorFragment : Fragment() {
             iconPerfil = binding.iconPerfil,
             textPerfil = binding.textPerfil,
 
-            pantallaActual =
-                NavegacionCuidador.Pantalla.PERFIL,
+            pantallaActual = NavegacionCuidador.Pantalla.PERFIL,
 
             lifecycleOwner = viewLifecycleOwner,
 

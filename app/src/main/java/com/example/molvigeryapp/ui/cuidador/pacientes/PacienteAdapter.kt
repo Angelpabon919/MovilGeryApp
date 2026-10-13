@@ -15,62 +15,124 @@ class PacienteAdapter(
     private val onSeleccionCambiada: ((totalSeleccionados: Int) -> Unit)? = null
 ) : RecyclerView.Adapter<PacienteAdapter.PacienteViewHolder>() {
 
-    inner class PacienteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tvNombre: TextView = itemView.findViewById(R.id.tvNombrePaciente)
-        val tvDetalles: TextView = itemView.findViewById(R.id.tvDetallesPaciente)
-        val cbSeleccionado: CheckBox = itemView.findViewById(R.id.cbSeleccionado)
+    inner class PacienteViewHolder(
+        itemView: View
+    ) : RecyclerView.ViewHolder(itemView) {
+
+        val tvNombre: TextView =
+            itemView.findViewById(R.id.tvNombrePaciente)
+
+        val tvDetalles: TextView =
+            itemView.findViewById(R.id.tvDetallesPaciente)
+
+        val cbSeleccionado: CheckBox =
+            itemView.findViewById(R.id.cbSeleccionado)
 
         fun bind(paciente: Paciente) {
-            val nombreCompleto = "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}".trim()
-            tvNombre.text = if (nombreCompleto.isNotEmpty()) nombreCompleto else "Paciente sin nombre"
 
-            val hab = paciente.habitacion?.toString() ?: "--"
-            val doc = paciente.numeroDocumento ?: "--"
-            tvDetalles.text = "Habitación $hab • Doc: $doc"
+            val nombreCompleto =
+                "${paciente.nombre ?: ""} ${paciente.apellido ?: ""}".trim()
 
-            if (mostrarCheckbox) {
-                cbSeleccionado.visibility = View.VISIBLE
-
-                // Desvincular listener temporal para evitar disparo involuntario
-                cbSeleccionado.setOnCheckedChangeListener(null)
-                cbSeleccionado.isChecked = paciente.isSelected
-
-                // Modificar la propiedad directamente en el objeto de la lista
-                val clickAccion = View.OnClickListener {
-                    paciente.isSelected = !paciente.isSelected
-                    cbSeleccionado.isChecked = paciente.isSelected
-
-                    // Notificar al Fragment solo el número de seleccionados para el TextView
-                    onSeleccionCambiada?.invoke(obtenerCantidadSeleccionados())
+            tvNombre.text =
+                if (nombreCompleto.isNotEmpty()) {
+                    nombreCompleto
+                } else {
+                    "Paciente sin nombre"
                 }
 
-                itemView.setOnClickListener(clickAccion)
-                cbSeleccionado.setOnClickListener(clickAccion)
+            val habitacion = paciente.habitacion?.toString() ?: "--"
+            val documento = paciente.numeroDocumento ?: "--"
+
+            tvDetalles.text =
+                "Habitación $habitacion • Doc: $documento"
+
+            if (mostrarCheckbox) {
+
+                cbSeleccionado.visibility = View.VISIBLE
+
+                // Evitar que el cambio visual active otro listener.
+                cbSeleccionado.setOnCheckedChangeListener(null)
+
+                // Restaurar el estado guardado en el objeto Paciente.
+                cbSeleccionado.isChecked = paciente.isSelected
+
+                val cambiarSeleccion = View.OnClickListener {
+
+                    val posicion = bindingAdapterPosition
+
+                    if (posicion != RecyclerView.NO_POSITION) {
+
+                        val pacienteActual = listaPacientes[posicion]
+
+                        pacienteActual.isSelected =
+                            !pacienteActual.isSelected
+
+                        cbSeleccionado.setOnCheckedChangeListener(null)
+
+                        cbSeleccionado.isChecked =
+                            pacienteActual.isSelected
+
+                        onSeleccionCambiada?.invoke(
+                            obtenerCantidadSeleccionados()
+                        )
+                    }
+                }
+
+                itemView.setOnClickListener(cambiarSeleccion)
+                cbSeleccionado.setOnClickListener(cambiarSeleccion)
+
             } else {
+
                 cbSeleccionado.visibility = View.GONE
+
                 itemView.setOnClickListener(null)
                 cbSeleccionado.setOnClickListener(null)
+                cbSeleccionado.setOnCheckedChangeListener(null)
             }
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PacienteViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_paciente, parent, false)
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): PacienteViewHolder {
+
+        val view = LayoutInflater.from(parent.context)
+            .inflate(
+                R.layout.item_paciente,
+                parent,
+                false
+            )
+
         return PacienteViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: PacienteViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: PacienteViewHolder,
+        position: Int
+    ) {
         holder.bind(listaPacientes[position])
     }
 
     override fun getItemCount(): Int = listaPacientes.size
 
     fun actualizarLista(nuevaLista: List<Paciente>) {
+
         listaPacientes = nuevaLista
+
         notifyDataSetChanged()
     }
 
     fun obtenerCantidadSeleccionados(): Int {
+
         return listaPacientes.count { it.isSelected }
+    }
+
+    fun obtenerIdsSeleccionados(): Set<Int> {
+
+        return listaPacientes
+            .filter { it.isSelected }
+            .mapNotNull { it.idPaciente }
+            .toSet()
     }
 }

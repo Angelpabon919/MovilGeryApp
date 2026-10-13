@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/color_background">
@@ -24,9 +22,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- ========================= -->
-            <!-- HEADER -->
-            <!-- ========================= -->
+            <!-- ENCABEZADO -->
 
             <TextView
                 android:layout_width="match_parent"
@@ -45,10 +41,7 @@
                 android:textColor="#64748B"
                 android:textSize="14sp" />
 
-
-            <!-- ========================= -->
             <!-- INFORMACIÓN DEL REGISTRO -->
-            <!-- ========================= -->
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -90,9 +83,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textColor="@color/black" />
-
                     </com.google.android.material.textfield.TextInputLayout>
-
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -112,17 +103,12 @@
                             android:gravity="top"
                             android:inputType="textMultiLine"
                             android:textColor="@color/black" />
-
                     </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
 
-
-            <!-- ========================= -->
             <!-- SIGNOS VITALES -->
-            <!-- ========================= -->
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -149,7 +135,6 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-
                     <LinearLayout
                         android:id="@+id/layoutSignosVitales"
                         android:layout_width="match_parent"
@@ -167,9 +152,6 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-
-                        <!-- Temperatura -->
-
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -186,11 +168,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="numberDecimal"
                                 android:textColor="@color/black" />
-
                         </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- Presión -->
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -215,14 +193,11 @@
                                     android:layout_height="wrap_content"
                                     android:inputType="number"
                                     android:textColor="@color/black" />
-
                             </com.google.android.material.textfield.TextInputLayout>
-
 
                             <Space
                                 android:layout_width="12dp"
                                 android:layout_height="1dp" />
-
 
                             <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="0dp"
@@ -241,13 +216,8 @@
                                     android:layout_height="wrap_content"
                                     android:inputType="number"
                                     android:textColor="@color/black" />
-
                             </com.google.android.material.textfield.TextInputLayout>
-
                         </LinearLayout>
-
-
-                        <!-- Frecuencia cardíaca -->
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
@@ -266,11 +236,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="number"
                                 android:textColor="@color/black" />
-
                         </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- Frecuencia respiratoria -->
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
@@ -289,11 +255,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="number"
                                 android:textColor="@color/black" />
-
                         </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- Saturación -->
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
@@ -312,11 +274,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="number"
                                 android:textColor="@color/black" />
-
                         </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- Peso -->
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
@@ -335,11 +293,7 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="numberDecimal"
                                 android:textColor="@color/black" />
-
                         </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- Observaciones -->
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
@@ -359,19 +313,13 @@
                                 android:gravity="top"
                                 android:inputType="textMultiLine"
                                 android:textColor="@color/black" />
-
                         </com.google.android.material.textfield.TextInputLayout>
 
                     </LinearLayout>
-
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
 
-
-            <!-- ========================= -->
-            <!-- CUIDADOS DIARIOS -->
-            <!-- ========================= -->
+            <!-- CONTROLES PERIÓDICOS -->
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -390,238 +338,334 @@
                     android:padding="20dp">
 
                     <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/switchCuidadosDiarios"
+                        android:id="@+id/switchControlesPeriodicos"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Registrar cuidados diarios"
+                        android:text="Registrar controles periódicos"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Estos controles se habilitan cada 7 días por paciente."
+                        android:textColor="#64748B"
+                        android:textSize="13sp" />
 
                     <LinearLayout
-                        android:id="@+id/layoutCuidadosDiarios"
+                        android:id="@+id/layoutControlesPeriodicos"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
                         android:orientation="vertical"
                         android:visibility="gone">
 
-
-                        <!-- BAÑO -->
+                        <!-- PESO Y TALLA -->
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:text="Baño del paciente"
+                            android:text="1. Control de peso y talla"
                             android:textColor="@color/black"
-                            android:textSize="17sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <RadioGroup
-                            android:id="@+id/rgBano"
+                            android:id="@+id/rgEstadoPesoTalla"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
-                                android:id="@+id/rbBanoCama"
+                                android:id="@+id/rbPesoTallaRealizado"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="En cama"
+                                android:text="Realizado"
                                 android:textColor="@color/black" />
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
-                                android:id="@+id/rbBanoSilla"
+                                android:id="@+id/rbPesoTallaNoAplica"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="En silla"
+                                android:text="No aplica"
                                 android:textColor="@color/black" />
-
-                            <com.google.android.material.radiobutton.MaterialRadioButton
-                                android:id="@+id/rbBanoDucha"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="En ducha"
-                                android:textColor="@color/black" />
-
                         </RadioGroup>
 
-
-                        <!-- PESO -->
-
-                        <com.google.android.material.textfield.TextInputLayout
+                        <LinearLayout
+                            android:id="@+id/layoutDatosPesoTalla"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <!-- CAMPO PARA ESCRIBIR EL PESO -->
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:hint="Peso (kg)"
+                                app:boxBackgroundMode="outline">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etPesoPeriodico"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="numberDecimal"
+                                    android:digits="0123456789.,"
+                                    android:focusable="true"
+                                    android:clickable="true"
+                                    android:cursorVisible="true"
+                                    android:singleLine="true" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <!-- CAMPO PARA ESCRIBIR LA TALLA -->
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:hint="Talla (cm)"
+                                app:boxBackgroundMode="outline">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etTallaPeriodica"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="numberDecimal"
+                                    android:digits="0123456789.,"
+                                    android:focusable="true"
+                                    android:clickable="true"
+                                    android:cursorVisible="true"
+                                    android:singleLine="true" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
                             android:layout_marginTop="16dp"
-                            android:hint="Peso (kg)"
-                            app:boxBackgroundMode="outline"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusTopStart="12dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etPesoDiario"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:textColor="@color/black" />
-
-                        </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- TALLA -->
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:hint="Talla (cm)"
-                            app:boxBackgroundMode="outline"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusTopStart="12dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etTalla"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:textColor="@color/black" />
-
-                        </com.google.android.material.textfield.TextInputLayout>
-
+                            android:layout_marginBottom="16dp"
+                            android:background="#E2E8F0" />
 
                         <!-- GLICEMIA -->
 
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:hint="Control de glicemia (mg/dL)"
-                            app:boxBackgroundMode="outline"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusTopStart="12dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etGlicemia"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:textColor="@color/black" />
-
-                        </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- CURACIONES -->
-
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switchCuraciones"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="Se realizaron curaciones"
-                            android:textColor="@color/black"
-                            android:textSize="16sp" />
-
-
-                        <!-- LÍQUIDOS ADMINISTRADOS -->
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:hint="Líquidos administrados (ml)"
-                            app:boxBackgroundMode="outline"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusTopStart="12dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etLiquidosAdministrados"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:textColor="@color/black" />
-
-                        </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- LÍQUIDOS ELIMINADOS -->
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:hint="Líquidos eliminados (ml)"
-                            app:boxBackgroundMode="outline"
-                            app:boxCornerRadiusBottomEnd="12dp"
-                            app:boxCornerRadiusBottomStart="12dp"
-                            app:boxCornerRadiusTopEnd="12dp"
-                            app:boxCornerRadiusTopStart="12dp">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etLiquidosEliminados"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:inputType="numberDecimal"
-                                android:textColor="@color/black" />
-
-                        </com.google.android.material.textfield.TextInputLayout>
-
-
-                        <!-- DEPOSICIÓN -->
-
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="18dp"
-                            android:layout_marginBottom="8dp"
-                            android:text="Control de deposición"
+                            android:text="2. Control de glicemia"
                             android:textColor="@color/black"
-                            android:textSize="17sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <RadioGroup
-                            android:id="@+id/rgDeposicion"
+                            android:id="@+id/rgEstadoGlicemia"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
-                                android:id="@+id/rbDeposicionManana"
+                                android:id="@+id/rbGlicemiaRealizado"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Mañana"
+                                android:text="Realizado"
                                 android:textColor="@color/black" />
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
-                                android:id="@+id/rbDeposicionTarde"
+                                android:id="@+id/rbGlicemiaNoAplica"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Tarde"
+                                android:text="No aplica"
+                                android:textColor="@color/black" />
+                        </RadioGroup>
+
+                        <LinearLayout
+                            android:id="@+id/layoutDatoGlicemia"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:hint="Resultado (mg/dL)"
+                                app:boxBackgroundMode="outline"
+                                app:boxCornerRadiusBottomEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusTopStart="12dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etGlicemiaPeriodica"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="numberDecimal"
+                                    android:textColor="@color/black" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#E2E8F0" />
+
+                        <!-- TERAPIAS FÍSICAS -->
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="3. Terapias físicas"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/rgTerapiasFisicas"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbTerapiasFisicasRealizado"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Realizado"
                                 android:textColor="@color/black" />
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
-                                android:id="@+id/rbDeposicionNoche"
+                                android:id="@+id/rbTerapiasFisicasNoAplica"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Noche"
+                                android:text="No aplica"
+                                android:textColor="@color/black" />
+                        </RadioGroup>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#E2E8F0" />
+
+                        <!-- TERAPIA RESPIRATORIA -->
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="4. Terapia respiratoria"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/rgTerapiaRespiratoria"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbTerapiaRespiratoriaRealizado"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Realizado"
                                 android:textColor="@color/black" />
 
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbTerapiaRespiratoriaNoAplica"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="No aplica"
+                                android:textColor="@color/black" />
+                        </RadioGroup>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#E2E8F0" />
+
+                        <!-- CORTE DE UÑAS -->
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="5. Corte de uñas"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/rgCorteUnas"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbCorteUnasRealizado"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Realizado"
+                                android:textColor="@color/black" />
+
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbCorteUnasNoAplica"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="No aplica"
+                                android:textColor="@color/black" />
+                        </RadioGroup>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#E2E8F0" />
+
+                        <!-- CORTE DE CABELLO -->
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="6. Corte de cabello"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/rgCorteCabello"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbCorteCabelloRealizado"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Realizado"
+                                android:textColor="@color/black" />
+
+                            <com.google.android.material.radiobutton.MaterialRadioButton
+                                android:id="@+id/rbCorteCabelloNoAplica"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="No aplica"
+                                android:textColor="@color/black" />
                         </RadioGroup>
 
                     </LinearLayout>
-
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- BOTONES -->
+
             <Button
                 android:id="@+id/btnGuardar"
                 android:layout_width="match_parent"
@@ -634,7 +678,6 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 app:backgroundTint="@null" />
-
 
             <Button
                 android:id="@+id/btnEventoAdverso"
@@ -651,7 +694,6 @@
                 app:backgroundTint="@null" />
 
         </LinearLayout>
-
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

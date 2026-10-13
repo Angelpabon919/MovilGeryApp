@@ -16,6 +16,7 @@ import com.example.molvigeryapp.databinding.FragmentHomeCuidadorBinding
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
 import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
+import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
 class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
@@ -44,6 +45,26 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         observarDatos()
         observarMedicamentos()
         configurarNavegacion()
+
+        // NUEVO: conectar la campanita de Inicio.
+        configurarBotonNotificaciones()
+    }
+
+    // =====================================================
+    // NOTIFICACIONES
+    // =====================================================
+
+    private fun configurarBotonNotificaciones() {
+        binding.btnNotification.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    NotificacionesFragment()
+                )
+                .addToBackStack("notificaciones_cuidador")
+                .commit()
+        }
     }
 
     // =====================================================
@@ -70,7 +91,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             textPerfil = binding.textPerfil,
 
             pantallaActual = NavegacionCuidador.Pantalla.INICIO,
-
             lifecycleOwner = viewLifecycleOwner,
 
             onInicio = {
@@ -87,31 +107,45 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             onCamaras = {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.fragmentContainer, EventosCamaraFragment())
+                    .replace(
+                        R.id.fragmentContainer,
+                        EventosCamaraFragment()
+                    )
                     .commit()
             },
 
             onPerfil = {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.fragmentContainer, PerfilCuidadorFragment())
+                    .replace(
+                        R.id.fragmentContainer,
+                        PerfilCuidadorFragment()
+                    )
                     .commit()
             }
         )
     }
 
+    // =====================================================
+    // EDITAR PACIENTES
+    // =====================================================
+
     private fun setupBotonEditar() {
         binding.btnEditPacientes.setOnClickListener {
-            if (parentFragmentManager.backStackEntryCount > 0) {
-                parentFragmentManager.popBackStack()
-            } else {
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainer, PacientesListFragment())
-                    .commit()
-            }
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    PacientesListFragment()
+                )
+                .addToBackStack("editar_pacientes")
+                .commit()
         }
     }
+
+    // =====================================================
+    // DESPLEGAR MEDICAMENTOS
+    // =====================================================
 
     private fun setupDespliegueMedicamentos() {
         binding.layoutHeaderMedicamentos.setOnClickListener {
@@ -119,13 +153,21 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
             if (isExpanded) {
                 binding.layoutListaMedicamentos.visibility = View.VISIBLE
-                binding.btnExpandMedicamentos.setImageResource(R.drawable.ic_arrow_up)
+                binding.btnExpandMedicamentos.setImageResource(
+                    R.drawable.ic_arrow_up
+                )
             } else {
                 binding.layoutListaMedicamentos.visibility = View.GONE
-                binding.btnExpandMedicamentos.setImageResource(R.drawable.ic_arrow_down)
+                binding.btnExpandMedicamentos.setImageResource(
+                    R.drawable.ic_arrow_down
+                )
             }
         }
     }
+
+    // =====================================================
+    // LISTA DE PACIENTES
+    // =====================================================
 
     private fun setupRecyclerViewPacientes() {
         homeAdapter = HomeAdapter { paciente ->
@@ -133,18 +175,24 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.fragmentContainer, DetallePacienteFragment())
+                .replace(
+                    R.id.fragmentContainer,
+                    DetallePacienteFragment()
+                )
                 .addToBackStack(null)
                 .commit()
         }
 
-        binding.rvPacientesAsignados.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvPacientesAsignados.layoutManager =
+            LinearLayoutManager(requireContext())
+
         binding.rvPacientesAsignados.adapter = homeAdapter
     }
 
     // =====================================================
     // OBSERVAR MEDICAMENTOS
     // =====================================================
+
     private fun observarMedicamentos() {
         viewModel.cargarPacientes()
         viewModel.cargarCatalogoMedicamentos()
@@ -166,13 +214,11 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 fun mostrarMedicamentos(
                     lista: List<FormulacionMedicamento>
                 ): String {
-
                     if (lista.isEmpty()) {
                         return "Sin medicamentos"
                     }
 
                     return lista.joinToString("\n\n") { med ->
-
                         val paciente =
                             mapaPacientes[med.idPaciente]
                                 ?: "Paciente ${med.idPaciente}"
@@ -191,8 +237,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         val horaActual = java.util.Calendar
                             .getInstance()
                             .get(java.util.Calendar.HOUR_OF_DAY)
-                        val horaProgramada = when {
 
+                        val horaProgramada = when {
                             med.idGrupo == 2 &&
                                     horaBase != null &&
                                     horaActual == ((horaBase + 12) % 24) -> {
@@ -203,11 +249,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         }
 
                         val horaMostrar = when {
-
                             horaProgramada == null -> "Sin hora"
-
                             horaProgramada == 0 -> "12:00 a. m."
-
                             horaProgramada < 12 ->
                                 "${horaProgramada}:00 a. m."
 
@@ -224,40 +267,64 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     }
                 }
 
-                fun filtrarSeleccionados(lista: List<FormulacionMedicamento>): List<FormulacionMedicamento> {
-                    val seleccionados = viewModel.pacientesSeleccionadosHome.value
-                        ?.map { it.idPaciente }
-                        ?: emptyList()
+                fun filtrarSeleccionados(
+                    lista: List<FormulacionMedicamento>
+                ): List<FormulacionMedicamento> {
+                    val seleccionados =
+                        viewModel.pacientesSeleccionadosHome.value
+                            ?.map { it.idPaciente }
+                            ?: emptyList()
 
-                    Log.d("MEDICAMENTOS_HOME", "TODAS LAS FORMULACIONES: $lista")
-                    Log.d("MEDICAMENTOS_HOME", "PACIENTES SELECCIONADOS: $seleccionados")
+                    Log.d(
+                        "MEDICAMENTOS_HOME",
+                        "TODAS LAS FORMULACIONES: $lista"
+                    )
 
-                    return lista.filter { it.idPaciente in seleccionados }
+                    Log.d(
+                        "MEDICAMENTOS_HOME",
+                        "PACIENTES SELECCIONADOS: $seleccionados"
+                    )
+
+                    return lista.filter {
+                        it.idPaciente in seleccionados
+                    }
                 }
 
                 viewModel.medicamentosManana.observe(viewLifecycleOwner) { lista ->
                     val filtrados = filtrarSeleccionados(lista)
-                    binding.tvMedicamentosManana.text = mostrarMedicamentos(filtrados)
+                    binding.tvMedicamentosManana.text =
+                        mostrarMedicamentos(filtrados)
+
                     Log.d("MEDICAMENTOS_HOME", "MAÑANA $filtrados")
                 }
 
                 viewModel.medicamentosTarde.observe(viewLifecycleOwner) { lista ->
                     val filtrados = filtrarSeleccionados(lista)
-                    binding.tvMedicamentosTarde.text = mostrarMedicamentos(filtrados)
+                    binding.tvMedicamentosTarde.text =
+                        mostrarMedicamentos(filtrados)
+
                     Log.d("MEDICAMENTOS_HOME", "TARDE $filtrados")
                 }
 
                 viewModel.medicamentosNoche.observe(viewLifecycleOwner) { lista ->
                     val filtrados = filtrarSeleccionados(lista)
-                    binding.tvMedicamentosNoche.text = mostrarMedicamentos(filtrados)
+                    binding.tvMedicamentosNoche.text =
+                        mostrarMedicamentos(filtrados)
+
                     Log.d("MEDICAMENTOS_HOME", "NOCHE $filtrados")
                 }
             }
         }
     }
 
+    // =====================================================
+    // OBSERVAR PACIENTES SELECCIONADOS
+    // =====================================================
+
     private fun observarDatos() {
-        viewModel.pacientesSeleccionadosHome.observe(viewLifecycleOwner) { listaSeleccionados ->
+        viewModel.pacientesSeleccionadosHome.observe(viewLifecycleOwner) {
+                listaSeleccionados ->
+
             val lista = listaSeleccionados ?: emptyList()
             listaOriginalPacientes = lista
 
@@ -265,7 +332,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 viewModel.cargarFormulacionesMedicamentos()
             }
 
-            val textoBusqueda = binding.etSearchPaciente.text.toString()
+            val textoBusqueda =
+                binding.etSearchPaciente.text.toString()
 
             if (textoBusqueda.isNotEmpty()) {
                 filtrarLista(textoBusqueda)
@@ -275,14 +343,32 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         }
     }
 
+    // =====================================================
+    // BUSCADOR
+    // =====================================================
+
     private fun setupBuscador() {
-        binding.etSearchPaciente.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                filtrarLista(s?.toString() ?: "")
+        binding.etSearchPaciente.addTextChangedListener(
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {}
+
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
+                    filtrarLista(s?.toString() ?: "")
+                }
+
+                override fun afterTextChanged(s: Editable?) {}
             }
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        )
     }
 
     private fun filtrarLista(texto: String) {
@@ -292,14 +378,20 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             homeAdapter.actualizarLista(listaOriginalPacientes)
         } else {
             val listaFiltrada = listaOriginalPacientes.filter { paciente ->
-                val nombreCompleto = "${paciente.nombre} ${paciente.apellido}".lowercase()
-                val documento = paciente.numeroDocumento?.lowercase() ?: ""
-                val habitacion = paciente.habitacion?.toString()?.lowercase() ?: ""
+                val nombreCompleto =
+                    "${paciente.nombre} ${paciente.apellido}".lowercase()
+
+                val documento =
+                    paciente.numeroDocumento?.lowercase() ?: ""
+
+                val habitacion =
+                    paciente.habitacion?.toString()?.lowercase() ?: ""
 
                 nombreCompleto.contains(consulta) ||
                         documento.contains(consulta) ||
                         habitacion.contains(consulta)
             }
+
             homeAdapter.actualizarLista(listaFiltrada)
         }
     }

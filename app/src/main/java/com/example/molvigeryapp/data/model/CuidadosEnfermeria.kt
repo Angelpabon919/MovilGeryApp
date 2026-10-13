@@ -28,5 +28,8 @@ data class CuidadoEnfermeria(
     val administracionMedicamentos: String? = null,
 
     @SerializedName("id_paciente")
-    val idPaciente: Int? = null
+    val idPaciente: Int? = null,
+
+    @SerializedName("fecha_registro")
+    val fechaRegistro: String? = null
 )
