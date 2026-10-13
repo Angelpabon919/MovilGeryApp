@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import com.example.molvigeryapp.MainActivity
 
 class FirebaseMessagingService : FirebaseMessagingService() {
 
@@ -119,40 +120,31 @@ class FirebaseMessagingService : FirebaseMessagingService() {
     // MENSAJE FCM
     // =========================================================
 
-    override fun onMessageReceived(
-        remoteMessage: RemoteMessage
-    ) {
-
+    override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        Log.d(
-            TAG,
-            "Mensaje FCM recibido"
-        )
+        Log.d(TAG, "Mensaje FCM recibido")
+        Log.d(TAG, "From: ${remoteMessage.from}")
+        Log.d(TAG, "Data: ${remoteMessage.data}")
 
-        Log.d(
-            TAG,
-            "From: ${remoteMessage.from}"
-        )
+        val titulo = remoteMessage.notification?.title
+            ?: remoteMessage.data["titulo"]
+            ?: "GerIApp"
 
-        Log.d(
-            TAG,
-            "Data: ${remoteMessage.data}"
-        )
+        val mensaje = remoteMessage.notification?.body
+            ?: remoteMessage.data["mensaje"]
+            ?: "Tienes una nueva notificación"
 
-        val titulo =
-            remoteMessage.notification?.title
-                ?: remoteMessage.data["titulo"]
-                ?: "GerIApp"
+        val idNotificacion = remoteMessage.data["id_notificacion"]
+            ?.toIntOrNull() ?: -1
 
-        val mensaje =
-            remoteMessage.notification?.body
-                ?: remoteMessage.data["mensaje"]
-                ?: "Tienes una nueva notificación"
+        val tipo = remoteMessage.data["tipo"].orEmpty()
 
         mostrarNotificacion(
             titulo = titulo,
-            mensaje = mensaje
+            mensaje = mensaje,
+            idNotificacion = idNotificacion,
+            tipo = tipo
         )
     }
 
@@ -162,77 +154,58 @@ class FirebaseMessagingService : FirebaseMessagingService() {
 
     private fun mostrarNotificacion(
         titulo: String,
-        mensaje: String
+        mensaje: String,
+        idNotificacion: Int,
+        tipo: String
     ) {
-
-        // Nos aseguramos de que exista el canal.
         crearCanalNotificaciones()
 
-        val intent =
-            packageManager.getLaunchIntentForPackage(
-                packageName
-            )
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
 
-        val pendingIntent =
-            if (intent != null) {
-
-                intent.flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP
-
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or
-                            PendingIntent.FLAG_IMMUTABLE
-                )
-
-            } else {
-                null
-            }
-
-        val notificationBuilder =
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.logo_blanco) // modificacion para notificacion push colocarle el logo
-                .setColor(
-                    androidx.core.content.ContextCompat.getColor(
-                        this,
-                        R.color.geriapp_notification_color
-                    )
-                )
-                .setContentTitle(titulo)
-                .setContentText(mensaje)
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(mensaje)
-                )
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setAutoCancel(true)
-                .setDefaults(NotificationCompat.DEFAULT_ALL)
-
-        if (pendingIntent != null) {
-
-            notificationBuilder.setContentIntent(
-                pendingIntent
-            )
+            putExtra("ABRIR_DESDE_NOTIFICACION", true)
+            putExtra("ID_NOTIFICACION", idNotificacion)
+            putExtra("TIPO_NOTIFICACION", tipo)
         }
 
-        val notificationManager =
-            getSystemService(
-                NotificationManager::class.java
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            if (idNotificacion > 0) idNotificacion else System.currentTimeMillis().toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.logo_blanco)
+            .setColor(
+                androidx.core.content.ContextCompat.getColor(
+                    this,
+                    R.color.geriapp_notification_color
+                )
             )
+            .setContentTitle(titulo)
+            .setContentText(mensaje)
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(mensaje)
+            )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setAutoCancel(true)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setContentIntent(pendingIntent)
+
+        val notificationManager =
+            getSystemService(NotificationManager::class.java)
 
         notificationManager.notify(
             System.currentTimeMillis().toInt(),
             notificationBuilder.build()
         )
 
-        Log.d(
-            TAG,
-            "Notificación mostrada: $titulo"
-        )
+        Log.d(TAG, "Notificación mostrada: $titulo, ID: $idNotificacion")
     }
 
     // =========================================================

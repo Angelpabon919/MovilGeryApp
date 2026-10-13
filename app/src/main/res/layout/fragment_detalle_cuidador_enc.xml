@@ -95,7 +95,7 @@
                         android:id="@+id/txtNombreCuidador"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="María Fernández"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="20sp"
                         android:textStyle="bold" />
@@ -105,7 +105,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Auxiliar de Enfermería"
+                        android:text=""
                         android:textColor="#DDE5FF"
                         android:textSize="13sp" />
 
@@ -124,7 +124,7 @@
                             android:paddingEnd="8dp"
                             android:paddingTop="3dp"
                             android:paddingBottom="3dp"
-                            android:text="C-0042"
+                            android:text=""
                             android:textColor="#FFFFFF"
                             android:textSize="10sp"
                             android:background="#3152C8" />
@@ -187,7 +187,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="3"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -217,7 +217,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="0"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -247,7 +247,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Activo"
+                        android:text=""
                         android:textColor="#FFFFFF"
                         android:textSize="12sp"
                         android:textStyle="bold" />
