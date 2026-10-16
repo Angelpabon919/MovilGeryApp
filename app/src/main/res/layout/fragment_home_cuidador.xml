@@ -8,319 +8,317 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
+    <!-- CONTENIDO DESPLAZABLE -->
 
-    <!-- ===================================================== -->
-    <!-- HEADER AZUL -->
-    <!-- ===================================================== -->
-
-
-    <View
-        android:id="@+id/viewHeaderBackground"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollContenido"
         android:layout_width="0dp"
-        android:layout_height="200dp"
-        android:background="@drawable/bg_rounded"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <TextView
-        android:id="@+id/tvAppName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="29dp"
-        android:text="GeriApp"
-        android:textColor="@android:color/white"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <TextView
-        android:id="@+id/tvUserWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Bienvenida, cuidadora Angela"
-        android:textColor="#E2E8F0"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="@id/tvAppName"
-        app:layout_constraintTop_toBottomOf="@id/tvAppName" />
-
-    <ImageView
-        android:id="@+id/btnNotification"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_marginTop="35dp"
-        android:layout_marginEnd="15dp"
-        android:padding="11dp"
-        android:background="@drawable/bg_notifi"
-        android:src="@drawable/notifications"
-        android:contentDescription="Abrir notificaciones"
-        android:clickable="true"
-        android:focusable="true"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:overScrollMode="ifContentScrolls"
+        android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- ===================================================== -->
-    <!-- BUSCADOR -->
-    <!-- ===================================================== -->
-
-=======
-
-
-    <!-- Buscador: Buscar paciente -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardSearch"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationCuidador"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvUserWelcome">
+        app:layout_constraintEnd_toEndOf="parent">
 
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@android:drawable/ic_menu_search"
-                app:tint="#64748B" />
-
-            <EditText
-                android:id="@+id/etSearchPaciente"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:hint="Buscar paciente..."
-                android:imeOptions="actionSearch"
-                android:inputType="text"
-                android:textColor="#1E293B"
-                android:textColorHint="#94A3B8"
-                android:textSize="14sp" />
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <!-- ===================================================== -->
-    <!-- CARD MEDICAMENTOS -->
-    <!-- ===================================================== -->
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardMedicamentos"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="75dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardSearch">
-
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:paddingBottom="16dp">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/layoutHeaderMedicamentos"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="?attr/selectableItemBackground"
-                android:padding="16dp">
+            <!-- HEADER AZUL -->
 
-                <ImageView
-                    android:id="@+id/imgMedIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:padding="8dp"
-                    android:src="@android:drawable/ic_menu_today"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+            <View
+                android:id="@+id/viewHeaderBackground"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                android:background="@drawable/bg_rounded"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-                <TextView
-                    android:id="@+id/tvMedTitle"
-                    android:layout_width="0dp"
+            <TextView
+                android:id="@+id/tvAppName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="29dp"
+                android:text="GeriApp"
+                android:textColor="@android:color/white"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvUserWelcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Bienvenida, cuidadora Angela"
+                android:textColor="#E2E8F0"
+                android:textSize="18sp"
+                app:layout_constraintStart_toStartOf="@id/tvAppName"
+                app:layout_constraintTop_toBottomOf="@id/tvAppName" />
+
+            <ImageView
+                android:id="@+id/btnNotification"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginTop="35dp"
+                android:layout_marginEnd="15dp"
+                android:padding="11dp"
+                android:background="@drawable/bg_notifi"
+                android:src="@drawable/notifications"
+                android:contentDescription="Abrir notificaciones"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- BUSCADOR -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardSearch"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:layout_constraintTop_toBottomOf="@id/tvUserWelcome"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="#64748B" />
+
+                    <EditText
+                        android:id="@+id/etSearchPaciente"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="Buscar paciente..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:textColor="#1E293B"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- MEDICAMENTOS -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardMedicamentos"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="75dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:layout_constraintTop_toBottomOf="@id/cardSearch"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="8dp"
-                    android:text="Medicamentos de hoy"
-                    android:textColor="#1E293B"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:layout_constraintEnd_toStartOf="@id/btnExpandMedicamentos"
-                    app:layout_constraintStart_toEndOf="@id/imgMedIcon"
-                    app:layout_constraintTop_toTopOf="@id/imgMedIcon" />
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tvMedSubtitle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="Consolidado pacientes en turno"
-                    android:textColor="#64748B"
-                    android:textSize="12sp"
-                    app:layout_constraintEnd_toEndOf="@id/tvMedTitle"
-                    app:layout_constraintStart_toStartOf="@id/tvMedTitle"
-                    app:layout_constraintTop_toBottomOf="@id/tvMedTitle" />
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/layoutHeaderMedicamentos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="16dp">
 
-                <ImageView
-                    android:id="@+id/btnExpandMedicamentos"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_arrow_down"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                        <ImageView
+                            android:id="@+id/imgMedIcon"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:padding="8dp"
+                            android:src="@android:drawable/ic_menu_today"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                        <TextView
+                            android:id="@+id/tvMedTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="8dp"
+                            android:text="Medicamentos de hoy"
+                            android:textColor="#1E293B"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toEndOf="@id/imgMedIcon"
+                            app:layout_constraintEnd_toStartOf="@id/btnExpandMedicamentos"
+                            app:layout_constraintTop_toTopOf="@id/imgMedIcon" />
+
+                        <TextView
+                            android:id="@+id/tvMedSubtitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Consolidado pacientes en turno"
+                            android:textColor="#64748B"
+                            android:textSize="12sp"
+                            app:layout_constraintStart_toStartOf="@id/tvMedTitle"
+                            app:layout_constraintEnd_toEndOf="@id/tvMedTitle"
+                            app:layout_constraintTop_toBottomOf="@id/tvMedTitle" />
+
+                        <ImageView
+                            android:id="@+id/btnExpandMedicamentos"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_arrow_down"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layoutListaMedicamentos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/tvTituloManana"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="🌞 Mañana"
+                            android:textColor="#1E293B"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvMedicamentosManana"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:text="Cargando..."
+                            android:textColor="#64748B" />
+
+                        <TextView
+                            android:id="@+id/tvTituloTarde"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="🌤 Tarde"
+                            android:textColor="#1E293B"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvMedicamentosTarde"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:text="Cargando..."
+                            android:textColor="#64748B" />
+
+                        <TextView
+                            android:id="@+id/tvTituloNoche"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="🌙 Noche"
+                            android:textColor="#1E293B"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvMedicamentosNoche"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:text="Cargando..."
+                            android:textColor="#64748B" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- TITULO PACIENTES -->
 
             <LinearLayout
-                android:id="@+id/layoutListaMedicamentos"
-                android:layout_width="match_parent"
+                android:id="@+id/layoutHeaderPacientes"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-
-                <TextView
-                    android:id="@+id/tvTituloManana"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🌞 Mañana"
-                    android:textStyle="bold"
-                    android:textColor="#1E293B"
-                    android:textSize="15sp"/>
-
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toBottomOf="@id/cardMedicamentos"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
                 <TextView
-                    android:id="@+id/tvMedicamentosManana"
-                    android:layout_width="match_parent"
+                    android:id="@+id/tvLabelPacientes"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:text="Cargando..."
-                    android:textColor="#64748B"/>
+                    android:layout_weight="1"
+                    android:text="PACIENTES ASIGNADOS"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
-
-                <TextView
-                    android:id="@+id/tvTituloTarde"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="🌤 Tarde"
-                    android:textStyle="bold"
-                    android:textColor="#1E293B"
-                    android:textSize="15sp"/>
-
-
-                <TextView
-                    android:id="@+id/tvMedicamentosTarde"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:text="Cargando..."
-                    android:textColor="#64748B"/>
-
-
-                <TextView
-                    android:id="@+id/tvTituloNoche"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="🌙 Noche"
-                    android:textStyle="bold"
-                    android:textColor="#1E293B"
-                    android:textSize="15sp"/>
-
-
-                <TextView
-                    android:id="@+id/tvMedicamentosNoche"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:text="Cargando..."
-                    android:textColor="#64748B"/>
-
+                <ImageView
+                    android:id="@+id/btnEditPacientes"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    android:contentDescription="Editar pacientes"
+                    app:tint="#64748B" />
 
             </LinearLayout>
 
-        </LinearLayout>
+            <!-- LISTA DE PACIENTES -->
 
-    </androidx.cardview.widget.CardView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPacientesAsignados"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="12dp"
+                app:layout_constraintTop_toBottomOf="@id/layoutHeaderPacientes"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:listitem="@layout/item_paciente" />
 
-    <!-- ===================================================== -->
-    <!-- TITULO PACIENTES -->
-    <!-- ===================================================== -->
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
-        android:id="@+id/layoutHeaderPacientes"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="20dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardMedicamentos">
+    </androidx.core.widget.NestedScrollView>
 
-        <TextView
-            android:id="@+id/tvLabelPacientes"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="PACIENTES ASIGNADOS"
-            android:textColor="#64748B"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/btnEditPacientes"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="4dp"
-            android:src="@android:drawable/ic_menu_edit"
-            app:tint="#64748B" />
-
-    </LinearLayout>
-
-    <!-- ===================================================== -->
-    <!-- LISTA PACIENTES -->
-    <!-- ===================================================== -->
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPacientesAsignados"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:clipToPadding="false"
-        android:paddingHorizontal="20dp"
-        android:paddingBottom="105dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layoutHeaderPacientes"
-        tools:listitem="@layout/item_paciente" />
-
-    <!-- ===================================================== -->
-    <!-- NAVEGACION INFERIOR CUIDADOR -->
-    <!-- ===================================================== -->
+    <!-- NAVEGACION INFERIOR FIJA -->
 
     <androidx.cardview.widget.CardView
         android:id="@+id/bottomNavigationCuidador"
@@ -333,8 +331,8 @@
         app:cardCornerRadius="34dp"
         app:cardElevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -342,13 +340,12 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <!-- ================= INICIO ================= -->
+            <!-- INICIO -->
 
             <LinearLayout
                 android:id="@+id/navInicio"
                 android:layout_width="0dp"
                 android:layout_height="58dp"
-                android:layout_gravity="center_vertical"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="2dp"
                 android:layout_weight="1"
@@ -378,12 +375,12 @@
 
             </LinearLayout>
 
-            <!-- ================= AGENDA ================= -->
+            <!-- AGENDA -->
 
             <LinearLayout
                 android:id="@+id/navAgenda"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="58dp"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
@@ -425,13 +422,12 @@
 
             </LinearLayout>
 
-            <!-- ================= CAMARAS ================= -->
+            <!-- CAMARAS -->
 
             <LinearLayout
                 android:id="@+id/navCamaras"
                 android:layout_width="0dp"
                 android:layout_height="58dp"
-                android:layout_gravity="center_vertical"
                 android:layout_marginStart="2dp"
                 android:layout_marginEnd="2dp"
                 android:layout_weight="1"
@@ -459,13 +455,12 @@
 
             </LinearLayout>
 
-            <!-- ================= PERFIL ================= -->
+            <!-- PERFIL -->
 
             <LinearLayout
                 android:id="@+id/navPerfil"
                 android:layout_width="0dp"
                 android:layout_height="58dp"
-                android:layout_gravity="center_vertical"
                 android:layout_marginStart="2dp"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
