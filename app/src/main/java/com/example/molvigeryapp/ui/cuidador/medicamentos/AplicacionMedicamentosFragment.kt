@@ -416,7 +416,9 @@ Stock disponible: $stock unidades
                 ?: return "Sin horario"
 
 
-        val horaActual = 8
+        val horaActual =
+            java.util.Calendar.getInstance()
+                .get(java.util.Calendar.HOUR_OF_DAY)
 
 
         val horaProgramada =

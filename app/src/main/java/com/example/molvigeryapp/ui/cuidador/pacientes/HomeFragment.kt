@@ -230,7 +230,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         val grupo = viewModel.gruposMedicacion.value
                             ?.find { it.idGrupo == med.idGrupo }
 
-                        val horaBase = grupo?.horaAdministracion
+
+                        val horaBase = med?.horaAdministrada
                             ?.substringBefore(":")
                             ?.toIntOrNull()
 
@@ -290,28 +291,44 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     }
                 }
 
-                viewModel.medicamentosManana.observe(viewLifecycleOwner) { lista ->
-                    val filtrados = filtrarSeleccionados(lista)
-                    binding.tvMedicamentosManana.text =
-                        mostrarMedicamentos(filtrados)
+                val horaActual = java.util.Calendar
+                    .getInstance()
+                    .get(java.util.Calendar.HOUR_OF_DAY)
 
-                    Log.d("MEDICAMENTOS_HOME", "MAÑANA $filtrados")
+                viewModel.medicamentosManana.observe(viewLifecycleOwner) { lista ->
+
+                    if (horaActual in 6..11) {
+                        val filtrados = filtrarSeleccionados(lista)
+                        binding.tvMedicamentosManana.text =
+                            mostrarMedicamentos(filtrados)
+                    } else {
+                        binding.tvMedicamentosManana.text =
+                            "Sin medicamentos"
+                    }
                 }
 
                 viewModel.medicamentosTarde.observe(viewLifecycleOwner) { lista ->
-                    val filtrados = filtrarSeleccionados(lista)
-                    binding.tvMedicamentosTarde.text =
-                        mostrarMedicamentos(filtrados)
 
-                    Log.d("MEDICAMENTOS_HOME", "TARDE $filtrados")
+                    if (horaActual in 12..17) {
+                        val filtrados = filtrarSeleccionados(lista)
+                        binding.tvMedicamentosTarde.text =
+                            mostrarMedicamentos(filtrados)
+                    } else {
+                        binding.tvMedicamentosTarde.text =
+                            "Sin medicamentos"
+                    }
                 }
 
                 viewModel.medicamentosNoche.observe(viewLifecycleOwner) { lista ->
-                    val filtrados = filtrarSeleccionados(lista)
-                    binding.tvMedicamentosNoche.text =
-                        mostrarMedicamentos(filtrados)
 
-                    Log.d("MEDICAMENTOS_HOME", "NOCHE $filtrados")
+                    if (horaActual >= 18 || horaActual < 6) {
+                        val filtrados = filtrarSeleccionados(lista)
+                        binding.tvMedicamentosNoche.text =
+                            mostrarMedicamentos(filtrados)
+                    } else {
+                        binding.tvMedicamentosNoche.text =
+                            "Sin medicamentos"
+                    }
                 }
             }
         }
