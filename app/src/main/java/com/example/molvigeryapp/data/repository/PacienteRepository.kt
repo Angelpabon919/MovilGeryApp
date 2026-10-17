@@ -261,97 +261,192 @@ class PacienteRepository {
         idUsuario: Int,
         idsSeleccionados: Set<Int>,
         fechaActual: String
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                // 1. Consultar asignaciones existentes en la API (si el endpoint está disponible)
-                val respuestaGet = try {
-                    api.getAsignacionesPacienteCuidador()
-                } catch (e: Exception) {
-                    Log.w("SINCRONIZAR_PACIENTES", "Excepción al consultar asignaciones: ${e.message}")
-                    null
+    ): Boolean = withContext(Dispatchers.IO) {
+
+        try {
+            // 1. Consultar las asignaciones existentes.
+            val respuestaGet = api.getAsignacionesPacienteCuidador()
+
+            if (!respuestaGet.isSuccessful) {
+                Log.e(
+                    "SINCRONIZAR_PACIENTES",
+                    "Error al consultar asignaciones: HTTP ${respuestaGet.code()}"
+                )
+                return@withContext false
+            }
+
+            val todasLasAsignaciones =
+                respuestaGet.body() ?: emptyList()
+
+            val asignacionesUsuario = todasLasAsignaciones.filter {
+                it.idUsuario == idUsuario
+            }
+
+            var operacionesCorrectas = true
+
+            // 2. Desactivar las asignaciones de pacientes desmarcados.
+            val asignacionesPorDesactivar = asignacionesUsuario.filter {
+                it.estado.equals("Activo", ignoreCase = true) &&
+                        it.idPaciente !in idsSeleccionados
+            }
+
+            for (asignacion in asignacionesPorDesactivar) {
+                val idAsignacion = asignacion.idAsignacion
+
+                if (idAsignacion == null) {
+                    operacionesCorrectas = false
+                    continue
                 }
 
-                val asignaciones = if (respuestaGet != null && respuestaGet.isSuccessful) {
-                    respuestaGet.body() ?: emptyList()
-                } else {
-                    emptyList()
-                }
+                try {
+                    val respuesta = api.actualizarEstadoAsignacion(
+                        idAsignacion,
+                        mapOf("estado" to "Inactivo")
+                    )
 
-                val asignacionesActivas = asignaciones.filter {
-                    it.idUsuario == idUsuario &&
-                            it.estado.equals("Activo", ignoreCase = true)
-                }
-
-                // 2. Intentar desactivar pacientes desmarcados
-                val asignacionesPorDesactivar = asignacionesActivas.filter {
-                    it.idPaciente !in idsSeleccionados
-                }
-
-                for (asignacion in asignacionesPorDesactivar) {
-                    val idAsignacion = asignacion.idAsignacion
-                    if (idAsignacion != null) {
-                        try {
-                            val resPatch = api.actualizarEstadoAsignacion(
-                                idAsignacion,
-                                mapOf("estado" to "Inactivo")
-                            )
-                            if (!resPatch.isSuccessful) {
-                                Log.w("SINCRONIZAR_PACIENTES", "PATCH inactivo HTTP ${resPatch.code()}")
-                            }
-                        } catch (e: Exception) {
-                            Log.w("SINCRONIZAR_PACIENTES", "Excepción al desactivar asignación: ${e.message}")
-                        }
+                    if (respuesta.isSuccessful) {
+                        Log.d(
+                            "SINCRONIZAR_PACIENTES",
+                            "Asignación $idAsignacion desactivada"
+                        )
+                    } else {
+                        operacionesCorrectas = false
+                        Log.e(
+                            "SINCRONIZAR_PACIENTES",
+                            "Error al desactivar $idAsignacion: HTTP ${respuesta.code()}"
+                        )
                     }
+                } catch (e: Exception) {
+                    operacionesCorrectas = false
+                    Log.e(
+                        "SINCRONIZAR_PACIENTES",
+                        "Error al desactivar asignación",
+                        e
+                    )
+                }
+            }
+
+            // 3. Procesar cada paciente seleccionado.
+            for (idPaciente in idsSeleccionados) {
+
+                val asignacionesDelPaciente = asignacionesUsuario.filter {
+                    it.idPaciente == idPaciente
                 }
 
-                // 3. Crear asignaciones para pacientes seleccionados
-                val idsActivos = asignacionesActivas.map { it.idPaciente }.toSet()
-                val idsPorAsignar = idsSeleccionados - idsActivos
+                val yaEstaActivo = asignacionesDelPaciente.any {
+                    it.estado.equals("Activo", ignoreCase = true)
+                }
 
-                val pacientesAEnviar = if (idsPorAsignar.isEmpty() && asignacionesActivas.isEmpty()) {
-                    idsSeleccionados
+                if (yaEstaActivo) {
+                    // Ya existe una asignación activa. No crear duplicados.
+                    Log.d(
+                        "SINCRONIZAR_PACIENTES",
+                        "Paciente $idPaciente ya tiene una asignación activa"
+                    )
+                    continue
+                }
+
+                // Buscar una asignación anterior para reactivarla.
+                val asignacionAnterior = asignacionesDelPaciente
+                    .filter {
+                        it.estado.equals("Inactivo", ignoreCase = true)
+                    }
+                    .maxByOrNull { it.idAsignacion ?: 0 }
+
+                if (asignacionAnterior != null) {
+
+                    val idAsignacion = asignacionAnterior.idAsignacion
+
+                    if (idAsignacion == null) {
+                        operacionesCorrectas = false
+                        continue
+                    }
+
+                    try {
+                        val respuesta = api.actualizarEstadoAsignacion(
+                            idAsignacion,
+                            mapOf("estado" to "Activo")
+                        )
+
+                        if (respuesta.isSuccessful) {
+                            Log.d(
+                                "SINCRONIZAR_PACIENTES",
+                                "Asignación $idAsignacion reactivada para paciente $idPaciente"
+                            )
+                        } else {
+                            operacionesCorrectas = false
+                            Log.e(
+                                "SINCRONIZAR_PACIENTES",
+                                "Error al reactivar $idAsignacion: HTTP ${respuesta.code()}"
+                            )
+                        }
+                    } catch (e: Exception) {
+                        operacionesCorrectas = false
+                        Log.e(
+                            "SINCRONIZAR_PACIENTES",
+                            "Error al reactivar asignación del paciente $idPaciente",
+                            e
+                        )
+                    }
+
                 } else {
-                    idsPorAsignar
-                }
-
-                var alMenosUnExito = pacientesAEnviar.isEmpty()
-
-                for (idPaciente in pacientesAEnviar) {
+                    // Solo crear una asignación si nunca existió una para ese paciente.
                     val nuevaAsignacion = AsignacionPacienteCuidador(
                         idAsignacion = null,
                         idUsuario = idUsuario,
                         idPaciente = idPaciente,
                         fechaInicio = fechaActual,
-                        fechaFin = null,
+                        fechaFin = fechaActual,
                         estado = "Activo",
                         observaciones = "Asignación desde app Cuidador"
                     )
 
                     try {
-                        val respuestaCrear = api.guardarAsignacion(nuevaAsignacion)
+                        val respuesta = api.guardarAsignacion(nuevaAsignacion)
 
-                        if (respuestaCrear.isSuccessful) {
-                            alMenosUnExito = true
-                            Log.d("SINCRONIZAR_PACIENTES", "Asignación exitosa para paciente $idPaciente")
+                        if (respuesta.isSuccessful) {
+                            Log.d(
+                                "SINCRONIZAR_PACIENTES",
+                                "Nueva asignación creada para paciente $idPaciente"
+                            )
                         } else {
-                            val detalle = respuestaCrear.errorBody()?.string() ?: "Sin detalle"
-                            Log.e("SINCRONIZAR_PACIENTES", "POST HTTP ${respuestaCrear.code()} al asignar $idPaciente: $detalle")
+                            operacionesCorrectas = false
+                            val detalle = respuesta.errorBody()?.string()
+                                ?: "Sin detalle"
+
+                            Log.e(
+                                "SINCRONIZAR_PACIENTES",
+                                "Error al crear asignación para $idPaciente: " +
+                                        "HTTP ${respuesta.code()} - $detalle"
+                            )
                         }
                     } catch (e: Exception) {
-                        Log.e("SINCRONIZAR_PACIENTES", "Excepción al enviar asignación $idPaciente: ${e.message}")
+                        operacionesCorrectas = false
+                        Log.e(
+                            "SINCRONIZAR_PACIENTES",
+                            "Error al crear asignación del paciente $idPaciente",
+                            e
+                        )
                     }
                 }
-
-                val resultadoFinal = alMenosUnExito || idsSeleccionados.isNotEmpty()
-                Log.d("SINCRONIZAR_PACIENTES", "Resultado de sincronización: $resultadoFinal")
-                resultadoFinal
-
-            } catch (e: Exception) {
-                Log.e("SINCRONIZAR_PACIENTES", "Excepción general en sincronización", e)
-                idsSeleccionados.isNotEmpty()
             }
+
+            Log.d(
+                "SINCRONIZAR_PACIENTES",
+                "Sincronización finalizada. Correcta: $operacionesCorrectas"
+            )
+
+            operacionesCorrectas
+
+        } catch (e: Exception) {
+            Log.e(
+                "SINCRONIZAR_PACIENTES",
+                "Error general al sincronizar asignaciones",
+                e
+            )
+            false
         }
+    }
 
     // =========================================================
     // ELEMENTOS DEL PACIENTE

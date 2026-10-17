@@ -13,7 +13,7 @@ object ActualizadorGeriApp {
     private const val KEY_INICIALIZADO = "citas_inicializadas"
     private const val KEY_CITAS_CONOCIDAS = "citas_conocidas"
 
-    private const val INTERVALO_ACTUALIZACION = 10_000L
+    private const val INTERVALO_ACTUALIZACION = 2_000L
 
     private val repository = PacienteRepository()
 
