@@ -51,30 +51,31 @@
         </RelativeLayout>
 
         <!-- Información del Paciente -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        <FrameLayout
+            android:layout_width="43dp"
+            android:layout_height="44dp"
+            android:background="@drawable/shape_rounded_avatar"
+            android:padding="10dp">
 
             <ImageView
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:padding="12dp"
-                android:background="@drawable/bg_badge_warning"
+                android:id="@+id/imgAvatar"
+                android:layout_width="19dp"
+                android:layout_height="match_parent"
                 android:src="@drawable/person_icon"
                 app:tint="#2563EB" />
 
-            <TextView
-                android:id="@+id/tvNombrePacientePerfil"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Nombre del Paciente"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tvNombrePacientePerfil"
+            android:layout_width="195dp"
+            android:layout_height="41dp"
+            android:layout_marginStart="87dp"
+            android:layout_marginTop="-48dp"
+            android:text="Nombre del Paciente"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 

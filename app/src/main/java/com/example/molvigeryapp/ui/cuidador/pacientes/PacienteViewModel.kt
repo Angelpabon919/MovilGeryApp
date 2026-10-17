@@ -663,31 +663,53 @@ class PacienteViewModel(
                 val cantidadADescontar =
                     if (cantidadAplicada > 0) cantidadAplicada else (dosis.toIntOrNull() ?: 1)
 
+                val idPaciente =
+                    _pacienteSeleccionado.value?.idPaciente
+                        ?: return@launch
+
                 val listaInventario =
                     repository.obtenerInventario()
 
                 val inventarioEncontrado =
-                    if (idInventario != null) {
-                        listaInventario.find { it.idInventario == idInventario }
-                    } else {
-                        listaInventario.find { inventario ->
-                            inventario.idElemento == idElementoPaciente ||
-                                    inventario.idMedicamentos ==
-                                    idTratamientoMedicamento
-                        }
+                    listaInventario.find { inventario ->
+
+                        inventario.idPaciente == idPaciente &&
+                                (
+                                        inventario.idMedicamentos == idTratamientoMedicamento ||
+                                                inventario.idElemento == idElementoPaciente
+                                        )
                     }
 
                 val idInventarioValido =
-                    idInventario ?: inventarioEncontrado?.idInventario ?: 1
+                    inventarioEncontrado?.idInventario
 
+                if (idInventarioValido == null) {
+
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception("No se encontró el inventario correcto para este medicamento")
+                        )
+
+                    return@launch
+                }
                 val fechaActual =
                     java.text.SimpleDateFormat(
                         "yyyy-MM-dd'T'HH:mm:ss'Z'",
                         java.util.Locale.getDefault()
                     ).format(java.util.Date())
 
-                val idPaciente =
-                    _pacienteSeleccionado.value?.idPaciente ?: 1
+
+
+                Log.d(
+                    "APLICACION_DEBUG",
+                    "idPaciente=$idPaciente | " +
+                            "idMedicamento=$idTratamientoMedicamento | " +
+                            "idElementoPaciente=$idElementoPaciente | " +
+                            "idInventarioRecibido=$idInventario | " +
+                            "idInventarioValido=$idInventarioValido | " +
+                            "cantidadActual=$cantidadActual | " +
+                            "cantidadAplicada=$cantidadADescontar"
+                )
 
                 val request = AplicacionRequest(
                     idPaciente = idPaciente,
@@ -718,6 +740,12 @@ class PacienteViewModel(
                             idInventarioValido,
                             stockRestante
                         )
+                        if (idElementoPaciente > 0){
+                            repository.actualizarCantidadElemento(
+                                idElementoPaciente,
+                                stockRestante
+                            )
+                        }
                     } catch (e: Exception) {
                         Log.e(
                             "INVENTARIO_UPDATE",
