@@ -11,7 +11,6 @@
     <!-- CONTENIDO DESPLAZABLE -->
 
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollContenido"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
