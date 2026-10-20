@@ -10,6 +10,9 @@ class GerIAppApplication : Application() {
 
     companion object {
 
+        lateinit var instancia: GerIAppApplication
+            private set
+
         const val CHANNEL_ID =
             "geriapp_notificaciones"
 
@@ -23,6 +26,8 @@ class GerIAppApplication : Application() {
     override fun onCreate() {
 
         super.onCreate()
+
+        instancia = this
 
         crearCanalNotificaciones()
     }

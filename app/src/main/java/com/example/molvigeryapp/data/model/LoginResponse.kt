@@ -1,6 +1,7 @@
 package com.example.molvigeryapp.data.model
 
-class LoginResponse (
+data class LoginResponse(
     val mensaje: String,
+    val token: String,
     val usuario: UsuarioLogin
 )

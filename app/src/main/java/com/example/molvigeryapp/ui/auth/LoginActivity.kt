@@ -174,6 +174,7 @@ class LoginActivity : AppCompatActivity() {
                     .putBoolean("SESION_INICIADA", true)
                     .putInt("ID_ROL", idRol)
                     .putInt("ID_USUARIO", idUsuario)
+                    .putString("TOKEN", respuesta.token)
                     .apply()
 
                 // registra el token
