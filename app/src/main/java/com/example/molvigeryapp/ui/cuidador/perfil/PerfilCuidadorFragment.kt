@@ -21,8 +21,12 @@ import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+import android.content.res.ColorStateList
+import android.graphics.Color
+import com.bumptech.glide.Glide
 
 import kotlinx.coroutines.launch
+
 
 class PerfilCuidadorFragment : Fragment() {
 
@@ -145,6 +149,32 @@ class PerfilCuidadorFragment : Fragment() {
 
                 // Teléfono
                 binding.txtTelefonoPerfil.text = usuario.telefono
+
+                if (!usuario.foto.isNullOrBlank()) {
+
+                    binding.imgPerfilCuidadora.imageTintList = null
+
+                    Glide.with(this@PerfilCuidadorFragment)
+                        .load(usuario.foto)
+                        .placeholder(R.drawable.person_icon)
+                        .error(R.drawable.person_icon)
+                        .centerCrop()
+                        .into(binding.imgPerfilCuidadora)
+
+                } else {
+
+                    Glide.with(this@PerfilCuidadorFragment)
+                        .clear(binding.imgPerfilCuidadora)
+
+                    binding.imgPerfilCuidadora.setImageResource(
+                        R.drawable.person_icon
+                    )
+
+                    binding.imgPerfilCuidadora.imageTintList =
+                        ColorStateList.valueOf(
+                            Color.parseColor("#FFFFFF")
+                        )
+                }
 
             } catch (e: Exception) {
 

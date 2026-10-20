@@ -10,6 +10,9 @@ import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacienteDetailBinding
 import com.google.android.material.tabs.TabLayoutMediator
+import android.content.res.ColorStateList
+import android.graphics.Color
+import com.bumptech.glide.Glide
 
 class DetallePacienteFragment : Fragment() {
 
@@ -85,9 +88,41 @@ class DetallePacienteFragment : Fragment() {
             paciente?.let {
                 val nombreCompleto = "${it.nombre ?: ""} ${it.apellido ?: ""}".trim()
                 binding.tvNombrePacientePerfil.text =
-                    if (nombreCompleto.isNotEmpty()) nombreCompleto else "Paciente sin nombre"
+                    if (nombreCompleto.isNotEmpty()) {
+                        nombreCompleto
+                    }else{
+                        "Paciente sin nombre"
+                    }
+
+            if (!it.foto.isNullOrBlank()){
+
+                binding.imgAvatar.imageTintList= null
+
+                Glide.with(this)
+                    .load(it.foto)
+                    .placeholder(R.drawable.person_icon)
+                    .error(R.drawable.person_icon)
+                    .centerCrop()
+                    .into(binding.imgAvatar)
+
+            } else {
+
+                Glide.with(this)
+                    .clear(binding.imgAvatar)
+
+                binding.imgAvatar.setImageResource(
+                    R.drawable.person_icon
+                )
+
+                binding.imgAvatar.imageTintList =
+                    ColorStateList.valueOf(
+                        Color.parseColor("#2563EB")
+                    )
+
+            }
             }
         }
+
     }
 
     private fun setupViewPagerAndTabs() {

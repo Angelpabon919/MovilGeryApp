@@ -6,6 +6,7 @@ class Usuario (
     @SerializedName("id_usuario")
     val idUsuario: Int? = null,
 
+
     @SerializedName("tipo_documento")
     val tipoDocumento: String,
 
@@ -23,6 +24,9 @@ class Usuario (
 
     @SerializedName("telefono")
     val telefono: String,
+
+    @SerializedName("foto")
+    val foto: String?=null,
 
     @SerializedName("fecha_ingreso")
     val fechaIngreso: String? = null,

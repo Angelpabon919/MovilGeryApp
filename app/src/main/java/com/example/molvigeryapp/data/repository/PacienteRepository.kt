@@ -23,6 +23,7 @@ import com.example.molvigeryapp.data.model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import okhttp3.MultipartBody
 
 class PacienteRepository {
 
@@ -55,6 +56,43 @@ class PacienteRepository {
                 null
             }
         }
+    suspend fun subirFotoUsuario(
+        idUsuario: Int,
+        foto: MultipartBody.Part
+    ): Usuario? =
+        withContext(Dispatchers.IO) {
+            try {
+
+                val respuesta =
+                    api.actualizarFotoUsuario(
+                        idUsuario,
+                        foto
+                    )
+
+                if (respuesta.isSuccessful) {
+                    respuesta.body()
+                } else {
+
+                    Log.e(
+                        "FOTO_USUARIO",
+                        "Error HTTP ${respuesta.code()}: ${respuesta.errorBody()?.string()}"
+                    )
+
+                    null
+                }
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "FOTO_USUARIO",
+                    "Error al subir foto del usuario",
+                    e
+                )
+
+                null
+            }
+        }
+
 
     suspend fun cambiarContrasena(
         idUsuario: Int,

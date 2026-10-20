@@ -13,10 +13,37 @@ import android.widget.ScrollView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.molvigeryapp.R
+import android.net.Uri
+import android.widget.ImageView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import com.example.molvigeryapp.data.repository.PacienteRepository
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class EditarPerfilCuidadorFragment : Fragment() {
 
     private var globalLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
+
+    private var fotoSeleccionadaUri: Uri?=null
+
+    private val selectorImagen =
+        registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri ->
+
+            if (uri != null) {
+                fotoSeleccionadaUri = uri
+
+                view?.findViewById<ImageView>(
+                    R.id.imgEditarPerfil
+                )?.setImageURI(uri)
+            }
+        }
+
+
 
     private val preferencias by lazy {
         requireContext().getSharedPreferences(
@@ -178,43 +205,142 @@ class EditarPerfilCuidadorFragment : Fragment() {
                 edtTelefono?.requestFocus()
                 return@setOnClickListener
             }
+            val idUsuario = requireContext()
+                .getSharedPreferences("SESION", Context.MODE_PRIVATE)
+                .getInt("ID_USUARIO", -1)
 
-            preferencias.edit()
-                .putString("nombre", nombre)
-                .putString("documento", documento)
-                .putString("correo", correo)
-                .putString("telefono", telefono)
-                .apply()
+            if (idUsuario == -1) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró el usuario de la sesión",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
 
-            Toast.makeText(
-                requireContext(),
-                "Información actualizada correctamente",
-                Toast.LENGTH_SHORT
-            ).show()
+            val uriFoto = fotoSeleccionadaUri
 
-            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-            imm.hideSoftInputFromWindow(view.windowToken, 0)
+            if (uriFoto != null) {
 
-            parentFragmentManager.popBackStack()
+                lifecycleScope.launch {
+
+                    try {
+
+                        val inputStream =
+                            requireContext().contentResolver.openInputStream(uriFoto)
+
+                        val bytes = inputStream?.readBytes()
+
+                        inputStream?.close()
+
+                        if (bytes == null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "No se pudo leer la imagen",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            return@launch
+                        }
+
+                        val mimeType =
+                            requireContext().contentResolver.getType(uriFoto)
+                                ?: "image/jpeg"
+
+                        val requestBody =
+                            bytes.toRequestBody(
+                                mimeType.toMediaTypeOrNull()
+                            )
+
+                        val fotoPart =
+                            MultipartBody.Part.createFormData(
+                                "foto",
+                                "foto_perfil.jpg",
+                                requestBody
+                            )
+
+                        val usuarioActualizado =
+                            PacienteRepository().subirFotoUsuario(
+                                idUsuario,
+                                fotoPart
+                            )
+
+                        if (usuarioActualizado != null) {
+
+                            Toast.makeText(
+                                requireContext(),
+                                "Foto actualizada correctamente",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            preferencias.edit()
+                                .putString("nombre", nombre)
+                                .putString("documento", documento)
+                                .putString("correo", correo)
+                                .putString("telefono", telefono)
+                                .apply()
+
+                            parentFragmentManager.popBackStack()
+
+                        } else {
+
+                            Toast.makeText(
+                                requireContext(),
+                                "No se pudo guardar la foto",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                    } catch (e: Exception) {
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Error al subir la foto",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            if (uriFoto == null) {
+
+                preferencias.edit()
+                    .putString("nombre", nombre)
+                    .putString("documento", documento)
+                    .putString("correo", correo)
+                    .putString("telefono", telefono)
+                    .apply()
+
+                Toast.makeText(
+                    requireContext(),
+                    "Información actualizada correctamente",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                val imm = requireContext().getSystemService(
+                    Context.INPUT_METHOD_SERVICE
+                ) as android.view.inputmethod.InputMethodManager
+
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+
+                parentFragmentManager.popBackStack()
+            }
+
+        }}
+
+            private fun configurarCambiarFoto(view: View) {
+                val btnCambiarFoto =
+                    view.findViewById<View>(R.id.btnCambiarFoto)
+
+                btnCambiarFoto?.setOnClickListener {
+                    selectorImagen.launch("image/*")
+                }
+            }
+
+            override fun onDestroyView() {
+                globalLayoutListener?.let { listener ->
+                    view?.viewTreeObserver?.removeOnGlobalLayoutListener(listener)
+                }
+                globalLayoutListener = null
+                super.onDestroyView()
+            }
         }
-    }
-
-    private fun configurarCambiarFoto(view: View) {
-        val btnCambiarFoto = view.findViewById<View>(R.id.btnCambiarFoto)
-        btnCambiarFoto?.setOnClickListener {
-            Toast.makeText(
-                requireContext(),
-                "La opción para cambiar la foto estará disponible próximamente",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    override fun onDestroyView() {
-        globalLayoutListener?.let { listener ->
-            view?.viewTreeObserver?.removeOnGlobalLayoutListener(listener)
-        }
-        globalLayoutListener = null
-        super.onDestroyView()
-    }
-}

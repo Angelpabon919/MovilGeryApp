@@ -29,6 +29,8 @@ import com.example.molvigeryapp.data.model.NotificacionResponse
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Usuario
 import okhttp3.ResponseBody
+import okhttp3.MultipartBody
+import retrofit2.http.Part
 import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
 import com.example.molvigeryapp.data.model.RespuestaMensaje
 import com.example.molvigeryapp.data.model.CitaApiResponse
@@ -47,6 +49,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -240,6 +243,12 @@ interface ApiService {
         @Path("id") id: Int,
         @Body datos: Map<String, @JvmSuppressWildcards Any>
     ): Response<Usuario>
+    @Multipart
+    @PATCH("usuarios/{id}/")
+    suspend fun actualizarFotoUsuario(
+        @Path("id") idUsuario: Int,
+        @Part foto: MultipartBody.Part
+    ):Response<Usuario>
 
 
     // =========================================================

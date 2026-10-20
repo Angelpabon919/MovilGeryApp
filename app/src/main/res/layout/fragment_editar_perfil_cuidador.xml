@@ -121,8 +121,9 @@
                     android:id="@+id/imgEditarPerfil"
                     android:layout_width="90dp"
                     android:layout_height="90dp"
-                    android:padding="12dp"
                     android:src="@drawable/person"
+                    android:clipToOutline="true"
+                    android:scaleType="centerCrop"
                     android:background="@drawable/bg_estado_perfil"
                     android:contentDescription="Foto de perfil" />
 
