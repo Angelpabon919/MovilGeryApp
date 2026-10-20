@@ -78,9 +78,10 @@
             android:layout_height="78dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
-            android:padding="10dp"
             android:src="@drawable/person_icon"
+            android:clipToOutline="true"
             android:background="@drawable/bg_estado_perfil"
+            android:scaleType="centerCrop"
             android:contentDescription="Foto de la cuidadora" />
 
         <!-- NOMBRE -->
