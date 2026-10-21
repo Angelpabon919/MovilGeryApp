@@ -5,6 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.data.model.Cuidador
 import com.example.molvigeryapp.databinding.ItemCuidadorEncargadoBinding
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.molvigeryapp.R
 
 class CuidadorAdapter(
     private var lista: List<Cuidador>,
@@ -70,6 +73,17 @@ class CuidadorAdapter(
 
         holder.binding.txtPacientes.text =
             "${cuidador.pacientes} pacientes"
+
+
+        // FOTO DEL CUIDADOR
+        Glide.with(holder.itemView)
+            .load(cuidador.foto)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+            .centerCrop()
+            .into(holder.binding.imgCuidador)
+
 
 
         // ==========================================

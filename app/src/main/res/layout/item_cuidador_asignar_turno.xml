@@ -35,17 +35,17 @@
         <FrameLayout
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/bg_icono_cuidador"
-            android:clipToOutline="true">
+            android:background="@drawable/bg_foto_perfil"
+            android:padding="2dp">
 
-            <ImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/iconoCuidador"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="10dp"
-                android:src="@drawable/persona_encargado"
                 android:scaleType="centerCrop"
-                android:contentDescription="Foto del cuidador" />
+                android:src="@drawable/persona_encargado"
+                android:contentDescription="Foto del cuidador"
+                app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
 
         </FrameLayout>
 

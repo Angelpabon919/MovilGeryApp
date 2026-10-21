@@ -1,3 +1,4 @@
+
 package com.example.molvigeryapp.utils
 
 import java.text.SimpleDateFormat
@@ -13,18 +14,13 @@ object FechaNotificacionUtils {
     fun parsearFecha(valor: String): Date? {
         if (valor.isBlank()) return null
 
-        // Normalizar fracciones de segundo ISO a milisegundos.
-        // Ejemplo: .123456-05:00 -> .123-05:00
-        val normalizada = valor.trim().replace(
-            Regex("""\.(\d{3})\d+(?=Z|[+-]\d{2}:\d{2}$)"""),
-            ".$1"
-        )
-
         val formatos = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX",
             "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
             "yyyy-MM-dd'T'HH:mm:ssXXX",
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd"
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'"
         )
 
         for (patron in formatos) {
@@ -34,13 +30,13 @@ object FechaNotificacionUtils {
                     Locale.US
                 ).apply {
                     isLenient = false
-                    timeZone = zonaColombia
+                    timeZone = TimeZone.getTimeZone("UTC")
                 }
 
                 val posicion = java.text.ParsePosition(0)
-                val fecha = formato.parse(normalizada, posicion)
+                val fecha = formato.parse(valor.trim(), posicion)
 
-                if (fecha != null && posicion.index == normalizada.length) {
+                if (fecha != null && posicion.index == valor.trim().length) {
                     return fecha
                 }
             } catch (_: Exception) {
@@ -84,7 +80,6 @@ object FechaNotificacionUtils {
         }
     }
 
-    fun fechaOrdenamiento(valor: String): Long {
-        return parsearFecha(valor)?.time ?: 0L
-    }
+    fun fechaOrdenamiento(valor: String): Long =
+        parsearFecha(valor)?.time ?: 0L
 }

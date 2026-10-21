@@ -25,9 +25,6 @@ class Usuario (
     @SerializedName("telefono")
     val telefono: String,
 
-    @SerializedName("foto")
-    val foto: String?=null,
-
     @SerializedName("fecha_ingreso")
     val fechaIngreso: String? = null,
 
@@ -39,4 +36,7 @@ class Usuario (
 
     @SerializedName("id_rol")
     val idRol: Int? = null,
+
+    @SerializedName("foto")
+    val foto: String? = null
 )

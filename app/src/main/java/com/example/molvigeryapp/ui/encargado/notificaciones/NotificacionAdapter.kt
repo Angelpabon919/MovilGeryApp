@@ -102,23 +102,25 @@ class NotificacionAdapter(
         private fun actualizarFecha(notificacion: Notificacion) {
             val fechaOriginal = notificacion.fechaHora
 
-            val fecha = FechaNotificacionUtils.parsearFecha(
-                fechaOriginal
+            android.util.Log.d(
+                "DEBUG_FECHA",
+                "ID=${notificacion.idNotificacion} | " +
+                        "fechaHora=${notificacion.fechaHora} | " +
+                        "textoCalculado=${
+                            FechaNotificacionUtils.parsearFecha(notificacion.fechaHora)
+                                ?.let {
+                                    FechaNotificacionUtils.tiempoTranscurrido(it)
+                                } ?: "Fecha no disponible"
+                        }"
             )
+
+            val fecha = FechaNotificacionUtils.parsearFecha(fechaOriginal)
 
             binding.txtFechaNotificacion.text =
                 if (fecha != null) {
                     FechaNotificacionUtils.tiempoTranscurrido(fecha)
                 } else {
-                    Log.e(
-                        TAG,
-                        "No se pudo interpretar fechaHora='$fechaOriginal'. " +
-                                "Fecha recibida='${notificacion.fecha}'"
-                    )
-
-                    // No mostrar una fecha potencialmente incorrecta
-                    // cuando no podemos interpretar la fecha original.
-                    "Fecha no disponible"
+                    "Error al interpretar fechaHora"
                 }
         }
     }

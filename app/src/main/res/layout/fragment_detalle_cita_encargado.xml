@@ -135,14 +135,23 @@
                     android:padding="16dp">
 
 
-                    <ImageView
-                        android:id="@+id/imgPacienteDetalleCita"
+                    <!-- FOTO DEL PACIENTE -->
+                    <FrameLayout
                         android:layout_width="54dp"
                         android:layout_height="54dp"
-                        android:padding="9dp"
-                        android:src="@drawable/img"
-                        android:contentDescription="Paciente" />
+                        android:background="@drawable/bg_foto_perfil"
+                        android:padding="2dp">
 
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/imgPacienteDetalleCita"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/persona_encargado"
+                            android:contentDescription="Foto del paciente"
+                            app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
+
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -314,6 +323,25 @@
 
                     </LinearLayout>
 
+                    <!-- LUGAR DE LA CITA -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Lugar de la cita"
+                        android:textColor="#98A2B3"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtLugarDetalleCita"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text=""
+                        android:textColor="#1F2937"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
 
                     <!-- MOTIVO -->
 
@@ -371,14 +399,23 @@
                     android:padding="16dp">
 
 
-                    <ImageView
-                        android:id="@+id/imgCuidadorDetalleCita"
+                    <!-- FOTO DEL CUIDADOR RESPONSABLE -->
+                    <FrameLayout
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:padding="9dp"
-                        android:src="@drawable/persona_encargado"
-                        android:contentDescription="Cuidador" />
+                        android:background="@drawable/bg_foto_perfil"
+                        android:padding="2dp">
 
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/imgCuidadorDetalleCita"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/persona_encargado"
+                            android:contentDescription="Foto del cuidador responsable"
+                            app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
+
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"

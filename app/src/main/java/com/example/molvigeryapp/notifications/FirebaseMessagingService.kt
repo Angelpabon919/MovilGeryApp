@@ -127,6 +127,23 @@ class FirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "From: ${remoteMessage.from}")
         Log.d(TAG, "Data: ${remoteMessage.data}")
 
+        // control pushs
+
+        val preferencias = getSharedPreferences(
+            "SESION",
+            MODE_PRIVATE
+        )
+
+        val pushActivadas = preferencias.getBoolean(
+            "PUSH_ACTIVADAS",
+            true
+        )
+
+        if (!pushActivadas) {
+            Log.d(TAG, "Push desactivadas por el usuario. No se mostrará.")
+            return
+        }
+
         val titulo = remoteMessage.notification?.title
             ?: remoteMessage.data["titulo"]
             ?: "GerIApp"

@@ -4,6 +4,7 @@ import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.CrearCitaRequest
+import kotlinx.coroutines.CancellationException
 import com.example.molvigeryapp.data.model.Paciente
 
 object CitasRepository {
@@ -73,6 +74,61 @@ object CitasRepository {
     }
 
     // =========================================================
+    // ELIMINAR Y EDITAR
+    // =========================================================
+
+    suspend fun actualizarCita(
+        id: String,
+        cita: CrearCitaRequest
+    ): Result<CitaApiResponse> {
+        return try {
+            val respuesta = RetrofitClient.apiService
+                .actualizarCita(id, cita)
+
+            if (respuesta.isSuccessful) {
+                val cuerpo = respuesta.body()
+
+                if (cuerpo != null) {
+                    Result.success(cuerpo)
+                } else {
+                    Result.failure(
+                        Exception("El servidor no devolvió la cita actualizada.")
+                    )
+                }
+            } else {
+                Result.failure(
+                    Exception("Error HTTP ${respuesta.code()} al actualizar la cita.")
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun eliminarCita(
+        id: String
+    ): Result<Unit> {
+        return try {
+            val respuesta = RetrofitClient.apiService
+                .eliminarCita(id)
+
+            if (respuesta.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    Exception("Error HTTP ${respuesta.code()} al eliminar la cita.")
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // =========================================================
     // MÉTODOS EN MEMORIA LOCAL
     // =========================================================
 
@@ -120,10 +176,6 @@ object CitasRepository {
             it.id == id
         }
     }
-
-    fun eliminarCita(
-        id: Int
-    ) = eliminarCita(id.toString())
 
 
     // =========================================================

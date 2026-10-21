@@ -31,21 +31,21 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- ICONO DEL PACIENTE -->
+            <!-- FOTO DEL PACIENTE -->
             <FrameLayout
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_icono_cuidador"
-                android:clipToOutline="true">
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_foto_perfil"
+                android:padding="2dp">
 
-                <ImageView
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/imgPacienteCita"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="10dp"
+                    android:scaleType="centerCrop"
                     android:src="@drawable/persona_encargado"
-                    android:scaleType="centerInside"
-                    android:contentDescription="Paciente" />
+                    android:contentDescription="Foto del paciente"
+                    app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
 
             </FrameLayout>
 

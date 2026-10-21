@@ -538,6 +538,10 @@ class BitacoraEncargadoFragment : Fragment() {
                             idUsuarioCuidador
                 }
 
+            // Actualizar el contador con los registros reales
+            // del cuidador obtenidos desde la API.
+            actualizarContadorBitacora()
+
 
             // =================================================
             // ACTUALIZAR ADAPTER
@@ -634,6 +638,18 @@ class BitacoraEncargadoFragment : Fragment() {
             cargandoDatos =
                 false
         }
+    }
+
+
+    // =====================================================
+    // ACTUALIZAR CONTADOR DE BITÁCORA
+    // =====================================================
+
+    private fun actualizarContadorBitacora() {
+        if (_binding == null) return
+
+        binding.txtCantidadRegistrosBitacora.text =
+            listaBitacoras.size.toString()
     }
 
 

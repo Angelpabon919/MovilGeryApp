@@ -40,6 +40,11 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/geriapp_notification_color" />
 
+        <!-- recorte button-->
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

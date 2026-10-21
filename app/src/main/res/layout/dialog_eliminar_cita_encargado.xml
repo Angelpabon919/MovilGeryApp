@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_eliminar_cita_encargado">
+
+    <LinearLayout
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_icono_eliminar_cita_encargado">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_delete"
+            android:contentDescription="Eliminar cita"
+            app:tint="#D32F2F" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Eliminar cita"
+        android:textColor="#1D2939"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="¿Estás seguro de que deseas eliminar esta cita? Esta acción no se puede deshacer."
+        android:textColor="#687078"
+        android:textSize="14sp"
+        android:lineSpacingExtra="3dp"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal">
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelarEliminarCita"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Cancelar"
+            android:textAllCaps="false"
+            android:textColor="#344054"
+            android:textSize="14sp"
+            android:backgroundTint="#F8FAFC"
+            app:cornerRadius="14dp"
+            app:strokeColor="#D0D5DD"
+            app:strokeWidth="1dp"
+            app:rippleColor="#E9ECEF" />
+
+
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirmarEliminarCita"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="Eliminar"
+            android:textAllCaps="false"
+            android:textColor="#D32F2F"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:backgroundTint="#FFF1F1"
+            app:cornerRadius="14dp"
+            app:strokeColor="#FFD6D6"
+            app:strokeWidth="1dp"
+            app:rippleColor="#FFD6D6" />
+
+
+
+    </LinearLayout>
+
+</LinearLayout>

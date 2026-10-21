@@ -112,14 +112,22 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <ImageView
-                    android:id="@+id/imgEditarPerfil"
+                <FrameLayout
                     android:layout_width="90dp"
                     android:layout_height="90dp"
-                    android:padding="12dp"
-                    android:src="@drawable/persona_encargado"
-                    android:background="@drawable/bg_estado_perfil"
-                    android:contentDescription="Foto de perfil" />
+                    android:background="@drawable/bg_foto_perfil"
+                    android:padding="2dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/imgEditarPerfil"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/persona_encargado"
+                        android:contentDescription="Foto de perfil"
+                        app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
+
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/btnCambiarFoto"

@@ -5,6 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.databinding.ItemPacienteCitaBinding
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.molvigeryapp.R
 
 class PacienteCitaAdapter(
     private var listaPacientes: List<Paciente>,
@@ -25,6 +28,16 @@ class PacienteCitaAdapter(
 
             binding.txtEpsPaciente.text =
                 "EPS: ${paciente.eps ?: "No registrada"}"
+
+            // Cargar fotografía del paciente desde la API
+            Glide.with(binding.imgPaciente)
+                .load(paciente.foto)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .placeholder(R.drawable.person_icon)
+                .error(R.drawable.person_icon)
+                .fallback(R.drawable.person_icon)
+                .centerCrop()
+                .into(binding.imgPaciente)
 
             binding.root.setOnClickListener {
                 onPacienteClick(paciente)

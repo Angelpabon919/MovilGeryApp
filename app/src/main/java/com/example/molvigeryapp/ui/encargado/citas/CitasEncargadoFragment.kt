@@ -172,10 +172,15 @@ class CitasEncargadoFragment : Fragment() {
     // CITAS
     // =========================================================
 
+
     private fun configurarCitas() {
-        citaAdapter = CitaAdapter(emptyList()) { cita ->
-            abrirDetalleCita(cita)
-        }
+        citaAdapter = CitaAdapter(
+            listaCitas = emptyList(),
+            onCitaClick = { cita ->
+                abrirDetalleCita(cita)
+            },
+            listaPacientes = emptyList()
+        )
 
         binding.recyclerCitasEncargado.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -184,6 +189,7 @@ class CitasEncargadoFragment : Fragment() {
             isNestedScrollingEnabled = false
         }
     }
+
 
     private fun ordenarCitasPorFechaRegistro(
         citas: List<Cita>
@@ -245,6 +251,10 @@ class CitasEncargadoFragment : Fragment() {
                 if (!isActive || _binding == null) return@launch
 
                 listaPacientes = pacientes
+
+                // Actualizar las fotos y los datos de los pacientes en las citas.
+                citaAdapter.actualizarPacientes(listaPacientes)
+
                 actualizarListaPacientes()
 
                 val citas = CitasRepository.obtenerCitasDesdeApi()

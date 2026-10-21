@@ -18,6 +18,9 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.molvigeryapp.R
 
 class PerfilPacienteEncargadoFragment : Fragment() {
 
@@ -116,6 +119,23 @@ class PerfilPacienteEncargadoFragment : Fragment() {
         cargarPaciente()
     }
 
+    // =========================================================
+    // CARGAR FOTO DEL PACIENTE
+    // =========================================================
+
+    private fun cargarFotoPaciente(pacienteActual: Paciente) {
+
+        val bindingActual = _binding ?: return
+
+        Glide.with(bindingActual.imgPerfilPaciente)
+            .load(pacienteActual.foto?.takeIf { it.isNotBlank() })
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .fallback(R.drawable.persona_encargado)
+            .centerCrop()
+            .into(bindingActual.imgPerfilPaciente)
+    }
 
     // =========================================================
     // CARGAR PACIENTE DESDE API
@@ -286,6 +306,8 @@ class PerfilPacienteEncargadoFragment : Fragment() {
         val bindingActual =
             _binding ?: return
 
+        // Cargar fotografía desde la API
+        cargarFotoPaciente(pacienteActual)
 
         // =====================================================
         // INFORMACIÓN PRINCIPAL

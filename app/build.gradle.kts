@@ -40,7 +40,7 @@ android {
 dependencies {
     implementation(platform(libs.firebase.bom))
     implementation("com.google.firebase:firebase-messaging")
-
+    implementation("com.vanniktech:android-image-cropper:4.6.0")
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)

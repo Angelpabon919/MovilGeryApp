@@ -31,15 +31,22 @@
             app:cardCornerRadius="21dp"
             app:cardElevation="0dp">
 
-            <TextView
-                android:id="@+id/txtInicialCuidador"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="C"
-                android:textColor="#3B5BDB"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+            <FrameLayout
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_foto_perfil"
+                android:padding="2dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/imgCuidadorResumen"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/persona_encargado"
+                    android:contentDescription="Foto del cuidador"
+                    app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
+
+            </FrameLayout>
 
         </androidx.cardview.widget.CardView>
 
