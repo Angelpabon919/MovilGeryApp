@@ -61,4 +61,26 @@ object FcmTokenRepository {
             false
         }
     }
+
+    suspend fun configurarPreferenciaPush(
+        idUsuario: Int,
+        activadas: Boolean
+    ): Boolean {
+        if (idUsuario <= 0) return false
+
+        return try {
+            val datos = mapOf(
+                "id_usuario" to idUsuario,
+                "activadas" to activadas
+            )
+
+            val respuesta = RetrofitClient.apiService
+                .configurarPreferenciaPush(datos)
+
+            respuesta.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
 }

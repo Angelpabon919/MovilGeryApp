@@ -36,10 +36,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
+import com.example.molvigeryapp.data.model.NotificacionTurnoRequest
+import java.time.Instant
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import java.util.UUID
 
@@ -2028,6 +2032,85 @@ class AsignarTurnoEncargadoFragment : Fragment() {
         }
     }
 
+    private suspend fun enviarNotificacionesTurno(
+        turno: Turno,
+        cuidadores: List<Usuario>,
+        fechaInicioTexto: String,
+        fechaFinTexto: String
+    ): Int {
+
+        var fallidas = 0
+
+        val titulo = "Nuevo turno asignado"
+
+
+        //mensaje personalizados para el turno asignado
+        val mensaje =
+            "Se te asignó el turno ${turno.nombre}, " +
+                    "desde el $fechaInicioTexto hasta el $fechaFinTexto."
+
+        for (cuidador in cuidadores) {
+
+            val idUsuario = cuidador.idUsuario ?: continue
+
+            try {
+
+                val solicitud = NotificacionTurnoRequest(
+                    titulo = titulo,
+                    tipo = "turno",
+                    mensaje = mensaje,
+                    enviar_correo = false,
+                    fecha_hora = SimpleDateFormat(
+                        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                        Locale.US
+                    ).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }.format(Date()),
+                    estado = true,
+                    id_paciente = null,
+                    id_usuario = idUsuario
+                )
+
+                val respuesta = RetrofitClient.apiService
+                    .crearNotificacionTurno(solicitud)
+
+                if (!respuesta.isSuccessful) {
+
+                    fallidas++
+
+                    android.util.Log.e(
+                        "NOTIFICACION_TURNO",
+                        "Error para usuario $idUsuario: " +
+                                "${respuesta.code()} ${respuesta.errorBody()?.string()}"
+                    )
+
+                } else {
+
+                    android.util.Log.d(
+                        "NOTIFICACION_TURNO",
+                        "Notificación creada para usuario $idUsuario"
+                    )
+                }
+
+            } catch (e: CancellationException) {
+
+                throw e
+
+            } catch (e: Exception) {
+
+                fallidas++
+
+                android.util.Log.e(
+                    "NOTIFICACION_TURNO",
+                    "No se pudo notificar al usuario $idUsuario",
+                    e
+                )
+            }
+        }
+
+        return fallidas
+    }
+
     // =========================================================
     // CONFIGURAR BOTÓN
     // =========================================================
@@ -2949,13 +3032,43 @@ class AsignarTurnoEncargadoFragment : Fragment() {
                     return@launch
                 }
 
+// Obtener el rango completo de fechas.
+                val fechaInicioTexto =
+                    formatoFechaVisible.format(fechaInicio!!.time)
 
-                Toast.makeText(
-                    context,
-                    "Turno asignado correctamente.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                val fechaFinTexto =
+                    formatoFechaVisible.format(fechaFin!!.time)
 
+// Enviar una notificación por cuidador,
+// únicamente después de guardar las asignaciones.
+                val notificacionesFallidas = enviarNotificacionesTurno(
+                    turno = turno,
+                    cuidadores = cuidadoresSeleccionados,
+                    fechaInicioTexto = fechaInicioTexto,
+                    fechaFinTexto = fechaFinTexto
+                )
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                if (notificacionesFallidas == 0) {
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Turnos asignados y notificaciones enviadas.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                } else {
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Turnos asignados, pero falló el envío de " +
+                                "$notificacionesFallidas notificaciones.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
 
                 limpiarFormulario()
 

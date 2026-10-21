@@ -23,6 +23,9 @@ import com.example.molvigeryapp.ui.encargado.notificaciones.ContadorNotificacion
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import com.example.molvigeryapp.data.repository.FcmTokenRepository
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 
 
 class PerfilEncargadoFragment : Fragment() {
@@ -69,6 +72,113 @@ class PerfilEncargadoFragment : Fragment() {
         )
     }
 
+    // activar y desactivar push
+
+
+    private fun obtenerPreferenciasPush(): android.content.SharedPreferences? {
+        val contexto = context ?: return null
+
+        return contexto.getSharedPreferences(
+            "PREFERENCIAS_NOTIFICACIONES",
+            Context.MODE_PRIVATE
+        )
+    }
+
+    private fun notificacionesPushActivadas(): Boolean {
+        return obtenerPreferenciasPush()
+            ?.getBoolean("PUSH_ACTIVADAS", true)
+            ?: true
+    }
+
+    private fun guardarPreferenciaPush(activadas: Boolean) {
+        obtenerPreferenciasPush()
+            ?.edit()
+            ?.putBoolean("PUSH_ACTIVADAS", activadas)
+            ?.apply()
+    }
+
+    private fun configurarInterruptorPush() {
+        binding.switchNotificaciones.setOnCheckedChangeListener(null)
+        binding.switchNotificaciones.isChecked = notificacionesPushActivadas()
+
+        binding.switchNotificaciones.setOnCheckedChangeListener { _, activadas ->
+            val preferenciasSesion = obtenerPreferenciasSesion()
+            val idUsuario = preferenciasSesion?.getInt("ID_USUARIO", -1) ?: -1
+
+            if (idUsuario <= 0) {
+                binding.switchNotificaciones.setOnCheckedChangeListener(null)
+                binding.switchNotificaciones.isChecked = !activadas
+                configurarInterruptorPush()
+
+                mostrarMensaje(
+                    "No se encontró el usuario de la sesión.",
+                    Toast.LENGTH_LONG
+                )
+                return@setOnCheckedChangeListener
+            }
+
+            // Evitar varios cambios mientras se consulta el servidor.
+            binding.switchNotificaciones.isEnabled = false
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val actualizado =
+                        FcmTokenRepository.configurarPreferenciaPush(
+                            idUsuario = idUsuario,
+                            activadas = activadas
+                        )
+
+                    if (_binding == null) return@launch
+
+                    if (actualizado) {
+                        guardarPreferenciaPush(activadas)
+
+                        mostrarMensaje(
+                            if (activadas) {
+                                "Notificaciones push activadas."
+                            } else {
+                                "Notificaciones push desactivadas."
+                            },
+                            Toast.LENGTH_SHORT
+                        )
+                    } else {
+                        // El servidor no confirmó el cambio.
+                        binding.switchNotificaciones.setOnCheckedChangeListener(null)
+                        binding.switchNotificaciones.isChecked = !activadas
+                        configurarInterruptorPush()
+
+                        mostrarMensaje(
+                            "No se pudo actualizar la preferencia en el servidor. Verifica tu conexión y que tengas un token FCM registrado.",
+                            Toast.LENGTH_LONG
+                        )
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(
+                        "PERFIL_ENCARGADO",
+                        "Error al actualizar la preferencia de notificaciones push",
+                        e
+                    )
+
+                    if (_binding != null) {
+                        binding.switchNotificaciones.setOnCheckedChangeListener(null)
+                        binding.switchNotificaciones.isChecked = !activadas
+                        configurarInterruptorPush()
+
+                        mostrarMensaje(
+                            "Error de conexión al cambiar las notificaciones.",
+                            Toast.LENGTH_LONG
+                        )
+                    }
+                } finally {
+                    if (_binding != null) {
+                        binding.switchNotificaciones.isEnabled = true
+                    }
+                }
+            }
+        }
+    }
 
     // =====================================================
     // CREAR VISTA
@@ -122,7 +232,7 @@ class PerfilEncargadoFragment : Fragment() {
         // =================================================
 
         configurarNotificaciones()
-
+        configurarInterruptorPush()
         configurarEditarPerfil()
 
         configurarCambiarContrasena()
@@ -154,6 +264,29 @@ class PerfilEncargadoFragment : Fragment() {
         if (_binding != null) {
             cargarDatosPerfil()
         }
+    }
+
+    private fun mostrarFotoPerfil(url: String?) {
+        val bindingActual = _binding ?: return
+
+        if (url.isNullOrBlank()) {
+            Glide.with(this)
+                .clear(bindingActual.imgPerfilEncargado)
+
+            bindingActual.imgPerfilEncargado.setImageResource(
+                R.drawable.persona_encargado
+            )
+            return
+        }
+
+        Glide.with(this)
+            .load(url)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .skipMemoryCache(true)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .centerCrop()
+            .into(bindingActual.imgPerfilEncargado)
     }
 
 
@@ -213,11 +346,7 @@ class PerfilEncargadoFragment : Fragment() {
 
             try {
 
-                /*
-                 * UsuarioRepository consulta:
-                 *
-                 * GET /usuarios/{id}/
-                 */
+                /* UsuarioRepository consulta GET /usuarios/{id}/ */
 
                 val usuario =
                     repository.obtenerUsuarioPorId(
@@ -270,6 +399,8 @@ class PerfilEncargadoFragment : Fragment() {
                     .txtNombreCompletoPerfil
                     .text =
                     nombreCompleto
+
+                mostrarFotoPerfil(usuario.foto)
 
 
                 // =================================================

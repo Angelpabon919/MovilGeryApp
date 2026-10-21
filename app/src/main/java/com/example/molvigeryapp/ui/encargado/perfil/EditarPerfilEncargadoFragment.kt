@@ -16,6 +16,21 @@ import com.example.molvigeryapp.data.repository.UsuarioRepository
 import com.example.molvigeryapp.databinding.FragmentEditarPerfilEncargadoBinding
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import android.app.AlertDialog
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.molvigeryapp.R
+import android.graphics.Bitmap
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+import android.app.Dialog
+import com.example.molvigeryapp.databinding.DialogOpcionesFotoBinding
+import com.example.molvigeryapp.databinding.DialogConfirmarEliminarFotoBinding
+
 
 class EditarPerfilEncargadoFragment : Fragment() {
 
@@ -51,6 +66,73 @@ class EditarPerfilEncargadoFragment : Fragment() {
     // =====================================================
 
     private var guardandoCambios = false
+
+    // =====================================================
+    // CONTROL DE FOTO DE PERFIL
+    // =====================================================
+
+    private var procesandoFoto = false
+
+    private var fotoPerfilActual: String? = null
+
+    private var fotoPerfilPendiente: Uri? = null
+
+    // Seleccionar una imagen de la galería.
+    private val selectorFotoPerfil =
+        registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+
+            if (uri != null) {
+                recortarFotoPerfil(uri)
+            }
+        }
+
+    // Recortar la imagen seleccionada.
+    private val recortadorFotoPerfil =
+        registerForActivityResult(
+            CropImageContract()
+        ) { resultado ->
+
+            if (resultado.isSuccessful) {
+                val uriRecortada = resultado.uriContent
+
+                if (uriRecortada != null) {
+                    fotoPerfilPendiente = uriRecortada
+
+                    Glide.with(this)
+                        .load(uriRecortada)
+                        .centerCrop()
+                        .into(binding.imgEditarPerfil)
+
+                    mostrarMensaje(
+                        "Vista previa lista. Pulsa Guardar cambios para confirmar.",
+                        Toast.LENGTH_LONG
+                    )
+                } else {
+                    mostrarMensaje(
+                        "No se pudo obtener la imagen recortada.",
+                        Toast.LENGTH_LONG
+                    )
+                }
+            } else {
+                val error = resultado.error
+
+                if (error != null) {
+                    android.util.Log.e(
+                        "EDITAR_PERFIL",
+                        "Error al recortar imagen",
+                        error
+                    )
+
+                    mostrarMensaje(
+                        "No se pudo recortar la imagen.",
+                        Toast.LENGTH_LONG
+                    )
+                }
+                // Si se cancela el recorte, no se cambia la foto.
+            }
+        }
 
 
     // =====================================================
@@ -270,6 +352,14 @@ class EditarPerfilEncargadoFragment : Fragment() {
                         posicion
                     )
 
+                // =================================================
+                // FOTO DE PERFIL
+                // =================================================
+
+                fotoPerfilActual = usuario.foto
+
+                mostrarFotoPerfil(usuario.foto)
+
 
                 // =================================================
                 // FINALIZAR CARGA
@@ -310,6 +400,34 @@ class EditarPerfilEncargadoFragment : Fragment() {
                 )
             }
         }
+    }
+
+
+    // =====================================================
+    // MOSTRAR FOTO DE PERFIL
+    // =====================================================
+
+    private fun mostrarFotoPerfil(url: String?) {
+        val bindingActual = _binding ?: return
+
+        if (url.isNullOrBlank()) {
+            Glide.with(this)
+                .clear(bindingActual.imgEditarPerfil)
+
+            bindingActual.imgEditarPerfil.setImageResource(
+                R.drawable.persona_encargado
+            )
+            return
+        }
+
+        Glide.with(this)
+            .load(url)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .skipMemoryCache(true)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .centerCrop()
+            .into(bindingActual.imgEditarPerfil)
     }
 
 
@@ -1015,6 +1133,30 @@ class EditarPerfilEncargadoFragment : Fragment() {
 
                 if (usuarioActualizado != null) {
 
+                    val uriPendiente = fotoPerfilPendiente
+
+                    if (uriPendiente != null) {
+                        val usuarioConFoto = repository.actualizarFotoUsuario(
+                            context = requireContext(),
+                            idUsuario = idUsuario,
+                            uriFoto = uriPendiente
+                        )
+
+                        if (usuarioConFoto == null) {
+                            mostrarCargando(false)
+
+                            mostrarMensaje(
+                                "Los datos personales se guardaron, pero no se pudo actualizar la foto. Puedes intentarlo nuevamente.",
+                                Toast.LENGTH_LONG
+                            )
+
+                            return@launch
+                        }
+
+                        fotoPerfilActual = usuarioConFoto.foto
+                        fotoPerfilPendiente = null
+                    }
+
                     Toast.makeText(
                         contextoActual,
                         "Información actualizada correctamente.",
@@ -1142,16 +1284,303 @@ class EditarPerfilEncargadoFragment : Fragment() {
 
     private fun configurarCambiarFoto() {
 
-        binding
-            .btnCambiarFoto
-            .setOnClickListener {
+        binding.btnCambiarFoto.setOnClickListener {
+            mostrarOpcionesFoto()
+        }
 
-                mostrarMensaje(
-                    "La opción para cambiar la foto estará disponible próximamente.",
-                    Toast.LENGTH_SHORT
-                )
-            }
+        binding.imgEditarPerfil.setOnClickListener {
+            mostrarOpcionesFoto()
+        }
     }
+
+// =====================================================
+// OPCIONES DE FOTO
+// =====================================================
+
+
+    private fun mostrarOpcionesFoto() {
+        if (procesandoFoto) {
+            mostrarMensaje(
+                "Espera a que termine la operación actual.",
+                Toast.LENGTH_SHORT
+            )
+            return
+        }
+
+        val dialogBinding = DialogOpcionesFotoBinding.inflate(layoutInflater)
+        val dialogo = Dialog(requireContext())
+
+        dialogo.setContentView(dialogBinding.root)
+        dialogo.window?.setBackgroundDrawableResource(
+            android.R.color.transparent
+        )
+
+        val tieneFoto = !fotoPerfilActual.isNullOrBlank()
+
+        dialogBinding.opcionEliminarFoto.visibility =
+            if (tieneFoto) View.VISIBLE else View.GONE
+
+        dialogBinding.txtCambiarFoto.text =
+            if (tieneFoto) "Cambiar foto" else "Seleccionar foto"
+
+        dialogBinding.opcionCambiarFoto.setOnClickListener {
+            dialogo.dismiss()
+            selectorFotoPerfil.launch("image/*")
+        }
+
+        dialogBinding.opcionEliminarFoto.setOnClickListener {
+            dialogo.dismiss()
+            confirmarEliminarFoto()
+        }
+
+        dialogBinding.btnCancelarFoto.setOnClickListener {
+            dialogo.dismiss()
+        }
+
+        dialogo.show()
+
+        dialogo.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+
+    // =====================================================
+// SUBIR FOTO DE PERFIL
+// =====================================================
+
+    private fun subirFotoPerfil(uri: Uri) {
+
+        if (procesandoFoto) return
+
+        val preferencias = obtenerPreferenciasSesion()
+        val idUsuario = preferencias?.getInt("ID_USUARIO", -1) ?: -1
+
+        if (idUsuario <= 0) {
+            mostrarMensaje(
+                "No se encontró el usuario de la sesión.",
+                Toast.LENGTH_LONG
+            )
+            return
+        }
+
+        procesandoFoto = true
+        mostrarCargando(true)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val usuarioActualizado =
+                    repository.actualizarFotoUsuario(
+                        context = requireContext(),
+                        idUsuario = idUsuario,
+                        uriFoto = uri
+                    )
+
+                if (_binding == null) return@launch
+
+                if (usuarioActualizado != null) {
+                    fotoPerfilActual = usuarioActualizado.foto
+                    mostrarFotoPerfil(usuarioActualizado.foto)
+
+                    mostrarMensaje(
+                        "Foto de perfil actualizada correctamente.",
+                        Toast.LENGTH_LONG
+                    )
+                } else {
+                    mostrarMensaje(
+                        "No se pudo subir la foto. Inténtalo nuevamente.",
+                        Toast.LENGTH_LONG
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e(
+                    "EDITAR_PERFIL",
+                    "Error al subir la foto",
+                    e
+                )
+
+                if (_binding != null) {
+                    mostrarMensaje(
+                        "Ocurrió un error al subir la foto.",
+                        Toast.LENGTH_LONG
+                    )
+                }
+            } finally {
+                procesandoFoto = false
+
+                if (_binding != null) {
+                    mostrarCargando(false)
+                }
+            }
+        }
+    }
+
+    // =====================================================
+    // RECORTAR FOTO
+    // =====================================================
+
+
+    private fun recortarFotoPerfil(uri: Uri) {
+
+        val opciones = CropImageOptions().apply {
+            cropShape = CropImageView.CropShape.RECTANGLE
+
+            fixAspectRatio = true
+            aspectRatioX = 1
+            aspectRatioY = 1
+
+            guidelines = CropImageView.Guidelines.ON
+
+            imageSourceIncludeGallery = false
+            imageSourceIncludeCamera = false
+
+            outputCompressFormat = Bitmap.CompressFormat.JPEG
+            outputCompressQuality = 95
+
+            // Mostrar los controles de recorte.
+            showCropLabel = true
+            cropMenuCropButtonTitle = "Aceptar"
+            cropMenuCropButtonIcon = 0
+            activityTitle = "Ajustar foto"
+        }
+
+        recortadorFotoPerfil.launch(
+            CropImageContractOptions(
+                uri = uri,
+                cropImageOptions = opciones
+            )
+        )
+    }
+
+
+    // =====================================================
+    // CONFIRMAR ELIMINACIÓN DE FOTO
+    // =====================================================
+
+
+    private fun confirmarEliminarFoto() {
+        val dialogBinding =
+            DialogConfirmarEliminarFotoBinding.inflate(layoutInflater)
+
+        val dialogo = Dialog(requireContext())
+
+        dialogo.setContentView(dialogBinding.root)
+        dialogo.window?.setBackgroundDrawableResource(
+            android.R.color.transparent
+        )
+
+        dialogBinding.btnCancelarEliminar.setOnClickListener {
+            dialogo.dismiss()
+        }
+
+        dialogBinding.btnConfirmarEliminar.setOnClickListener {
+            dialogo.dismiss()
+            eliminarFotoPerfil()
+        }
+
+        dialogo.show()
+
+        dialogo.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+
+// =====================================================
+// ELIMINAR FOTO DE PERFIL
+// =====================================================
+
+    private fun eliminarFotoPerfil() {
+
+        if (procesandoFoto) return
+
+        val preferencias = obtenerPreferenciasSesion()
+        val idUsuario = preferencias?.getInt("ID_USUARIO", -1) ?: -1
+
+        if (idUsuario <= 0) {
+            mostrarMensaje(
+                "No se encontró el usuario de la sesión.",
+                Toast.LENGTH_LONG
+            )
+            return
+        }
+
+        if (fotoPerfilActual.isNullOrBlank()) {
+            mostrarMensaje(
+                "No hay una foto de perfil para eliminar.",
+                Toast.LENGTH_SHORT
+            )
+            return
+        }
+
+        procesandoFoto = true
+        mostrarCargando(true)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val eliminada =
+                    repository.eliminarFotoUsuario(idUsuario)
+
+                if (_binding == null) return@launch
+
+                if (eliminada) {
+                    fotoPerfilActual = null
+                    mostrarFotoPerfil(null)
+
+
+                    mostrarFotoEliminada()
+
+                } else {
+                    mostrarMensaje(
+                        "No se pudo eliminar la foto.",
+                        Toast.LENGTH_LONG
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e(
+                    "EDITAR_PERFIL",
+                    "Error al eliminar la foto",
+                    e
+                )
+
+                if (_binding != null) {
+                    mostrarMensaje(
+                        "Ocurrió un error al eliminar la foto.",
+                        Toast.LENGTH_LONG
+                    )
+                }
+            } finally {
+                procesandoFoto = false
+
+                if (_binding != null) {
+                    mostrarCargando(false)
+                }
+            }
+        }
+    }
+
+    private fun mostrarFotoEliminada() {
+        val toastBinding =
+            com.example.molvigeryapp.databinding.ToastFotoEliminadaBinding
+                .inflate(layoutInflater)
+
+        Toast(requireContext()).apply {
+            duration = Toast.LENGTH_LONG
+            view = toastBinding.root
+            setGravity(
+                android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL,
+                0,
+                dp(80)
+            )
+        }.show()
+    }
+
 
 
     // =====================================================

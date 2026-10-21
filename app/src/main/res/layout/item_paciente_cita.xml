@@ -22,23 +22,26 @@
         android:paddingEnd="12dp"
         android:paddingBottom="16dp">
 
-        <!-- Imagen del paciente -->
-        <FrameLayout
-            android:layout_width="54dp"
-            android:layout_height="54dp"
-            android:background="@drawable/bg_icono_paciente"
-            android:clipToOutline="true">
+        <!-- FOTO DEL PACIENTE -->
 
-            <ImageView
+        <FrameLayout
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/bg_foto_perfil"
+            android:padding="2dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgPaciente"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="9dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/person_icon"
-                android:contentDescription="Foto del paciente" />
+                android:contentDescription="Foto del paciente"
+                app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
 
         </FrameLayout>
+
 
         <!-- Información del paciente -->
         <LinearLayout

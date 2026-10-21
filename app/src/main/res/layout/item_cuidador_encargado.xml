@@ -32,13 +32,24 @@
         <!-- FOTO DEL CUIDADOR -->
         <!-- ========================= -->
 
-        <ImageView
-            android:id="@+id/imgCuidador"
+
+        <FrameLayout
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:contentDescription="Foto del cuidador"
-            android:scaleType="centerCrop"
-            android:src="@drawable/img" />
+            android:background="@drawable/bg_foto_perfil"
+            android:padding="2dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgCuidador"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/persona_encargado"
+                android:contentDescription="Foto del cuidador"
+                app:shapeAppearanceOverlay="@style/FotoPerfilRedondeada" />
+
+        </FrameLayout>
+
 
 
         <!-- ========================= -->

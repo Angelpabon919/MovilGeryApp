@@ -4,6 +4,9 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.databinding.ItemCuidadorResumenAsignacionBinding
 
@@ -56,7 +59,15 @@ class CuidadorResumenAsignacionAdapter(
                 ?.uppercaseChar()
                 ?: 'C'
 
-            binding.txtInicialCuidador.text = inicial.toString()
+            Glide.with(binding.imgCuidadorResumen)
+                .load(cuidador.foto)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .placeholder(R.drawable.persona_encargado)
+                .error(R.drawable.persona_encargado)
+                .fallback(R.drawable.persona_encargado)
+                .centerCrop()
+                .into(binding.imgCuidadorResumen)
         }
     }
 
@@ -86,26 +97,19 @@ class CuidadorResumenAsignacionAdapter(
 
     fun actualizarLista(nuevaLista: List<Usuario>) {
 
-        // Comparamos los ID de los cuidadores actuales
-        // con los que acaba de entregar la API
-        val idsActuales = cuidadores.mapNotNull {
-            it.idUsuario
+        val clavesActuales = cuidadores.map {
+            "${it.idUsuario}|${it.foto}"
         }
 
-        val idsNuevos = nuevaLista.mapNotNull {
-            it.idUsuario
+        val clavesNuevas = nuevaLista.map {
+            "${it.idUsuario}|${it.foto}"
         }
 
-        // Si la lista es exactamente la misma,
-        // no reconstruimos el RecyclerView
-        if (idsActuales == idsNuevos) {
+        if (clavesActuales == clavesNuevas) {
             return
         }
 
-        // Solo actualizamos visualmente cuando realmente
-        // hubo un cambio en los cuidadores.
         cuidadores = nuevaLista
-
         notifyDataSetChanged()
     }
 }

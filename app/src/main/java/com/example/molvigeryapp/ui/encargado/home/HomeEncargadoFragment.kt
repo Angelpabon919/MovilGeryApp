@@ -35,9 +35,9 @@ import kotlinx.coroutines.launch
 
 class HomeEncargadoFragment : Fragment() {
 
-    // =====================================================
-    // VIEW BINDING
-    // =====================================================
+    private val usuarioRepository by lazy {
+        com.example.molvigeryapp.data.repository.UsuarioRepository()
+    }
 
     private var _binding: FragmentHomeEncargadoBinding? = null
 
@@ -267,6 +267,16 @@ class HomeEncargadoFragment : Fragment() {
                     RetrofitClient.apiService
                         .getUsuarios()
 
+                android.util.Log.d(
+                    "HOME_ENCARGADO",
+                    "Total de usuarios recibidos: ${usuarios.size}"
+                )
+
+                android.util.Log.d(
+                    "HOME_ENCARGADO",
+                    "Roles recibidos: ${usuarios.map { it.idRol }}"
+                )
+
 
                 if (_binding == null) {
                     return@launch
@@ -277,9 +287,7 @@ class HomeEncargadoFragment : Fragment() {
                 // MOSTRAR NOMBRE DEL ENCARGADO
                 // =================================================
 
-                mostrarNombreEncargado(
-                    usuarios
-                )
+                mostrarNombreEncargado()
 
 
                 // =================================================
@@ -296,17 +304,24 @@ class HomeEncargadoFragment : Fragment() {
                 }
 
 
+
+                if (!respuestaAsignaciones.isSuccessful) {
+                    android.util.Log.e(
+                        TAG,
+                        "Error al consultar asignaciones: HTTP ${respuestaAsignaciones.code()}"
+                    )
+                    return@launch
+                }
+
                 val asignacionesPacientes =
-                    if (respuestaAsignaciones.isSuccessful) {
-
-                        respuestaAsignaciones
-                            .body()
-                            .orEmpty()
-
-                    } else {
-
-                        emptyList()
+                    respuestaAsignaciones.body() ?: run {
+                        android.util.Log.e(
+                            TAG,
+                            "La API no devolvió el contenido de las asignaciones"
+                        )
+                        return@launch
                     }
+
 
 
                 // =================================================
@@ -461,85 +476,86 @@ class HomeEncargadoFragment : Fragment() {
     // CONTAR PACIENTES
     // =====================================================
 
+
     private fun obtenerCantidadPacientes(
         idUsuario: Int,
         asignaciones: List<AsignacionPacienteCuidador>
     ): Int {
-
         return asignaciones
+            .asSequence()
             .filter { asignacion ->
-
-                asignacion.idUsuario == idUsuario
+                asignacion.idUsuario == idUsuario &&
+                        asignacion.estado.equals(
+                            "Activo",
+                            ignoreCase = true
+                        )
             }
             .map { asignacion ->
-
                 asignacion.idPaciente
             }
             .distinct()
-            .size
+            .count()
     }
+
 
 
     // =====================================================
     // MOSTRAR NOMBRE DEL ENCARGADO
     // =====================================================
 
-    private fun mostrarNombreEncargado(
-        usuarios: List<Usuario>
-    ) {
-
-        val bindingActual =
-            _binding ?: return
 
 
-        val contexto =
-            context ?: return
+    private fun mostrarNombreEncargado() {
+        val bindingActual = _binding ?: return
+        val contexto = context ?: return
 
+        val preferencias = contexto.getSharedPreferences(
+            "SESION",
+            android.content.Context.MODE_PRIVATE
+        )
 
-        val preferencias =
-            contexto.getSharedPreferences(
-                "SESION",
-                0
-            )
+        val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
+        if (idUsuario <= 0) {
+            bindingActual.txtBienvenida.text = "Hola encargado"
+            return
+        }
 
-        val idUsuario =
-            preferencias.getInt(
-                "ID_USUARIO",
-                -1
-            )
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val usuarioActual =
+                    usuarioRepository.obtenerUsuarioPorId(idUsuario)
 
+                if (_binding == null) return@launch
 
-        val usuarioActual =
-            usuarios.firstOrNull { usuario ->
+                val nombre = usuarioActual?.nombres
+                    ?.trim()
+                    ?.split(Regex("\\s+"))
+                    ?.firstOrNull()
+                    ?.replaceFirstChar { it.uppercase() }
 
-                usuario.idUsuario == idUsuario
-            }
+                bindingActual.txtBienvenida.text =
+                    if (!nombre.isNullOrBlank()) {
+                        "Hola encargado $nombre"
+                    } else {
+                        "Hola encargado"
+                    }
 
+            } catch (e: Exception) {
+                android.util.Log.e(
+                    "HOME_ENCARGADO",
+                    "Error al cargar el nombre del usuario $idUsuario",
+                    e
+                )
 
-        val nombre =
-            usuarioActual
-                ?.nombres
-                ?.trim()
-                ?.split(" ")
-                ?.firstOrNull()
-                ?.replaceFirstChar { caracter ->
-
-                    caracter.uppercase()
+                if (_binding != null) {
+                    bindingActual.txtBienvenida.text = "Hola encargado"
                 }
-
-
-        bindingActual.txtBienvenida.text =
-
-            if (!nombre.isNullOrBlank()) {
-
-                "Hola encargado $nombre"
-
-            } else {
-
-                "Hola encargado"
             }
+        }
     }
+
+
 
 
     // =====================================================
@@ -582,7 +598,11 @@ class HomeEncargadoFragment : Fragment() {
                 estado,
 
             pacientes =
-                cantidadPacientes
+                cantidadPacientes,
+
+            foto =
+                usuario.foto
+
         )
     }
 

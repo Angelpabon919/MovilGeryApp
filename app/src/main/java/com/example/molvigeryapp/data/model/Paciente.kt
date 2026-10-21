@@ -8,10 +8,6 @@ data class Paciente(
     @SerializedName("id_paciente")
     val idPaciente: Int? = null,
 
-    @SerializedName("foto")
-    val foto: String? = null,
-
-
     @SerializedName("nombre")
     val nombre: String = "",
 
@@ -56,6 +52,9 @@ data class Paciente(
 
     @SerializedName("estado")
     val estado: Boolean = true,
+
+    @SerializedName("foto")
+    val foto: String? = null,
 
     var isSelected: Boolean = false
 ) : Serializable

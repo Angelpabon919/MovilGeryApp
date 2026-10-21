@@ -1,6 +1,5 @@
 package com.example.molvigeryapp.data.api
 
-import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Actividad
 import com.example.molvigeryapp.data.model.AplicacionRequest
@@ -43,13 +42,14 @@ import com.example.molvigeryapp.data.model.Habitacion
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
+import com.example.molvigeryapp.data.model.NotificacionTurnoRequest
 import com.example.molvigeryapp.data.model.TipoEventoIa
+import retrofit2.http.Multipart
 
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
-import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -99,6 +99,12 @@ interface ApiService {
     @POST("notificaciones/")
     suspend fun crearNotificacion(
         @Body request: NotificacionRequest
+    ): Response<NotificacionResponse>
+
+
+    @POST("notificaciones/")
+    suspend fun crearNotificacionTurno(
+        @Body request: NotificacionTurnoRequest
     ): Response<NotificacionResponse>
 
     // 3. Endpoint para asociar la notificación al encargado (Tabla NotificacionDestinatario)
@@ -243,12 +249,27 @@ interface ApiService {
         @Path("id") id: Int,
         @Body datos: Map<String, @JvmSuppressWildcards Any>
     ): Response<Usuario>
+
+
+    // =========================================================
+    // FOTO DE PERFIL DEL USUARIO
+    // =========================================================
+
+    /*Sube o cambia la foto de perfil mediante multipart/form-data */
     @Multipart
     @PATCH("usuarios/{id}/")
     suspend fun actualizarFotoUsuario(
-        @Path("id") idUsuario: Int,
+        @Path("id") id: Int,
         @Part foto: MultipartBody.Part
-    ):Response<Usuario>
+    ): Response<Usuario>
+
+    /* Elimina la foto de perfil del usuario
+     * Requiere que el endpoint de eliminacion exista en Django */
+    @DELETE("usuarios/{id}/foto/")
+    suspend fun eliminarFotoUsuario(
+        @Path("id") id: Int
+    ): Response<ResponseBody>
+
 
 
     // =========================================================
@@ -300,6 +321,13 @@ interface ApiService {
     suspend fun registrarTokenFCM(
         @Body datos: Map<String, @JvmSuppressWildcards Any>
     ): Response<Any>
+
+
+    @POST("fcm_tokens/preferencia/")
+    suspend fun configurarPreferenciaPush(
+        @Body datos: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Any>
+
 
 
     // =========================================================
@@ -358,6 +386,17 @@ interface ApiService {
     @GET("citas/")
     suspend fun getCitas():
     Response<List<Cita>>
+
+    @PUT("citas/{id}/")
+    suspend fun actualizarCita(
+        @Path("id") id: String,
+        @Body cita: CrearCitaRequest
+    ): Response<CitaApiResponse>
+
+    @DELETE("citas/{id}/")
+    suspend fun eliminarCita(
+        @Path("id") id: String
+    ): Response<Unit>
 
 
 

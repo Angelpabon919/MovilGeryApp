@@ -5,5 +5,6 @@ data class Cuidador(
     val nombre: String,
     val cargo: String,
     val estado: String,
-    val pacientes: Int
+    val pacientes: Int,
+    val foto: String? = null
 )

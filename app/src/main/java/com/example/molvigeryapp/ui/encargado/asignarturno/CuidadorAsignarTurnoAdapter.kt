@@ -7,6 +7,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.databinding.ItemCuidadorAsignarTurnoBinding
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 
 class CuidadorAsignarTurnoAdapter(
     private var cuidadores: List<Usuario>,
@@ -32,10 +34,17 @@ class CuidadorAsignarTurnoAdapter(
             binding.txtNombreCuidador.text =
                 nombreCompleto.ifBlank { "Cuidador" }
 
-            // Icono predeterminado hasta incorporar la fotografía real.
-            binding.iconoCuidador.setImageResource(
-                R.drawable.persona_encargado
-            )
+            // Mostrar la foto real del cuidador.
+            // Si no tiene foto o falla la carga, mostrar la imagen predeterminada.
+            Glide.with(binding.iconoCuidador)
+                .load(cuidador.foto)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .placeholder(R.drawable.persona_encargado)
+                .error(R.drawable.persona_encargado)
+                .fallback(R.drawable.persona_encargado)
+                .centerCrop()
+                .into(binding.iconoCuidador)
 
             binding.txtEstadoCuidador.text =
                 if (cuidador.estado) "Activo" else "Inactivo"
@@ -144,7 +153,8 @@ class CuidadorAsignarTurnoAdapter(
             cuidador.nombres,
             cuidador.apellidos,
             cuidador.estado,
-            cuidador.idRol
+            cuidador.idRol,
+            cuidador.foto
         ).joinToString("|")
     }
 

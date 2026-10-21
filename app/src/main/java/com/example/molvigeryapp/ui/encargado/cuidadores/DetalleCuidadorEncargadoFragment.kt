@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 
 class DetalleCuidadorEncargadoFragment : Fragment() {
 
@@ -61,27 +63,15 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
         TurnoRepository()
     }
 
+    private var ultimaFotoCargada: String? = null
+
 
     // =====================================================
     // CONTROL DE CARGA
     // =====================================================
 
-    /**
-     * Evita que se ejecuten dos cargas simultáneamente.
-     */
     private var cargandoDatos = false
 
-    /**
-     * Indica si la primera carga terminó.
-     *
-     * Durante la primera carga:
-     * - Se muestra el ProgressBar.
-     * - Se ocultan las opciones.
-     *
-     * Después de la primera carga:
-     * - Las opciones permanecen visibles.
-     * - Las actualizaciones no provocan parpadeos.
-     */
     private var primeraCargaCompletada = false
 
 
@@ -157,6 +147,30 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
 
         return binding.root
     }
+
+
+    private fun mostrarFotoCuidador(url: String?) {
+        val bindingActual = _binding ?: return
+        val imageView = bindingActual.imgCuidador
+
+        if (url.isNullOrBlank()) {
+            Glide.with(imageView).clear(imageView)
+            imageView.setImageResource(R.drawable.persona_encargado)
+            ultimaFotoCargada = null
+            return
+        }
+
+        ultimaFotoCargada = url
+
+        Glide.with(imageView)
+            .load(url)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+            .centerCrop()
+            .into(imageView)
+    }
+
 
 
     // =====================================================
@@ -567,6 +581,9 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
             return
         }
 
+        // Mostrar la foto del cuidador
+        mostrarFotoCuidador(usuario.foto)
+
 
         // =================================================
         // NOMBRE
@@ -693,89 +710,24 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
     // =====================================================
 
     private fun contarPacientesDelCuidador(
-        asignaciones:
-        List<AsignacionPacienteCuidador>,
-
+        asignaciones: List<AsignacionPacienteCuidador>,
         idUsuario: Int
     ): Int {
 
-        val pacientes =
-            asignaciones.mapNotNull { asignacion ->
-
-                try {
-
-                    val campoUsuario =
-                        asignacion::class.java
-                            .declaredFields
-                            .firstOrNull { campo ->
-
-                                campo.name ==
-                                        "idUsuario"
-                            }
-
-
-                    val campoPaciente =
-                        asignacion::class.java
-                            .declaredFields
-                            .firstOrNull { campo ->
-
-                                campo.name ==
-                                        "idPaciente"
-                            }
-
-
-                    if (
-                        campoUsuario == null ||
-                        campoPaciente == null
-                    ) {
-
-                        null
-
-                    } else {
-
-                        campoUsuario.isAccessible =
-                            true
-
-                        campoPaciente.isAccessible =
-                            true
-
-
-                        val usuarioAsignado =
-                            campoUsuario.get(
-                                asignacion
-                            ) as? Int
-
-
-                        val paciente =
-                            campoPaciente.get(
-                                asignacion
-                            ) as? Int
-
-
-                        if (
-                            usuarioAsignado ==
-                            idUsuario
-                        ) {
-
-                            paciente
-
-                        } else {
-
-                            null
-                        }
-                    }
-
-                } catch (
-                    _: Exception
-                ) {
-
-                    null
-                }
+        return asignaciones
+            .asSequence()
+            .filter { asignacion ->
+                asignacion.idUsuario == idUsuario &&
+                        asignacion.estado.equals(
+                            "Activo",
+                            ignoreCase = true
+                        )
             }
-                .distinct()
-
-
-        return pacientes.size
+            .map { asignacion ->
+                asignacion.idPaciente
+            }
+            .distinct()
+            .count()
     }
 
 
@@ -1739,7 +1691,11 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
     // =====================================================
 
     override fun onDestroyView() {
+        _binding?.let { bindingActual ->
+            Glide.with(this).clear(bindingActual.imgCuidador)
+        }
 
+        ultimaFotoCargada = null
         _binding = null
 
         super.onDestroyView()

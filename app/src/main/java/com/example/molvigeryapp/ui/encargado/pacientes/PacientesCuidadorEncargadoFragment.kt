@@ -459,19 +459,10 @@ class PacientesCuidadorEncargadoFragment : Fragment() {
                 mostrarCargaInicial &&
                 _binding != null
             ) {
-
-                mostrarSinPacientes()
-
-
-                val contexto =
-                    context
-
-
-                if (contexto != null) {
-
+                context?.let { contexto ->
                     Toast.makeText(
                         contexto,
-                        "Error al cargar los pacientes asignados",
+                        "No se pudieron actualizar los pacientes. Intenta nuevamente.",
                         Toast.LENGTH_SHORT
                     ).show()
                 }

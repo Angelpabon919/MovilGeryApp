@@ -6,16 +6,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
-import com.example.molvigeryapp.data.model.Usuario
+import androidx.lifecycle.repeatOnLifecycle
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Cita
-import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.Paciente
+import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.data.repository.CitasRepository
+import com.example.molvigeryapp.databinding.DialogEliminarCitaEncargadoBinding
 import com.example.molvigeryapp.databinding.FragmentDetalleCitaEncargadoBinding
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -31,29 +35,23 @@ class DetalleCitaEncargadoFragment : Fragment() {
     private var _binding: FragmentDetalleCitaEncargadoBinding? = null
 
     private val binding
-        get() = _binding!!
-
+        get() = requireNotNull(_binding)
 
     // =========================================================
     // DATOS
     // =========================================================
 
     private var idCita: String? = null
-
     private var idPaciente: Int = -1
-
 
     // =========================================================
     // CONSTANTES
     // =========================================================
 
     private companion object {
-
         const val TAG = "DETALLE_CITA"
-
         const val INTERVALO_ACTUALIZACION = 30_000L
     }
-
 
     // =========================================================
     // CREAR VISTA
@@ -64,17 +62,14 @@ class DetalleCitaEncargadoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-        _binding =
-            FragmentDetalleCitaEncargadoBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+        _binding = FragmentDetalleCitaEncargadoBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         return binding.root
     }
-
 
     // =========================================================
     // VISTA CREADA
@@ -84,106 +79,200 @@ class DetalleCitaEncargadoFragment : Fragment() {
         view: View,
         savedInstanceState: Bundle?
     ) {
+        super.onViewCreated(view, savedInstanceState)
 
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
-
-        // =====================================================
-        // RECUPERAR ARGUMENTOS
-        // =====================================================
-
-        idCita =
-            arguments?.getString(
-                "idCita"
-            )
-
-
-        idPaciente =
-            arguments?.getInt(
-                "idPaciente",
-                -1
-            ) ?: -1
-
-
-        // =====================================================
-        // CONFIGURAR INTERFAZ
-        // =====================================================
+        idCita = arguments?.getString("idCita")
+        idPaciente = arguments?.getInt("idPaciente", -1) ?: -1
 
         configurarBotonVolver()
-
         configurarBotonEditar()
-
         configurarBotonEliminar()
 
-
-        // =====================================================
-        // CARGA INICIAL
-        // =====================================================
-
         cargarDetalle()
-
-
-        // =====================================================
-        // ACTUALIZACIÓN AUTOMÁTICA
-        // =====================================================
-
         iniciarActualizacionAutomatica()
     }
-
 
     // =========================================================
     // BOTÓN VOLVER
     // =========================================================
 
     private fun configurarBotonVolver() {
-
-        binding.btnVolverDetalleCita
-            .setOnClickListener {
-
-                parentFragmentManager
-                    .popBackStack()
-            }
+        binding.btnVolverDetalleCita.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
     }
-
 
     // =========================================================
     // BOTÓN EDITAR
     // =========================================================
 
     private fun configurarBotonEditar() {
+        binding.btnEditarCita.setOnClickListener {
 
-        binding.btnEditarCita
-            .setOnClickListener {
+            val identificador = idCita?.takeIf {
+                it.isNotBlank()
+            }
 
+            if (identificador == null) {
                 Toast.makeText(
                     requireContext(),
-                    "La edición de citas se implementará con el endpoint de actualización.",
+                    "No se encontró el identificador de la cita.",
                     Toast.LENGTH_SHORT
                 ).show()
-            }
-    }
 
+                return@setOnClickListener
+            }
+
+            val datos = Bundle().apply {
+                putBoolean("modoEdicion", true)
+                putString("idCita", identificador)
+                putInt("idPaciente", idPaciente)
+            }
+
+            val formulario = NuevaCitaEncargadoFragment().apply {
+                arguments = datos
+            }
+
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, formulario)
+                .addToBackStack(null)
+                .commit()
+        }
+    }
 
     // =========================================================
     // BOTÓN ELIMINAR
     // =========================================================
 
     private fun configurarBotonEliminar() {
+        binding.btnEliminarCita.setOnClickListener {
 
-        binding.btnEliminarCita
-            .setOnClickListener {
+            val identificador = idCita?.takeIf {
+                it.isNotBlank()
+            }
 
+            if (identificador == null) {
                 Toast.makeText(
                     requireContext(),
-                    "La eliminación de citas se implementará con el endpoint correspondiente.",
+                    "No se encontró el identificador de la cita.",
                     Toast.LENGTH_SHORT
                 ).show()
-            }
-    }
 
+                return@setOnClickListener
+            }
+
+            val dialogBinding =
+                DialogEliminarCitaEncargadoBinding.inflate(
+                    LayoutInflater.from(requireContext())
+                )
+
+            val dialogo = AlertDialog.Builder(requireContext())
+                .setView(dialogBinding.root)
+                .create()
+
+            dialogo.setOnShowListener {
+                dialogo.window?.setBackgroundDrawableResource(
+                    android.R.color.transparent
+                )
+            }
+
+            dialogBinding.btnCancelarEliminarCita.setOnClickListener {
+                dialogo.dismiss()
+            }
+
+            dialogBinding.btnConfirmarEliminarCita.setOnClickListener {
+
+                dialogBinding.btnConfirmarEliminarCita.isEnabled = false
+                dialogBinding.btnCancelarEliminarCita.isEnabled = false
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val resultado =
+                            CitasRepository.eliminarCita(identificador)
+
+                        if (!isAdded || _binding == null) {
+                            dialogo.dismiss()
+                            return@launch
+                        }
+
+                        resultado
+                            .onSuccess {
+                                dialogo.dismiss()
+
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Cita eliminada correctamente.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                parentFragmentManager.popBackStack()
+                            }
+                            .onFailure { error ->
+
+                                Log.e(
+                                    TAG,
+                                    "Error eliminando la cita",
+                                    error
+                                )
+
+                                dialogBinding
+                                    .btnConfirmarEliminarCita
+                                    .isEnabled = true
+
+                                dialogBinding
+                                    .btnCancelarEliminarCita
+                                    .isEnabled = true
+
+                                Toast.makeText(
+                                    requireContext(),
+                                    "No se pudo eliminar la cita: " +
+                                            (error.message
+                                                ?: "Error desconocido"),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
+                    } catch (e: CancellationException) {
+                        dialogo.dismiss()
+                        throw e
+
+                    } catch (e: Exception) {
+
+                        Log.e(
+                            TAG,
+                            "Error inesperado eliminando la cita",
+                            e
+                        )
+
+                        if (!isAdded || _binding == null) {
+                            dialogo.dismiss()
+                            return@launch
+                        }
+
+                        dialogBinding
+                            .btnConfirmarEliminarCita
+                            .isEnabled = true
+
+                        dialogBinding
+                            .btnCancelarEliminarCita
+                            .isEnabled = true
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Ocurrió un error al eliminar la cita.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+
+            dialogo.show()
+
+            dialogo.window?.setBackgroundDrawableResource(
+                android.R.color.transparent
+            )
+        }
+    }
 
     // =========================================================
     // CARGAR DETALLE
@@ -192,99 +281,49 @@ class DetalleCitaEncargadoFragment : Fragment() {
     private fun cargarDetalle(
         mostrarLoading: Boolean = true
     ) {
-
         viewLifecycleOwner.lifecycleScope.launch {
 
             try {
-
                 if (mostrarLoading) {
-
                     mostrarLoading()
                 }
 
+                val identificadorCita = idCita
 
-                // =================================================
-                // VALIDAR ID
-                // =================================================
-
-                val identificadorCita =
-                    idCita
-
-
-                if (
-                    identificadorCita.isNullOrBlank()
-                ) {
-
+                if (identificadorCita.isNullOrBlank()) {
                     mostrarError(
                         "No se recibió el identificador de la cita."
                     )
-
                     return@launch
                 }
 
+                // Obtener las citas.
+                val citas = CitasRepository.obtenerCitasDesdeApi()
 
-                // =================================================
-                // OBTENER CITAS DESDE API
-                // =================================================
+                if (_binding == null) return@launch
 
-                val citas =
-                    CitasRepository
-                        .obtenerCitasDesdeApi()
-
-
-                if (_binding == null) {
-                    return@launch
+                val cita = citas.firstOrNull {
+                    it.id == identificadorCita ||
+                            it.idCita == identificadorCita
                 }
-
-
-                // =================================================
-                // BUSCAR LA CITA
-                // =================================================
-
-                val cita =
-                    citas.firstOrNull {
-
-                        it.id == identificadorCita ||
-                                it.idCita == identificadorCita
-                    }
-
 
                 if (cita == null) {
-
                     mostrarError(
                         "No se encontró la cita en el servidor."
                     )
-
                     return@launch
                 }
 
+                // Obtener el paciente asociado a la cita.
+                val pacientes = RetrofitClient.apiService.getPacientes()
 
-                // =================================================
-                // OBTENER PACIENTES
-                // =================================================
+                if (_binding == null) return@launch
 
-                val pacientes =
-                    RetrofitClient.apiService
-                        .getPacientes()
-
-
-                if (_binding == null) {
-                    return@launch
+                val paciente = pacientes.firstOrNull {
+                    it.idPaciente == cita.idPaciente
                 }
 
-
-                val paciente =
-                    pacientes.firstOrNull {
-
-                        it.idPaciente ==
-                                cita.idPaciente
-                    }
-
-
-                // =================================================
-                // OBTENER CUIDADOR ASIGNADO AL PACIENTE
-                // =================================================
-
+                // Obtener el cuidador asignado al paciente.
                 var cuidadorAsignado: Usuario? = null
 
                 try {
@@ -299,32 +338,30 @@ class DetalleCitaEncargadoFragment : Fragment() {
                             emptyList()
                         }
 
-                    // Buscar primero una asignación activa
-                    // correspondiente al paciente de la cita.
-                    val asignacion =
-                        asignaciones.firstOrNull { asignacion ->
-                            asignacion.idPaciente == cita.idPaciente &&
-                                    asignacion.estado.equals(
-                                        "Activo",
-                                        ignoreCase = true
-                                    )
-                        } ?: asignaciones.firstOrNull { asignacion ->
-                            asignacion.idPaciente == cita.idPaciente
-                        }
+                    // Priorizar la asignación activa.
+                    val asignacion = asignaciones.firstOrNull {
+                        it.idPaciente == cita.idPaciente &&
+                                it.estado.equals(
+                                    "Activo",
+                                    ignoreCase = true
+                                )
+                    } ?: asignaciones.firstOrNull {
+                        it.idPaciente == cita.idPaciente
+                    }
 
                     if (asignacion != null) {
                         val usuarios =
                             RetrofitClient.apiService.getUsuarios()
 
-                        cuidadorAsignado =
-                            usuarios.firstOrNull { usuario ->
-                                usuario.idUsuario == asignacion.idUsuario &&
-                                        usuario.idRol == 3
-                            }
+                        cuidadorAsignado = usuarios.firstOrNull { usuario ->
+                            usuario.idUsuario == asignacion.idUsuario &&
+                                    usuario.idRol == 3
+                        }
                     }
 
                 } catch (e: CancellationException) {
                     throw e
+
                 } catch (e: Exception) {
                     Log.e(
                         TAG,
@@ -333,66 +370,72 @@ class DetalleCitaEncargadoFragment : Fragment() {
                     )
                 }
 
-                if (_binding == null) {
-                    return@launch
-                }
+                if (_binding == null) return@launch
 
-                // =================================================
-                // MOSTRAR INFORMACIÓN
-                // =================================================
-
+                // Mostrar toda la información una sola vez.
                 mostrarInformacion(
                     cita = cita,
                     paciente = paciente,
                     cuidador = cuidadorAsignado
                 )
-
-
-                // =================================================
-                // MOSTRAR INFORMACIÓN
-                // =================================================
-
-                mostrarInformacion(
-                    cita = cita,
-                    paciente = paciente,
-                    cuidador = cuidadorAsignado
-                )
-
 
             } catch (e: CancellationException) {
-
-                // Cancelación normal cuando el usuario
-                // abandona rápidamente el Fragment.
                 throw e
 
-
             } catch (e: Exception) {
-
                 Log.e(
                     TAG,
                     "Error cargando detalle de cita",
                     e
                 )
 
-
                 if (_binding != null) {
-
                     mostrarError(
                         "No se pudo cargar la información de la cita."
                     )
                 }
 
-
             } finally {
-
                 if (_binding != null) {
-
                     ocultarLoading()
                 }
             }
         }
     }
 
+    // =========================================================
+    // CARGAR FOTO DEL PACIENTE
+    // =========================================================
+
+    private fun cargarFotoPaciente(url: String?) {
+        val bindingActual = _binding ?: return
+
+        Glide.with(this)
+            .load(url?.takeIf { it.isNotBlank() })
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .fallback(R.drawable.persona_encargado)
+            .centerCrop()
+            .into(bindingActual.imgPacienteDetalleCita)
+    }
+
+    // =========================================================
+    // CARGAR FOTO DEL CUIDADOR
+    // =========================================================
+
+    private fun cargarFotoCuidador(url: String?) {
+        val bindingActual = _binding ?: return
+
+        Glide.with(this)
+            .load(url?.takeIf { it.isNotBlank() })
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+            .placeholder(R.drawable.persona_encargado)
+            .error(R.drawable.persona_encargado)
+            .fallback(R.drawable.persona_encargado)
+            .centerCrop()
+            .into(bindingActual.imgCuidadorDetalleCita)
+    }
 
     // =========================================================
     // MOSTRAR INFORMACIÓN
@@ -403,136 +446,109 @@ class DetalleCitaEncargadoFragment : Fragment() {
         paciente: Paciente?,
         cuidador: Usuario?
     ) {
+        val bindingActual = _binding ?: return
 
-        if (_binding == null) {
-            return
+        // -----------------------------------------------------
+        // FOTO Y NOMBRE DEL PACIENTE
+        // -----------------------------------------------------
+
+        cargarFotoPaciente(paciente?.foto)
+
+        val nombrePaciente = paciente
+            ?.let {
+                "${it.nombre} ${it.apellido}".trim()
+            }
+            ?.takeIf { it.isNotBlank() }
+            ?: cita.nombrePaciente
+                ?.takeIf { it.isNotBlank() }
+            ?: "Paciente no encontrado"
+
+        bindingActual.txtPacienteDetalleCita.text = nombrePaciente
+
+        // -----------------------------------------------------
+        // HABITACIÓN Y CAMA
+        // -----------------------------------------------------
+
+        bindingActual.txtHabitacionDetalleCita.text = when {
+            paciente?.habitacion != null &&
+                    paciente.cama != null -> {
+                "Habitación ${paciente.habitacion} • Cama ${paciente.cama}"
+            }
+
+            paciente?.habitacion != null -> {
+                "Habitación ${paciente.habitacion}"
+            }
+
+            paciente?.cama != null -> {
+                "Cama ${paciente.cama}"
+            }
+
+            else -> "Sin habitación asignada"
         }
 
+        // -----------------------------------------------------
+        // TIPO Y ESPECIALIDAD
+        // -----------------------------------------------------
 
-        // =====================================================
-        // PACIENTE
-        // =====================================================
+        val (tipo, especialidad) = separarMotivo(
+            cita.motivo.orEmpty()
+        )
 
-        val nombrePaciente =
+        bindingActual.txtTipoDetalleCita.text =
+            cita.tipoCita
+                ?.takeIf { it.isNotBlank() }
+                ?: tipo
 
-            if (paciente != null) {
+        bindingActual.txtEspecialidadDetalleCita.text =
+            cita.especialidad
+                ?.takeIf { it.isNotBlank() }
+                ?: especialidad
 
-                "${paciente.nombre} ${paciente.apellido}"
-                    .trim()
+        bindingActual.txtMotivoDetalleCita.text =
+            obtenerMotivoLimpio(cita.motivo.orEmpty())
 
-            } else {
+        // -----------------------------------------------------
+        // LUGAR DE LA CITA
+        // -----------------------------------------------------
 
-                "Paciente no encontrado"
-            }
+        bindingActual.txtLugarDetalleCita.text =
+            cita.lugar
+                ?.takeIf { it.isNotBlank() }
+                ?: "Lugar no disponible"
 
+        // -----------------------------------------------------
+        // FECHA Y HORA
+        // -----------------------------------------------------
 
-        binding.txtPacienteDetalleCita.text =
-            nombrePaciente
+        bindingActual.txtFechaDetalleCita.text =
+            formatearFecha(cita.fecha)
 
+        bindingActual.txtHoraDetalleCita.text =
+            cita.hora.takeIf { it.isNotBlank() }
+                ?: "Sin hora"
 
-        // =====================================================
-        // HABITACIÓN
-        // =====================================================
-
-        binding.txtHabitacionDetalleCita.text =
-
-            when {
-
-                paciente?.habitacion != null &&
-                        paciente.cama != null ->
-
-                    "Habitación ${paciente.habitacion} • Cama ${paciente.cama}"
-
-
-                paciente?.habitacion != null ->
-
-                    "Habitación ${paciente.habitacion}"
-
-
-                paciente?.cama != null ->
-
-                    "Cama ${paciente.cama}"
-
-
-                else ->
-
-                    "Sin habitación asignada"
-            }
-
-
-        // =====================================================
-        // MOTIVO
-        // =====================================================
-
-        val partesMotivo =
-            separarMotivo(
-                cita.motivo ?: ""
-            )
-
-
-        binding.txtTipoDetalleCita.text =
-            partesMotivo.first
-
-
-        binding.txtEspecialidadDetalleCita.text =
-            partesMotivo.second
-
-
-        binding.txtMotivoDetalleCita.text =
-            obtenerMotivoLimpio(
-                cita.motivo ?: ""
-            )
-
-
-        // =====================================================
-        // FECHA
-        // =====================================================
-
-        binding.txtFechaDetalleCita.text =
-            formatearFecha(
-                cita.fecha
-            )
-
-
-        // =====================================================
-        // HORA
-        // =====================================================
-
-        binding.txtHoraDetalleCita.text =
-            cita.hora
-
-
-        // =====================================================
+        // -----------------------------------------------------
         // ESTADO
-        // =====================================================
+        // -----------------------------------------------------
 
-        binding.txtEstadoDetalleCita.text =
-            cita.estado.ifBlank {
-                "Sin estado"
-            }
+        bindingActual.txtEstadoDetalleCita.text =
+            cita.estado.takeIf { it.isNotBlank() }
+                ?: "Sin estado"
 
-
-        // =====================================================
+        // -----------------------------------------------------
         // OBSERVACIONES
-        // =====================================================
+        // -----------------------------------------------------
 
-        binding.txtObservacionesDetalleCita.text =
+        bindingActual.txtObservacionesDetalleCita.text =
+            cita.observaciones
+                ?.takeIf { it.isNotBlank() }
+                ?: "Sin observaciones registradas"
 
-            if (
-                cita.observaciones.isNullOrBlank()
-            ) {
+        // -----------------------------------------------------
+        // FOTO Y DATOS DEL CUIDADOR
+        // -----------------------------------------------------
 
-                "Sin observaciones registradas"
-
-            } else {
-
-                cita.observaciones
-            }
-
-
-        // =====================================================
-        // CUIDADOR ASIGNADO
-        // =====================================================
+        cargarFotoCuidador(cuidador?.foto)
 
         val nombreCuidador = cuidador
             ?.let {
@@ -540,43 +556,34 @@ class DetalleCitaEncargadoFragment : Fragment() {
             }
             ?.takeIf { it.isNotBlank() }
 
-        binding.txtCuidadorDetalleCita.text =
+        bindingActual.txtCuidadorDetalleCita.text =
             nombreCuidador ?: "No asignado"
 
-        binding.txtTelefonoCuidadorDetalleCita.text =
+        bindingActual.txtTelefonoCuidadorDetalleCita.text =
             cuidador?.telefono
                 ?.takeIf { it.isNotBlank() }
                 ?: "No disponible"
 
+        // -----------------------------------------------------
+        // ASISTENCIA Y RESULTADO
+        // -----------------------------------------------------
 
-        // =====================================================
-        // ASISTENCIA
-        // =====================================================
-
-        binding.txtAsistenciaDetalleCita.text =
+        bindingActual.txtAsistenciaDetalleCita.text =
             "Sin registrar"
 
-
-        // =====================================================
-        // RESULTADO
-        // =====================================================
-
-        binding.txtResultadoDetalleCita.text =
+        bindingActual.txtResultadoDetalleCita.text =
             "Sin registrar"
 
+        // -----------------------------------------------------
+        // ESTADO VISUAL
+        // -----------------------------------------------------
 
-        // =====================================================
-        // ERROR
-        // =====================================================
-
-        binding.contenedorErrorDetalleCita.visibility =
+        bindingActual.contenedorErrorDetalleCita.visibility =
             View.GONE
 
-
-        binding.scrollDetalleCita.visibility =
+        bindingActual.scrollDetalleCita.visibility =
             View.VISIBLE
     }
-
 
     // =========================================================
     // SEPARAR MOTIVO
@@ -587,65 +594,42 @@ class DetalleCitaEncargadoFragment : Fragment() {
     ): Pair<String, String> {
 
         if (motivo.isBlank()) {
-
             return Pair(
                 "Sin tipo",
                 "Sin especialidad"
             )
         }
 
-
         return try {
-
-            val partesGuion =
-                motivo.split(
-                    " - ",
-                    limit = 2
-                )
-
+            val partesGuion = motivo.split(
+                " - ",
+                limit = 2
+            )
 
             if (partesGuion.size < 2) {
-
                 return Pair(
                     motivo.trim(),
                     "Sin especialidad"
                 )
             }
 
+            val tipo = partesGuion[0].trim()
+            val resto = partesGuion[1].trim()
 
-            val tipo =
-                partesGuion[0].trim()
+            val especialidad = resto
+                .substringBefore(":")
+                .trim()
+                .ifEmpty { "Sin especialidad" }
 
-
-            val resto =
-                partesGuion[1].trim()
-
-
-            val partesDosPuntos =
-                resto.split(
-                    ":",
-                    limit = 2
-                )
-
-
-            val especialidad =
-                partesDosPuntos[0].trim()
-
-
-            Pair(
-                tipo,
-                especialidad
-            )
+            Pair(tipo, especialidad)
 
         } catch (e: Exception) {
-
             Pair(
                 motivo.trim(),
                 "Sin especialidad"
             )
         }
     }
-
 
     // =========================================================
     // OBTENER MOTIVO LIMPIO
@@ -654,36 +638,26 @@ class DetalleCitaEncargadoFragment : Fragment() {
     private fun obtenerMotivoLimpio(
         motivo: String
     ): String {
-
         if (motivo.isBlank()) {
             return "Sin motivo registrado"
         }
 
-
         return try {
-
-            val partes =
-                motivo.split(
-                    ":",
-                    limit = 2
-                )
-
+            val partes = motivo.split(
+                ":",
+                limit = 2
+            )
 
             if (partes.size == 2) {
-
                 partes[1].trim()
-
             } else {
-
                 motivo.trim()
             }
 
         } catch (e: Exception) {
-
             motivo.trim()
         }
     }
-
 
     // =========================================================
     // FORMATEAR FECHA
@@ -692,77 +666,54 @@ class DetalleCitaEncargadoFragment : Fragment() {
     private fun formatearFecha(
         fecha: String
     ): String {
-
         if (fecha.isBlank()) {
             return "Sin fecha"
         }
 
-
         return try {
-
-            val partes =
-                fecha.split("-")
-
+            val partes = fecha.split("-")
 
             if (partes.size == 3) {
-
                 "${partes[2]}/${partes[1]}/${partes[0]}"
-
             } else {
-
                 fecha
             }
 
         } catch (e: Exception) {
-
             fecha
         }
     }
-
 
     // =========================================================
     // MOSTRAR LOADING
     // =========================================================
 
     private fun mostrarLoading() {
+        val bindingActual = _binding ?: return
 
-        if (_binding == null) {
-            return
-        }
-
-
-        binding.loadingDetalleCita.visibility =
+        bindingActual.loadingDetalleCita.visibility =
             View.VISIBLE
 
-
-        binding.scrollDetalleCita.visibility =
+        bindingActual.scrollDetalleCita.visibility =
             View.GONE
 
-
-        binding.contenedorErrorDetalleCita.visibility =
+        bindingActual.contenedorErrorDetalleCita.visibility =
             View.GONE
 
-
-        binding.txtLoadingDetalleCita.text =
+        bindingActual.txtLoadingDetalleCita.text =
             "Cargando información..."
     }
-
 
     // =========================================================
     // OCULTAR LOADING
     // =========================================================
 
     private fun ocultarLoading() {
+        val bindingActual = _binding ?: return
 
-        if (_binding == null) {
-            return
-        }
-
-
-        binding.loadingDetalleCita.visibility =
+        bindingActual.loadingDetalleCita.visibility =
             View.GONE
     }
-
 
     // =========================================================
     // MOSTRAR ERROR
@@ -771,65 +722,47 @@ class DetalleCitaEncargadoFragment : Fragment() {
     private fun mostrarError(
         mensaje: String
     ) {
+        val bindingActual = _binding ?: return
 
-        if (_binding == null) {
-            return
-        }
-
-
-        binding.loadingDetalleCita.visibility =
+        bindingActual.loadingDetalleCita.visibility =
             View.GONE
 
-
-        binding.scrollDetalleCita.visibility =
+        bindingActual.scrollDetalleCita.visibility =
             View.GONE
 
-
-        binding.contenedorErrorDetalleCita.visibility =
+        bindingActual.contenedorErrorDetalleCita.visibility =
             View.VISIBLE
 
-
-        binding.txtErrorDetalleCita.text =
+        bindingActual.txtErrorDetalleCita.text =
             mensaje
     }
-
 
     // =========================================================
     // ACTUALIZACIÓN AUTOMÁTICA
     // =========================================================
 
     private fun iniciarActualizacionAutomatica() {
-
         viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                while (isActive) {
+                    delay(INTERVALO_ACTUALIZACION)
 
-            while (isActive) {
+                    if (!isActive) break
 
-                delay(
-                    INTERVALO_ACTUALIZACION
-                )
-
-
-                if (!isActive) {
-                    break
+                    cargarDetalle(mostrarLoading = false)
                 }
-
-
-                cargarDetalle(
-                    mostrarLoading = false
-                )
             }
         }
     }
-
 
     // =========================================================
     // DESTRUIR VISTA
     // =========================================================
 
     override fun onDestroyView() {
-
-        super.onDestroyView()
-
         _binding = null
+        super.onDestroyView()
     }
 }
