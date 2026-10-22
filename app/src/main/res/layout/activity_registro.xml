@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -20,6 +21,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- ENCABEZADO -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
@@ -52,24 +54,15 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <!-- CONTENIDO -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingStart="25dp"
-                android:paddingEnd="25dp"
                 android:paddingTop="22dp"
+                android:paddingEnd="25dp"
                 android:paddingBottom="30dp">
-
-                <TextView
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:text="♙"
-                    android:textColor="@color/color_primary"
-                    android:textSize="45sp"
-                    android:background="@drawable/bg_icon_register" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -85,17 +78,91 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
+                    android:alpha="0.6"
                     android:gravity="center"
                     android:text="Registra tu información para crear tu cuenta"
                     android:textColor="@color/black"
-                    android:alpha="0.6"
                     android:textSize="15sp" />
 
-
+                <!-- FOTO DE PERFIL OPCIONAL -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="25dp"
+                    android:text="Foto de perfil (opcional)"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <!-- CONTENEDOR CIRCULAR DE LA FOTO -->
+                    <FrameLayout
+                        android:layout_width="124dp"
+                        android:layout_height="124dp"
+                        android:background="@drawable/bg_foto_perfil_circular"
+                        android:padding="4dp">
+
+                        <ImageView
+                            android:id="@+id/imgFotoPerfil"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_foto_perfil_interior"
+                            android:clipToOutline="true"
+                            android:contentDescription="Vista previa de la foto de perfil"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/person" />
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvNombreFoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:text="Puedes agregar una foto"
+                        android:textColor="@color/color_text_secondary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnSeleccionarFoto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_button_primary"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:text="Agregar fotografía"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        app:backgroundTint="@null" />
+
+                    <TextView
+                        android:id="@+id/tvQuitarFoto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="8dp"
+                        android:text="Quitar foto"
+                        android:textColor="@color/color_primary"
+                        android:textSize="14sp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <!-- NOMBRES -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
                     android:text="Nombres"
                     android:textColor="@color/black"
                     android:textSize="16sp"
@@ -115,6 +182,7 @@
                     android:textColorHint="#999999"
                     android:textSize="15sp" />
 
+                <!-- APELLIDOS -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -138,6 +206,7 @@
                     android:textColorHint="#999999"
                     android:textSize="15sp" />
 
+                <!-- TIPO DE DOCUMENTO -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -156,6 +225,7 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
 
+                <!-- DOCUMENTO -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -179,7 +249,7 @@
                     android:textColorHint="#999999"
                     android:textSize="15sp" />
 
-
+                <!-- TELÉFONO -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -203,6 +273,7 @@
                     android:textColorHint="#999999"
                     android:textSize="15sp" />
 
+                <!-- CORREO -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -226,6 +297,7 @@
                     android:textColorHint="#999999"
                     android:textSize="15sp" />
 
+                <!-- CONTRASEÑA -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -235,20 +307,44 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <EditText
-                    android:id="@+id/etContrasena"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="55dp"
                     android:layout_marginTop="7dp"
                     android:background="@drawable/bg_input"
-                    android:hint="Crea una contraseña"
-                    android:inputType="textPassword"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:textColor="@color/black"
-                    android:textColorHint="#999999"
-                    android:textSize="15sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <EditText
+                        android:id="@+id/etContrasena"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="Crea una contraseña"
+                        android:inputType="textPassword"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textColorHint="#999999"
+                        android:textSize="15sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnMostrarContrasenaRegistro"
+                        android:layout_width="48dp"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"
+                        android:clickable="true"
+                        android:contentDescription="Mostrar contraseña"
+                        android:focusable="true"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_visibility_off"
+                        app:tint="@color/color_text_secondary" />
+
+                </LinearLayout>
+
+                <!-- CONFIRMAR CONTRASEÑA -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -258,20 +354,44 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <EditText
-                    android:id="@+id/etConfirmarContrasena"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="55dp"
                     android:layout_marginTop="7dp"
                     android:background="@drawable/bg_input"
-                    android:hint="Confirma tu contraseña"
-                    android:inputType="textPassword"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:textColor="@color/black"
-                    android:textColorHint="#999999"
-                    android:textSize="15sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <EditText
+                        android:id="@+id/etConfirmarContrasena"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="Confirma tu contraseña"
+                        android:inputType="textPassword"
+                        android:paddingStart="15dp"
+                        android:paddingEnd="5dp"
+                        android:textColor="@color/black"
+                        android:textColorHint="#999999"
+                        android:textSize="15sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnMostrarConfirmarContrasenaRegistro"
+                        android:layout_width="48dp"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"
+                        android:clickable="true"
+                        android:contentDescription="Mostrar confirmación de contraseña"
+                        android:focusable="true"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_visibility_off"
+                        app:tint="@color/color_text_secondary" />
+
+                </LinearLayout>
+
+                <!-- AVISO DE ROL -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -281,19 +401,21 @@
                     android:textColor="@color/color_primary"
                     android:textSize="14sp" />
 
+                <!-- REGISTRARSE -->
                 <Button
                     android:id="@+id/btnRegistrarse"
                     android:layout_width="match_parent"
                     android:layout_height="58dp"
                     android:layout_marginTop="22dp"
                     android:background="@drawable/bg_button_primary"
-                    app:backgroundTint="@null"
                     android:text="Registrarse"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
 
+                <!-- INICIAR SESIÓN -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

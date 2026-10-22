@@ -111,16 +111,40 @@ class PacienteRepository {
                 val respuesta = api.cambiarContrasena(datos)
 
                 if (respuesta.isSuccessful) {
-                    Pair(true, "Contraseña actualizada correctamente.")
+                    Pair(
+                        true,
+                        "Contraseña actualizada correctamente."
+                    )
                 } else {
-                    Pair(false, "No se pudo actualizar la contraseña.")
+                    val detalle = respuesta.errorBody()
+                        ?.string()
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "Sin detalles del servidor."
+
+                    Log.e(
+                        "CAMBIAR_CONTRASENA",
+                        "HTTP ${respuesta.code()}: $detalle"
+                    )
+
+                    Pair(
+                        false,
+                        "No se pudo actualizar la contraseña. " +
+                                "Código HTTP: ${respuesta.code()}."
+                    )
                 }
             } catch (e: Exception) {
-                Log.e("API_ERROR", "Error al cambiar contraseña", e)
-                Pair(false, "Error de conexión con el servidor.")
+                Log.e(
+                    "CAMBIAR_CONTRASENA",
+                    "Error al cambiar la contraseña",
+                    e
+                )
+
+                Pair(
+                    false,
+                    "Error de conexión con el servidor."
+                )
             }
         }
-
     // =========================================================
     // RECOMENDACIONES
     // =========================================================

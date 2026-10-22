@@ -56,6 +56,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+
 interface ApiService {
 
     // =========================================================
@@ -225,6 +226,21 @@ interface ApiService {
     suspend fun registrarUsuario(
         @Body usuario: Usuario
     ): Usuario
+
+    //subir registro con foto
+
+    @Multipart
+    @POST("usuarios/registro/")
+    suspend fun registrarUsuarioConFoto(
+        @Part("tipo_documento") tipoDocumento: okhttp3.RequestBody,
+        @Part("numero_documento") numeroDocumento: okhttp3.RequestBody,
+        @Part("nombres") nombres: okhttp3.RequestBody,
+        @Part("apellidos") apellidos: okhttp3.RequestBody,
+        @Part("correo") correo: okhttp3.RequestBody,
+        @Part("telefono") telefono: okhttp3.RequestBody,
+        @Part("contrasena") contrasena: okhttp3.RequestBody,
+        @Part foto: MultipartBody.Part?
+    ): Response<ResponseBody>
 
     @POST("usuarios/login/")
     suspend fun loginUsuario(

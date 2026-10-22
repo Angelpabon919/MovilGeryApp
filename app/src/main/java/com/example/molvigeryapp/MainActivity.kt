@@ -1,4 +1,3 @@
-
 package com.example.molvigeryapp
 
 import android.Manifest
@@ -29,6 +28,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "GERIAPP_FCM"
+        private const val TAG_PANTALLA = "GERIAPP_PANTALLA"
+
         private const val REQUEST_NOTIFICATION_PERMISSION = 1001
 
         private const val EXTRA_ABRIR_NOTIFICACION =
@@ -40,7 +41,6 @@ class MainActivity : AppCompatActivity() {
         private const val EXTRA_TIPO_NOTIFICACION =
             "TIPO_NOTIFICACION"
 
-        //comprueba el rol del usuario, asi luego busc la notificacion
         private const val ROL_ENCARGADO = 2
         private const val ROL_CUIDADOR = 3
     }
@@ -51,28 +51,78 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Log.e(
+            TAG_PANTALLA,
+            "MainActivity: entrando a onCreate"
+        )
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        Log.e(
+            TAG_PANTALLA,
+            "MainActivity: pantalla principal cargada"
+        )
 
         solicitarPermisoNotificaciones()
         obtenerTokenFCM()
 
-        val preferencias = getSharedPreferences("SESION", MODE_PRIVATE)
+        val preferencias = getSharedPreferences(
+            "SESION",
+            MODE_PRIVATE
+        )
 
-        idRolActual = intent.getIntExtra(
+        val rolRecibido = intent.getIntExtra(
             "ID_ROL",
             preferencias.getInt("ID_ROL", -1)
         )
 
-        Log.d(TAG, "Rol recibido en MainActivity: $idRolActual")
+        // Compatibilidad con los roles anteriores.
+        idRolActual = when (rolRecibido) {
+            5 -> ROL_CUIDADOR
+            6 -> ROL_ENCARGADO
+            else -> rolRecibido
+        }
+
+        if (idRolActual != rolRecibido) {
+            preferencias.edit()
+                .putInt("ID_ROL", idRolActual)
+                .apply()
+
+            Log.d(
+                TAG,
+                "Rol actualizado de $rolRecibido a $idRolActual"
+            )
+        }
+
+        Log.d(
+            TAG,
+            "Rol recibido en MainActivity: $idRolActual"
+        )
+
+        Log.e(
+            TAG_PANTALLA,
+            "Rol utilizado para abrir la pantalla: $idRolActual"
+        )
 
         if (idRolActual == ROL_CUIDADOR) {
+            Log.e(
+                TAG_PANTALLA,
+                "Iniciando actualizador del cuidador"
+            )
+
             iniciarActualizadorGeriApp()
         }
 
         if (savedInstanceState == null) {
             when (idRolActual) {
+
                 ROL_ENCARGADO -> {
+                    Log.e(
+                        TAG_PANTALLA,
+                        "Abriendo HomeEncargadoFragment"
+                    )
+
                     supportFragmentManager.beginTransaction()
                         .replace(
                             R.id.fragmentContainer,
@@ -82,6 +132,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 ROL_CUIDADOR -> {
+                    Log.e(
+                        TAG_PANTALLA,
+                        "Abriendo VerificacionLlegadaFragment"
+                    )
+
                     supportFragmentManager.beginTransaction()
                         .replace(
                             R.id.fragmentContainer,
@@ -92,8 +147,8 @@ class MainActivity : AppCompatActivity() {
 
                 else -> {
                     Log.e(
-                        TAG,
-                        "Rol no válido para las pantallas configuradas en MainActivity: $idRolActual"
+                        TAG_PANTALLA,
+                        "No se abrió ningún fragmento. Rol=$idRolActual"
                     )
                 }
             }
@@ -121,14 +176,26 @@ class MainActivity : AppCompatActivity() {
 
         if (procesandoNotificacion) return
 
-        val preferencias = getSharedPreferences("SESION", MODE_PRIVATE)
+        val preferencias = getSharedPreferences(
+            "SESION",
+            MODE_PRIVATE
+        )
 
-        val idUsuario = preferencias.getInt("ID_USUARIO", -1)
+        val idUsuario = preferencias.getInt(
+            "ID_USUARIO",
+            -1
+        )
 
-        val idRol = preferencias.getInt(
+        val rolGuardado = preferencias.getInt(
             "ID_ROL",
             idRolActual
         )
+
+        val idRol = when (rolGuardado) {
+            5 -> ROL_CUIDADOR
+            6 -> ROL_ENCARGADO
+            else -> rolGuardado
+        }
 
         val idNotificacion = intent.getIntExtra(
             EXTRA_ID_NOTIFICACION,
@@ -139,11 +206,10 @@ class MainActivity : AppCompatActivity() {
             EXTRA_TIPO_NOTIFICACION
         ).orEmpty()
 
-        // El detalle disponible corresponde al Cuidador.
         if (idRol != ROL_CUIDADOR) {
             Log.d(
                 TAG,
-                "No se abrirá el detalle del Cuidador. Rol actual: $idRol"
+                "No se abrirá el detalle del cuidador. Rol=$idRol"
             )
 
             limpiarExtrasNotificacion(intent)
@@ -153,7 +219,8 @@ class MainActivity : AppCompatActivity() {
         if (idUsuario <= 0 || idNotificacion <= 0) {
             Log.e(
                 TAG,
-                "ID_USUARIO o ID_NOTIFICACION inválido. Usuario=$idUsuario, notificación=$idNotificacion"
+                "ID_USUARIO o ID_NOTIFICACION inválido. " +
+                        "Usuario=$idUsuario, notificación=$idNotificacion"
             )
 
             limpiarExtrasNotificacion(intent)
@@ -176,12 +243,15 @@ class MainActivity : AppCompatActivity() {
                 if (notificacion == null) {
                     Log.w(
                         TAG,
-                        "No se encontró la notificación $idNotificacion. Tipo: $tipo"
+                        "No se encontró la notificación " +
+                                "$idNotificacion. Tipo=$tipo"
                     )
                     return@launch
                 }
 
-                if (isFinishing || isDestroyed) return@launch
+                if (isFinishing || isDestroyed) {
+                    return@launch
+                }
 
                 val bundle = Bundle().apply {
                     putSerializable(
@@ -204,11 +274,13 @@ class MainActivity : AppCompatActivity() {
                     .commit()
 
                 if (!notificacion.leida) {
-                    val marcada = NotificacionesRepository
-                        .marcarCualquierNotificacionLeida(
-                            idNotificacion = notificacion.idNotificacion,
-                            idUsuario = idUsuario
-                        )
+                    val marcada =
+                        NotificacionesRepository
+                            .marcarCualquierNotificacionLeida(
+                                idNotificacion =
+                                    notificacion.idNotificacion,
+                                idUsuario = idUsuario
+                            )
 
                     Log.d(
                         TAG,
@@ -258,7 +330,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun obtenerTokenFCM() {
-        Log.d(TAG, "Solicitando token FCM...")
+        Log.d(
+            TAG,
+            "Solicitando token FCM..."
+        )
 
         FirebaseMessaging.getInstance()
             .token
@@ -275,7 +350,10 @@ class MainActivity : AppCompatActivity() {
 
                 val token = tarea.result
 
-                Log.d(TAG, "Token FCM obtenido correctamente")
+                Log.d(
+                    TAG,
+                    "Token FCM obtenido correctamente"
+                )
 
                 registrarTokenEnDjango(token)
             }
