@@ -159,6 +159,26 @@ class NotificacionAdapter(
 
     override fun getItemCount(): Int = lista.size
 
+    override fun onViewAttachedToWindow(
+        holder: NotificacionViewHolder
+    ) {
+        super.onViewAttachedToWindow(holder)
+
+        val posicion = holder.bindingAdapterPosition
+
+        if (posicion != RecyclerView.NO_POSITION) {
+            val notificacion = lista[posicion]
+
+            Log.d(
+                "NOTIFICACION_VISIBLE",
+                "POSICION=$posicion, " +
+                        "ID=${notificacion.idNotificacion}, " +
+                        "TIPO=${notificacion.tipo}, " +
+                        "TITULO=${notificacion.titulo}"
+            )
+        }
+    }
+
     fun actualizarLista(nuevaLista: List<Notificacion>) {
         if (lista == nuevaLista) return
 

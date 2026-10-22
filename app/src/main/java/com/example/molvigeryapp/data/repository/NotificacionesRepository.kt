@@ -43,6 +43,7 @@ object NotificacionesRepository {
             "GET notificaciones/: ${notificaciones.size} registros"
         )
 
+
         val destinatarios =
             try {
                 RetrofitClient.apiService.getNotificacionesDestinatarios()

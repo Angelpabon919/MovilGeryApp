@@ -2,16 +2,17 @@ package com.example.molvigeryapp.ui.cuidador.perfil
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import android.util.Log
-
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-
+import com.bumptech.glide.Glide
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPerfilCuidadorBinding
@@ -21,27 +22,12 @@ import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
-import android.content.res.ColorStateList
-import android.graphics.Color
-import com.bumptech.glide.Glide
-
 import kotlinx.coroutines.launch
-
 
 class PerfilCuidadorFragment : Fragment() {
 
-    // =====================================================
-    // BINDING
-    // =====================================================
-
     private var _binding: FragmentPerfilCuidadorBinding? = null
-
-    private val binding: FragmentPerfilCuidadorBinding
-        get() = _binding!!
-
-    // =====================================================
-    // REPOSITORIO Y SESIÓN
-    // =====================================================
+    private val binding get() = _binding!!
 
     private val repository by lazy {
         PacienteRepository()
@@ -54,28 +40,18 @@ class PerfilCuidadorFragment : Fragment() {
         )
     }
 
-    // =====================================================
-    // CREAR VISTA
-    // =====================================================
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding = FragmentPerfilCuidadorBinding.inflate(
             inflater,
             container,
             false
         )
-
         return binding.root
     }
-
-    // =====================================================
-    // VISTA CREADA
-    // =====================================================
 
     override fun onViewCreated(
         view: View,
@@ -86,72 +62,51 @@ class PerfilCuidadorFragment : Fragment() {
         cargarDatosPerfil()
         configurarNotificaciones()
         configurarEditarPerfil()
+        configurarCambiarContrasena()
         configurarCerrarSesion()
         configurarMenuInferior()
     }
 
-    // =====================================================
-    // CARGAR DATOS DEL PERFIL
-    // =====================================================
-
     private fun cargarDatosPerfil() {
+        val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
 
-        val idUsuario = preferenciasSesion.getInt(
-            "ID_USUARIO",
-            -1
-        )
-
-        if (idUsuario == -1) {
-
+        if (idUsuario <= 0) {
             Toast.makeText(
                 requireContext(),
                 "No se encontró el usuario de la sesión.",
                 Toast.LENGTH_LONG
             ).show()
-
             return
         }
 
-        lifecycleScope.launch {
-
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
+                val usuario = repository.obtenerUsuarioPorId(idUsuario)
 
-                val usuario = repository.obtenerUsuarioPorId(
-                    idUsuario
-                )
+                if (!isAdded || _binding == null) return@launch
 
                 if (usuario == null) {
-
                     Toast.makeText(
                         requireContext(),
                         "No se pudo cargar el usuario $idUsuario",
                         Toast.LENGTH_LONG
                     ).show()
-
                     return@launch
                 }
 
                 val nombreCompleto =
                     "${usuario.nombres} ${usuario.apellidos}".trim()
 
-                // Nombre debajo de la foto
                 binding.txtNombrePerfil.text = nombreCompleto
-
-                // Nombre completo
                 binding.txtNombreCompletoPerfil.text = nombreCompleto
 
-                // Documento
                 binding.txtDocumentoPerfil.text =
                     "${usuario.tipoDocumento ?: "CC"} ${usuario.numeroDocumento}"
 
-                // Correo
                 binding.txtCorreoPerfil.text = usuario.correo
-
-                // Teléfono
                 binding.txtTelefonoPerfil.text = usuario.telefono
 
                 if (!usuario.foto.isNullOrBlank()) {
-
                     binding.imgPerfilCuidadora.imageTintList = null
 
                     Glide.with(this@PerfilCuidadorFragment)
@@ -160,9 +115,7 @@ class PerfilCuidadorFragment : Fragment() {
                         .error(R.drawable.person_icon)
                         .centerCrop()
                         .into(binding.imgPerfilCuidadora)
-
                 } else {
-
                     Glide.with(this@PerfilCuidadorFragment)
                         .clear(binding.imgPerfilCuidadora)
 
@@ -177,14 +130,13 @@ class PerfilCuidadorFragment : Fragment() {
                 }
 
             } catch (e: Exception) {
-
                 Log.e(
                     "PERFIL_CUIDADOR",
                     "Error inesperado al cargar el perfil",
                     e
                 )
 
-                if (!isAdded) return@launch
+                if (!isAdded || _binding == null) return@launch
 
                 Toast.makeText(
                     requireContext(),
@@ -195,16 +147,8 @@ class PerfilCuidadorFragment : Fragment() {
         }
     }
 
-    // =====================================================
-    // NOTIFICACIONES
-    // =====================================================
-
     private fun configurarNotificaciones() {
-
-        // Abrir la pantalla de notificaciones al pulsar
-        // la campanita del encabezado.
         binding.btnNotificacionesPerfil.setOnClickListener {
-
             parentFragmentManager
                 .beginTransaction()
                 .replace(
@@ -215,8 +159,6 @@ class PerfilCuidadorFragment : Fragment() {
                 .commit()
         }
 
-        // Se conserva el comportamiento original
-        // del interruptor de notificaciones.
         binding.switchNotificaciones.setOnCheckedChangeListener {
                 _, activado ->
 
@@ -234,59 +176,50 @@ class PerfilCuidadorFragment : Fragment() {
         }
     }
 
-    // =====================================================
-    // EDITAR PERFIL
-    // =====================================================
-
     private fun configurarEditarPerfil() {
-
         binding.btnEditarPerfil.setOnClickListener {
-
             parentFragmentManager
                 .beginTransaction()
                 .replace(
                     R.id.fragmentContainer,
                     EditarPerfilCuidadorFragment()
                 )
-                .addToBackStack(null)
+                .addToBackStack("editar_perfil_cuidador")
                 .commit()
         }
     }
 
-    // =====================================================
-    // CERRAR SESIÓN
-    // =====================================================
+    private fun configurarCambiarContrasena() {
+        binding.btnCambiarContrasena.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    CambiarContrasenaCuidadorFragment()
+                )
+                .addToBackStack("cambiar_contrasena_cuidador")
+                .commit()
+        }
+    }
 
     private fun configurarCerrarSesion() {
-
         binding.btnCerrarSesion.setOnClickListener {
-
-            preferenciasSesion
-                .edit()
-                .clear()
-                .apply()
+            preferenciasSesion.edit().clear().apply()
 
             val intent = Intent(
                 requireContext(),
                 LoginActivity::class.java
-            )
-
-            intent.flags =
-                Intent.FLAG_ACTIVITY_NEW_TASK or
+            ).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
 
             startActivity(intent)
         }
     }
 
-    // =====================================================
-    // MENÚ INFERIOR
-    // =====================================================
-
     private fun configurarMenuInferior() {
-
         NavegacionCuidador.configurar(
-
             navInicio = binding.navInicio,
             iconInicio = binding.iconInicio,
             textInicio = binding.textInicio,
@@ -305,15 +238,9 @@ class PerfilCuidadorFragment : Fragment() {
             textPerfil = binding.textPerfil,
 
             pantallaActual = NavegacionCuidador.Pantalla.PERFIL,
-
             lifecycleOwner = viewLifecycleOwner,
 
-            // ==============================
-            // INICIO
-            // ==============================
-
             onInicio = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -323,12 +250,7 @@ class PerfilCuidadorFragment : Fragment() {
                     .commit()
             },
 
-            // ==============================
-            // AGENDA
-            // ==============================
-
             onAgenda = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -338,12 +260,7 @@ class PerfilCuidadorFragment : Fragment() {
                     .commit()
             },
 
-            // ==============================
-            // CÁMARAS
-            // ==============================
-
             onCamaras = {
-
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
@@ -353,24 +270,14 @@ class PerfilCuidadorFragment : Fragment() {
                     .commit()
             },
 
-            // ==============================
-            // PERFIL
-            // ==============================
-
             onPerfil = {
                 // Ya estamos en Perfil.
             }
         )
     }
 
-    // =====================================================
-    // DESTRUIR BINDING
-    // =====================================================
-
     override fun onDestroyView() {
-
         super.onDestroyView()
-
         _binding = null
     }
 }

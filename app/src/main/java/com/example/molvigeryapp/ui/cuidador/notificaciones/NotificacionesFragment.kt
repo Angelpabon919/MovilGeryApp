@@ -128,6 +128,23 @@ class NotificacionesFragment : Fragment() {
 
             if (!isAdded || view == null) return
 
+            Log.d(
+                TAG,
+                "TOTAL QUE LLEGA AL ADAPTADOR: ${listaFinal.size}"
+            )
+
+            listaFinal.forEachIndexed { index, notificacion ->
+                Log.d(
+                    TAG,
+                    "POSICION=$index | " +
+                            "ID=${notificacion.idNotificacion} | " +
+                            "TIPO=${notificacion.tipo} | " +
+                            "TITULO=${notificacion.titulo}"
+                )
+            }
+
+            notificacionAdapter.actualizarLista(listaFinal)
+
             // Actualizamos la lista en el adaptador
             notificacionAdapter.actualizarLista(listaFinal)
 

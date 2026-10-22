@@ -6,18 +6,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
-
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 import com.example.molvigeryapp.R
-import com.example.molvigeryapp.data.model.EventoIa
+import com.example.molvigeryapp.databinding.FragmentEventosCamaraBinding
+import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
+import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 
 class EventosCamaraFragment : Fragment() {
+
+    private var _binding: FragmentEventosCamaraBinding? = null
+    private val binding get() = _binding!!
 
     private val viewModel: EventoIaViewModel by viewModels()
 
@@ -27,7 +32,7 @@ class EventosCamaraFragment : Fragment() {
     private lateinit var tvSinEventos: TextView
     private lateinit var progressEventos: View
 
-    private var listaCompleta = listOf<EventoIa>()
+    private var listaCompleta = listOf<com.example.molvigeryapp.data.model.EventoIa>()
     private var primeraConsultaFinalizada = false
 
     override fun onCreateView(
@@ -35,11 +40,12 @@ class EventosCamaraFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return inflater.inflate(
-            R.layout.fragment_eventos_camara,
+        _binding = FragmentEventosCamaraBinding.inflate(
+            inflater,
             container,
             false
         )
+        return binding.root
     }
 
     override fun onViewCreated(
@@ -50,8 +56,9 @@ class EventosCamaraFragment : Fragment() {
 
         inicializarVistas(view)
         configurarRecyclerView()
-        configurarBotones(view)
-        configurarBotonNotificaciones(view)
+        configurarBotones()
+        configurarBotonNotificaciones()
+        configurarNavegacion()
         observarDatos()
 
         viewModel.obtenerTiposEventos()
@@ -61,16 +68,15 @@ class EventosCamaraFragment : Fragment() {
     }
 
     private fun inicializarVistas(view: View) {
-        recyclerEventos = view.findViewById(R.id.recyclerEventos)
-        tvSinEventos = view.findViewById(R.id.tvSinEventos)
-        progressEventos = view.findViewById(R.id.progressEventos)
+        recyclerEventos = binding.recyclerEventos
+        tvSinEventos = binding.tvSinEventos
+        progressEventos = binding.progressEventos
 
         tvSinEventos.visibility = View.GONE
     }
 
     private fun configurarRecyclerView() {
         adapter = EventoIaAdapter { evento ->
-
             val detalleFragment =
                 DetalleEventoFragment.newInstance(evento.id_evento)
 
@@ -87,38 +93,89 @@ class EventosCamaraFragment : Fragment() {
         recyclerEventos.adapter = adapter
     }
 
-    private fun configurarBotones(view: View) {
-        view.findViewById<View>(R.id.btnVolverEventos)
-            ?.setOnClickListener {
+    private fun configurarBotones() {
+        binding.btnVolverEventos.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, HomeFragment())
+                .commit()
+        }
+    }
 
+    private fun configurarBotonNotificaciones() {
+        binding.btnNotificationCamara.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    NotificacionesFragment()
+                )
+                .addToBackStack("notificaciones_cuidador")
+                .commit()
+        }
+    }
+
+    // =====================================================
+    // BARRA DE NAVEGACIÓN DEL CUIDADOR
+    // =====================================================
+
+    private fun configurarNavegacion() {
+        NavegacionCuidador.configurar(
+            navInicio = binding.navInicio,
+            iconInicio = binding.iconInicio,
+            textInicio = binding.textInicio,
+
+            navAgenda = binding.navAgenda,
+            iconAgenda = binding.iconAgenda,
+            textAgenda = binding.textAgenda,
+            badgeAgenda = binding.badgeAgenda,
+
+            navCamaras = binding.navCamaras,
+            iconCamaras = binding.iconCamaras,
+            textCamaras = binding.textCamaras,
+
+            navPerfil = binding.navPerfil,
+            iconPerfil = binding.iconPerfil,
+            textPerfil = binding.textPerfil,
+
+            pantallaActual = NavegacionCuidador.Pantalla.CAMARAS,
+            lifecycleOwner = viewLifecycleOwner,
+
+            onInicio = {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, HomeFragment())
+                    .commit()
+            },
+
+            onAgenda = {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, AgendaFragment())
+                    .commit()
+            },
+
+            onCamaras = {
+                // Ya estamos en Eventos Cámara.
+            },
+
+            onPerfil = {
                 parentFragmentManager
                     .beginTransaction()
                     .replace(
                         R.id.fragmentContainer,
-                        HomeFragment()
+                        PerfilCuidadorFragment()
                     )
                     .commit()
             }
+        )
     }
 
-    // Abrir notificaciones desde la campanita
-    private fun configurarBotonNotificaciones(view: View) {
-        view.findViewById<View>(R.id.btnNotificationCamara)
-            ?.setOnClickListener {
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        NotificacionesFragment()
-                    )
-                    .addToBackStack("notificaciones_cuidador")
-                    .commit()
-            }
-    }
+    // =====================================================
+    // OBSERVAR EVENTOS IA
+    // =====================================================
 
     private fun observarDatos() {
-
         viewModel.eventos.observe(viewLifecycleOwner) { eventos ->
             listaCompleta = eventos
             adapter.actualizarEventos(eventos)
@@ -142,7 +199,6 @@ class EventosCamaraFragment : Fragment() {
         }
 
         viewModel.cargando.observe(viewLifecycleOwner) { cargando ->
-
             if (!cargando) {
                 primeraConsultaFinalizada = true
             }
@@ -188,6 +244,7 @@ class EventosCamaraFragment : Fragment() {
 
     override fun onDestroyView() {
         recyclerEventos.adapter = null
+        _binding = null
         super.onDestroyView()
     }
 }
