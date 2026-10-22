@@ -7,6 +7,7 @@
     android:background="@color/color_background">
 
     <ScrollView
+        android:id="@+id/scrollBitacora"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
@@ -695,5 +696,18 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- CONTENEDOR PARA EVENTOS ADVERSOS: oculto hasta pulsar el botón -->
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/contenedorEventoAdverso"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        android:elevation="10dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
