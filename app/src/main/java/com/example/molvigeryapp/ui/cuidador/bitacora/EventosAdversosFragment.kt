@@ -1,10 +1,15 @@
 package com.example.molvigeryapp.ui.cuidador.bitacora
 
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -31,57 +36,83 @@ class EventosAdversosFragment : Fragment() {
     }
 
     private var idPaciente: Int? = null
-
     private var idBitacora: Int? = null
+
+    // Foto seleccionada para mostrar en el formulario.
+    private var fotoBitmap: Bitmap? = null
+    private var fotoUri: Uri? = null
+
+    // Abrir cámara y obtener una vista previa.
+    private val tomarFotoLauncher =
+        registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+
+            if (bitmap != null) {
+                fotoBitmap = bitmap
+                fotoUri = null
+
+                binding.ivFoto.setImageBitmap(bitmap)
+                binding.ivFoto.visibility = View.VISIBLE
+
+                Toast.makeText(
+                    requireContext(),
+                    "Foto tomada correctamente",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+    // Seleccionar una imagen de la galería.
+    private val seleccionarFotoLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+
+            if (uri != null) {
+                fotoUri = uri
+                fotoBitmap = null
+
+                binding.ivFoto.setImageURI(uri)
+                binding.ivFoto.visibility = View.VISIBLE
+
+                Toast.makeText(
+                    requireContext(),
+                    "Foto seleccionada correctamente",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding = FragmentEventosAdversosBinding.inflate(
             inflater,
             container,
             false
         )
 
-        /*
-         * Si en algún momento el fragment recibe
-         * el ID de la bitácora por arguments,
-         * lo tomamos automáticamente.
-         */
         idBitacora = arguments?.getInt("ID_BITACORA")
+            ?.takeIf { it != 0 }
 
         return binding.root
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         observarPaciente()
-        configurarBotones()
         observarBitacora()
+        configurarBotones()
+
+        binding.ivFoto.visibility = View.GONE
     }
 
-    // =========================================================
-    // PACIENTE SELECCIONADO
-    // =========================================================
-
     private fun observarPaciente() {
-
-        pacienteViewModel.pacienteSeleccionado.observe(
-            viewLifecycleOwner
-        ) { paciente ->
-
+        pacienteViewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
             paciente?.let {
-
                 idPaciente = it.idPaciente
 
-                android.util.Log.d(
+                Log.d(
                     "EVENTO_ADVERSO",
                     "Paciente seleccionado: ${it.idPaciente}"
                 )
@@ -89,24 +120,23 @@ class EventosAdversosFragment : Fragment() {
         }
     }
 
-    private fun observarBitacora(){
-        pacienteViewModel.idBitacora.observe(
-            viewLifecycleOwner){
-            id ->
+    private fun observarBitacora() {
+        pacienteViewModel.idBitacora.observe(viewLifecycleOwner) { id ->
             id?.let {
                 idBitacora = it
-                android.util.Log.d(
-                "EVENTO_ADVERSO",
-                "ID Bitacora recibido: $it"
-            ) }
+
+                Log.d(
+                    "EVENTO_ADVERSO",
+                    "ID Bitácora recibido: $it"
+                )
+            }
         }
     }
 
-    // =========================================================
-    // BOTONES
-    // =========================================================
-
     private fun configurarBotones() {
+        binding.btnAdjuntarFoto.setOnClickListener {
+            mostrarOpcionesFoto()
+        }
 
         binding.btnGuardar.setOnClickListener {
             guardarEvento()
@@ -117,12 +147,26 @@ class EventosAdversosFragment : Fragment() {
         }
     }
 
-    // =========================================================
-    // FECHA Y HORA
-    // =========================================================
+    private fun mostrarOpcionesFoto() {
+        val opciones = arrayOf(
+            "Tomar foto con la cámara",
+            "Seleccionar de la galería"
+        )
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Adjuntar fotografía")
+            .setItems(opciones) { _, seleccion ->
+
+                when (seleccion) {
+                    0 -> tomarFotoLauncher.launch(null)
+                    1 -> seleccionarFotoLauncher.launch("image/*")
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
 
     private fun obtenerFechaHoraActual(): String {
-
         val formato = SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ssXXX",
             Locale.getDefault()
@@ -131,133 +175,78 @@ class EventosAdversosFragment : Fragment() {
         return formato.format(Date())
     }
 
-    // =========================================================
-    // GUARDAR EVENTO
-    // =========================================================
-
     private fun guardarEvento() {
         val bitacoraId = idBitacora
+
         if (bitacoraId == null) {
             Toast.makeText(
                 requireContext(),
                 "Aún no se ha creado la bitácora",
                 Toast.LENGTH_SHORT
             ).show()
-
             return
         }
 
         val pacienteId = idPaciente
 
         if (pacienteId == null) {
-
             Toast.makeText(
                 requireContext(),
                 "No se encontró el paciente seleccionado",
                 Toast.LENGTH_SHORT
             ).show()
-
             return
         }
 
-        // =====================================================
-        // CAMPOS DEL EVENTO
-        // =====================================================
-
-        val descripcion =
-            binding.etDescripcion.text.toString().trim()
-
-        val acciones =
-            binding.etAccionesRealizadas.text.toString().trim()
-
-        // =====================================================
-        // VALIDACIONES
-        // =====================================================
+        val descripcion = binding.etDescripcion.text.toString().trim()
+        val acciones = binding.etAccionesRealizadas.text.toString().trim()
 
         if (descripcion.isEmpty()) {
-
-            binding.etDescripcion.error =
-                "Ingrese una descripción"
-
+            binding.etDescripcion.error = "Ingrese una descripción"
             return
         }
 
         if (acciones.isEmpty()) {
-
             binding.etAccionesRealizadas.error =
                 "Ingrese las acciones realizadas"
-
             return
         }
 
-        // =====================================================
-        // TIPO DE EMERGENCIA
-        // =====================================================
-
         val idTipoEmergencia = when {
-
             binding.rbLeve.isChecked -> 1
-
             binding.rbModerado.isChecked -> 2
-
             binding.rbGrave.isChecked -> 3
 
             else -> {
-
                 Toast.makeText(
                     requireContext(),
                     "Seleccione una evaluación",
                     Toast.LENGTH_SHORT
                 ).show()
-
                 return
             }
         }
 
-        // =====================================================
-        // SIGNOS VITALES
-        // =====================================================
-
-        val temperatura =
-            binding.etTemperatura.text.toString().trim()
-
-        val frecuenciaCardiaca =
-            binding.etFrecuencia.text.toString().trim()
-
+        val temperatura = binding.etTemperatura.text.toString().trim()
+        val frecuenciaCardiaca = binding.etFrecuencia.text.toString().trim()
         val presionSistolica =
             binding.etPresionSistolica.text.toString().trim()
-
         val presionDiastolica =
             binding.etPresionDiastolica.text.toString().trim()
-
         val frecuenciaRespiratoria =
             binding.etFrecuenciaRespiratoria.text.toString().trim()
-
-        val saturacion =
-            binding.etSaturacion.text.toString().trim()
-
-        val peso =
-            binding.etPeso.text.toString().trim()
-
-        val observaciones =
-            binding.etObservaciones.text.toString().trim()
-
-        // =====================================================
-        // FECHA
-        // =====================================================
-
+        val saturacion = binding.etSaturacion.text.toString().trim()
+        val peso = binding.etPeso.text.toString().trim()
+        val observaciones = binding.etObservaciones.text.toString().trim()
         val fechaHora = obtenerFechaHoraActual()
 
-        // =====================================================
-        // ENVIAR AL API
-        // =====================================================
+        binding.btnGuardar.isEnabled = false
 
-        lifecycleScope.launch {
-
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
-
+                // 1. Registrar el evento adverso.
                 val evento = EventoAdverso(
-                    idBitacora = idBitacora,
+                    idBitacora = bitacoraId,
                     idEvento = null,
                     idTipoEmergencia = idTipoEmergencia,
                     fechaHora = fechaHora,
@@ -265,17 +254,18 @@ class EventosAdversosFragment : Fragment() {
                     accionesRealizadas = acciones,
                     estado = "pendiente"
                 )
+
                 val respuestaEvento =
-                    RetrofitClient.apiService.crearEventoAdverso(
-                        evento
-                    )
-                android.util.Log.d(
+                    RetrofitClient.apiService.crearEventoAdverso(evento)
+
+                Log.d(
                     "EVENTO_ADVERSO",
                     "Evento creado: ${respuestaEvento.idEventoAdverso}"
                 )
 
+                // 2. Registrar los signos vitales.
                 val signos = SignosVitales(
-                    idBitacora = idBitacora,
+                    idBitacora = bitacoraId,
                     temperatura = temperatura,
                     presionSistolica = presionSistolica,
                     presionDiastolica = presionDiastolica,
@@ -286,53 +276,62 @@ class EventosAdversosFragment : Fragment() {
                     fechaHora = fechaHora,
                     observaciones = observaciones
                 )
-                RetrofitClient.apiService.crearSignosVitales(
-                    signos
-                )
+
+                RetrofitClient.apiService.crearSignosVitales(signos)
+
+                // La foto todavía no se envía al backend.
+                val mensaje = if (fotoBitmap != null || fotoUri != null) {
+                    "Evento y signos vitales guardados. " +
+                            "La foto solo está en el formulario y no se ha subido al servidor."
+                } else {
+                    "Evento adverso y signos vitales guardados correctamente"
+                }
 
                 Toast.makeText(
                     requireContext(),
-                    "Evento adverso guardado correctamente",
+                    mensaje,
                     Toast.LENGTH_LONG
                 ).show()
 
                 limpiarFormulario()
-            } catch (e: HttpException) {
 
+            } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string()
 
-                android.util.Log.e(
-                    "EVENTO_ADVERSO",
-                    "Código HTTP: ${e.code()}"
-                )
+                Log.e("EVENTO_ADVERSO", "Código HTTP: ${e.code()}")
+                Log.e("EVENTO_ADVERSO", "Respuesta de la API: $errorBody")
 
-                android.util.Log.e(
-                    "EVENTO_ADVERSO",
-                    "Respuesta de la API: $errorBody"
-                )
-
-                Toast.makeText(
-                    requireContext(),
-                    "Error ${e.code()}: $errorBody",
-                    Toast.LENGTH_LONG
-                ).show()
+                if (_binding != null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error ${e.code()}: $errorBody",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
 
             } catch (e: Exception) {
-
-                android.util.Log.e(
+                Log.e(
                     "EVENTO_ADVERSO",
                     "Error inesperado al guardar evento",
                     e
                 )
 
-                Toast.makeText(
-                    requireContext(),
-                    "Error inesperado: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                if (_binding != null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error inesperado: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+            } finally {
+                if (_binding != null) {
+                    binding.btnGuardar.isEnabled = true
+                }
             }
         }
     }
+
     private fun limpiarFormulario() {
         binding.etDescripcion.text.clear()
         binding.etTemperatura.text.clear()
@@ -344,7 +343,15 @@ class EventosAdversosFragment : Fragment() {
         binding.etPeso.text.clear()
         binding.etObservaciones.text.clear()
         binding.etAccionesRealizadas.text.clear()
+
         binding.rgEvaluacion.clearCheck()
+
+        // Limpiar la fotografía seleccionada.
+        fotoBitmap = null
+        fotoUri = null
+
+        binding.ivFoto.setImageDrawable(null)
+        binding.ivFoto.visibility = View.GONE
     }
 
     override fun onDestroyView() {

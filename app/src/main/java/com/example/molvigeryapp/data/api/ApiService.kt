@@ -39,6 +39,7 @@ import com.example.molvigeryapp.data.model.EvidenciaIa
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
 import com.example.molvigeryapp.data.model.GrupoMedicacion
 import com.example.molvigeryapp.data.model.Habitacion
+import com.example.molvigeryapp.data.model.ImagenEventoAdverso
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
@@ -508,4 +509,16 @@ interface ApiService {
     suspend fun cambiarContrasenaRecuperacion(
         @Body datos: Map<String, String>
     ): Response<RespuestaMensaje>
+
+    // =========================================================
+// IMÁGENES DE EVENTOS ADVERSOS
+// =========================================================
+
+    @GET("imagenes_evento_adverso/")
+    suspend fun getImagenesEventoAdverso(): List<ImagenEventoAdverso>
+
+    @POST("imagenes_evento_adverso/")
+    suspend fun crearImagenEventoAdverso(
+        @Body imagen: ImagenEventoAdverso
+    ): ImagenEventoAdverso
 }
