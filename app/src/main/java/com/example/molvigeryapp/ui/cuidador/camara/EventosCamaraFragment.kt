@@ -100,7 +100,19 @@ class EventosCamaraFragment : Fragment() {
                 .replace(R.id.fragmentContainer, HomeFragment())
                 .commit()
         }
+        binding.btnMonitoreoCamaras.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    MonitoreoCamarasFragment()
+                )
+                .addToBackStack("monitoreo_camaras")
+                .commit()
+        }
     }
+
+
 
     private fun configurarBotonNotificaciones() {
         binding.btnNotificationCamara.setOnClickListener {

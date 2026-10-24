@@ -3,9 +3,11 @@ package com.example.molvigeryapp
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +45,11 @@ class MainActivity : AppCompatActivity() {
 
         private const val ROL_ENCARGADO = 2
         private const val ROL_CUIDADOR = 3
+
+        ///boton de llamada
+
+        private const val TELEFONO_EMERGENCIA =
+            "+573146767639"
     }
 
     private var idRolActual = -1
@@ -58,6 +65,10 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.fabLlamada.setOnClickListener {
+            abrirMarcadorEmergencia()
+        }
 
         Log.e(
             TAG_PANTALLA,
@@ -424,6 +435,37 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
+
+    private fun abrirMarcadorEmergencia() {
+        val numero = TELEFONO_EMERGENCIA
+
+        if (
+            numero.isBlank() ||
+            numero == "REEMPLAZAR_NUMERO_NATALIA"
+        ) {
+            Toast.makeText(
+                this,
+                "Configura el número de emergencia.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.fromParts("tel", numero, null)
+        }
+
+        try {
+            startActivity(intent)
+        } catch (e: android.content.ActivityNotFoundException) {
+            Toast.makeText(
+                this,
+                "No hay una aplicación de teléfono disponible.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
 
     fun cerrarSesion() {
         getSharedPreferences("SESION", MODE_PRIVATE)
