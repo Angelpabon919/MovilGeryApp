@@ -267,7 +267,6 @@ interface ApiService {
         @Body datos: Map<String, @JvmSuppressWildcards Any>
     ): Response<Usuario>
 
-
     // =========================================================
     // FOTO DE PERFIL DEL USUARIO
     // =========================================================

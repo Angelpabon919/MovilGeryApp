@@ -8,6 +8,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.databinding.FragmentCardexBinding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class CardexFragment : Fragment() {
 
@@ -116,6 +122,34 @@ class CardexFragment : Fragment() {
                         cuidado.administracionMedicamentos
                             ?: ""
                     )
+                }
+            }
+        }
+
+        iniciarActualizacionAutomatica()
+
+    }
+    private fun iniciarActualizacionAutomatica() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                while (isActive) {
+
+                    val idPaciente =
+                        pacienteViewModel.pacienteSeleccionado.value?.idPaciente
+
+                    if (idPaciente != null) {
+
+                        pacienteViewModel.cargarCuidados(
+                            idPaciente
+                        )
+                    }
+
+                    delay(10_000)
                 }
             }
         }
