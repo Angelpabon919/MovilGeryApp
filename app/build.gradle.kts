@@ -38,6 +38,7 @@ android {
 }
 
 dependencies {
+    implementation("io.livekit:livekit-android:2.29.1")
     implementation(platform(libs.firebase.bom))
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.vanniktech:android-image-cropper:4.6.0")

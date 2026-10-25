@@ -1,6 +1,28 @@
 
 package com.example.molvigeryapp.ui.cuidador.camara
 
+import android.content.Context
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.lifecycle.lifecycleScope
+import io.livekit.android.LiveKit
+import io.livekit.android.events.RoomEvent
+import io.livekit.android.events.collect
+import io.livekit.android.renderer.SurfaceViewRenderer
+import io.livekit.android.room.Room
+import io.livekit.android.room.track.VideoTrack
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType.Companion.toMediaType
+import org.json.JSONObject
+
+
 import android.os.Bundle
 import android.graphics.BitmapFactory
 import android.widget.ImageView
@@ -11,7 +33,6 @@ import java.net.URL
 import java.net.URLEncoder
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
@@ -42,13 +63,11 @@ class MonitoreoCamarasFragment : Fragment() {
     @Volatile
     private var generacionVideo = 0
 
-    @Volatile
-    private var conexionVideo: HttpURLConnection? = null
+    private var salaLiveKit: Room? = null
+    private var tareaLiveKit: Job? = null
+    private var renderizadorLiveKit: SurfaceViewRenderer? = null
+    private var pistaLiveKit: VideoTrack? = null
 
-    @Volatile
-    private var flujoVideo: InputStream? = null
-
-    private var hiloVideo: Thread? = null
     private var camaraActual: Camara? = null
     private lateinit var tvEstadoGeneral: TextView
 
@@ -336,164 +355,190 @@ class MonitoreoCamarasFragment : Fragment() {
 
     private fun detenerVideo() {
         generacionVideo++
-        try {
-            flujoVideo?.close()
-        } catch (_: Exception) {
-        }
-        flujoVideo = null
 
-        try {
-            conexionVideo?.disconnect()
-        } catch (_: Exception) {
-        }
-        conexionVideo = null
+        tareaLiveKit?.cancel()
+        tareaLiveKit = null
 
-        hiloVideo?.interrupt()
-        hiloVideo = null
+        val pistaAnterior = pistaLiveKit
+        val renderizadorAnterior = renderizadorLiveKit
+        val salaAnterior = salaLiveKit
+
+        pistaLiveKit = null
+        renderizadorLiveKit = null
+        salaLiveKit = null
+
+        if (pistaAnterior != null && renderizadorAnterior != null) {
+            try {
+                pistaAnterior.removeRenderer(renderizadorAnterior)
+            } catch (_: Exception) {
+            }
+        }
+
+        if (renderizadorAnterior != null) {
+            try {
+                (renderizadorAnterior.parent as? ViewGroup)
+                    ?.removeView(renderizadorAnterior)
+                renderizadorAnterior.release()
+            } catch (_: Exception) {
+            }
+        }
+
+        if (salaAnterior != null && isAdded) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    salaAnterior.disconnect()
+                } catch (_: Exception) {
+                }
+            }
+        }
     }
 
     private fun iniciarVideo(camara: Camara) {
         detenerVideo()
 
-        if (!camara.estado || !isAdded || view == null) return
+        val idHabitacion = camara.idHabitacion
+        if (!camara.estado || idHabitacion == null || !isAdded || view == null) {
+            mostrarMensajeVideo("La cámara no tiene una habitación válida")
+            return
+        }
 
         val generacion = generacionVideo
-        val nombreCodificado = URLEncoder.encode(camara.nombre, "UTF-8")
         val contexto = context ?: return
-        val servidor = ConfiguracionServidorCamaras.obtenerServidor(contexto)
-        val direccion =
-            "$servidor/video?camara=$nombreCodificado"
+
+        val contenedor = imagenVideoCamara.parent as? FrameLayout
+        if (contenedor == null) {
+            mostrarMensajeVideo("No se encontró el contenedor del video")
+            return
+        }
 
         imagenVideoCamara.setImageDrawable(null)
-        imagenVideoCamara.visibility = View.VISIBLE
-        contenedorSinVideo.visibility = View.GONE
-        tvEstadoVideo.text = "Conectando con la cámara..."
+        imagenVideoCamara.visibility = View.GONE
+        contenedorSinVideo.visibility = View.VISIBLE
+        tvEstadoConexion.text = "Conectando con LiveKit..."
+        tvEstadoVideo.text = "Esperando transmisión en vivo"
 
-        val vista = view ?: return
+        val renderizador = SurfaceViewRenderer(contexto)
+        renderizador.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        renderizador.visibility = View.VISIBLE
+        contenedor.addView(renderizador)
+        renderizadorLiveKit = renderizador
 
-        hiloVideo = Thread({
-            var conexion: HttpURLConnection? = null
-            var flujo: InputStream? = null
+        tareaLiveKit = viewLifecycleOwner.lifecycleScope.launch {
+            var sala: Room? = null
 
             try {
-                conexion = (URL(direccion).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 10000
-                    readTimeout = 15000
-                    requestMethod = "GET"
-                    setRequestProperty("Accept", "multipart/x-mixed-replace")
-                    useCaches = false
-                }
+                val preferencias = contexto.getSharedPreferences(
+                    "SESION",
+                    Context.MODE_PRIVATE
+                )
+                val tokenSesion = preferencias.getString("TOKEN", null)
+                    ?: throw IllegalStateException(
+                        "No se encontró el token de sesión de GerIApp"
+                    )
 
-                conexionVideo = conexion
-                conexion.connect()
+                // Solicitar al backend el token temporal de esta habitación.
+                val respuesta = withContext(Dispatchers.IO) {
+                    val cuerpo = JSONObject()
+                        .put("id_habitacion", idHabitacion)
+                        .toString()
+                        .toRequestBody(
+                            "application/json; charset=utf-8".toMediaType()
+                        )
 
-                if (generacion != generacionVideo) return@Thread
+                    val peticion = Request.Builder()
+                        .url(
+                            "https://geriapp-backend.onrender.com/api/livekit/token/"
+                        )
+                        .header("Authorization", "Bearer $tokenSesion")
+                        .post(cuerpo)
+                        .build()
 
-                val respuesta = conexion.responseCode
-                if (respuesta != HttpURLConnection.HTTP_OK) {
-                    throw IllegalStateException("El servidor de video respondió HTTP $respuesta")
-                }
+                    OkHttpClient().newCall(peticion).execute().use { resultado ->
+                        val contenido = resultado.body?.string().orEmpty()
 
-                flujo = conexion.inputStream
-                flujoVideo = flujo
-
-                val fotograma = ByteArrayOutputStream()
-                var dentroDeImagen = false
-                var anterior = -1
-                var primerFotograma = true
-
-                while (
-                    generacion == generacionVideo &&
-                    !Thread.currentThread().isInterrupted
-                ) {
-                    val byte = flujo.read()
-                    if (byte == -1) break
-
-                    if (!dentroDeImagen) {
-                        if (anterior == 0xFF && byte == 0xD8) {
-                            fotograma.reset()
-                            fotograma.write(0xFF)
-                            fotograma.write(0xD8)
-                            dentroDeImagen = true
-                            anterior = -1
-                        } else {
-                            anterior = byte
+                        if (!resultado.isSuccessful) {
+                            val detalle = try {
+                                JSONObject(contenido).optString(
+                                    "error",
+                                    "HTTP ${resultado.code}"
+                                )
+                            } catch (_: Exception) {
+                                "HTTP ${resultado.code}"
+                            }
+                            throw IllegalStateException(detalle)
                         }
-                    } else {
-                        fotograma.write(byte)
 
-                        if (anterior == 0xFF && byte == 0xD9) {
-                            val bytesImagen = fotograma.toByteArray()
-                            val bitmap = BitmapFactory.decodeByteArray(
-                                bytesImagen, 0, bytesImagen.size
-                            )
+                        JSONObject(contenido)
+                    }
+                }
 
-                            if (bitmap != null && generacion == generacionVideo) {
-                                vista.post {
-                                    if (
-                                        generacion == generacionVideo &&
-                                        isAdded &&
-                                        ::imagenVideoCamara.isInitialized
-                                    ) {
-                                        imagenVideoCamara.setImageBitmap(bitmap)
-                                        imagenVideoCamara.visibility = View.VISIBLE
-                                        contenedorSinVideo.visibility = View.GONE
+                if (generacion != generacionVideo) return@launch
 
-                                        if (primerFotograma) {
-                                            tvEstadoConexion.text = "Transmisión conectada"
-                                            primerFotograma = false
+                val tokenLiveKit = respuesta.getString("token")
+                val urlLiveKit = respuesta.getString("url")
+                val identidadPublicador =
+                    "geriapp-publicador-camara-${camara.idCamara}"
+
+                sala = LiveKit.create(contexto.applicationContext)
+                salaLiveKit = sala
+
+                sala.initVideoRenderer(renderizador)
+
+                // Escuchar las pistas antes de conectar a la sala.
+                val salaActiva = sala
+                launch {
+                    salaActiva.events.collect { evento ->
+                        if (generacion != generacionVideo) return@collect
+
+                        when (evento) {
+                            is RoomEvent.TrackSubscribed -> {
+                                val pista = evento.track
+                                val esCamaraCorrecta =
+                                    evento.participant.identity?.value == identidadPublicador
+
+                                if (pista is VideoTrack && esCamaraCorrecta) {
+                                    pistaLiveKit?.let { anterior ->
+                                        renderizadorLiveKit?.let {
+                                            anterior.removeRenderer(it)
                                         }
-                                        tvEstadoVideo.text = "Transmisión en vivo"
-                                    } else {
-                                        bitmap.recycle()
                                     }
+
+                                    pistaLiveKit = pista
+                                    pista.addRenderer(renderizador)
+
+                                    imagenVideoCamara.visibility = View.GONE
+                                    contenedorSinVideo.visibility = View.GONE
+                                    renderizador.visibility = View.VISIBLE
+                                    tvEstadoConexion.text = "Transmisión conectada"
+                                    tvEstadoVideo.text = "Transmisión en vivo"
                                 }
                             }
-                            dentroDeImagen = false
-                            anterior = -1
-                        } else {
-                            anterior = byte
-                        }
 
-                        // Evita acumular datos indefinidamente si llega una imagen corrupta.
-                        if (fotograma.size() > 10 * 1024 * 1024) {
-                            fotograma.reset()
-                            dentroDeImagen = false
-                            anterior = -1
+                            else -> Unit
                         }
                     }
                 }
 
+                sala.connect(urlLiveKit, tokenLiveKit)
+
                 if (generacion == generacionVideo) {
-                    throw IllegalStateException("La transmisión de video se interrumpió")
+                    tvEstadoConexion.text = "Conectado a LiveKit"
+                    tvEstadoVideo.text = "Esperando video de la cámara..."
                 }
+            } catch (error: CancellationException) {
+                throw error
             } catch (error: Exception) {
-                if (generacion == generacionVideo) {
-                    vista.post {
-                        if (generacion == generacionVideo && isAdded) {
-                            tvEstadoConexion.text = "Video desconectado"
-                            mostrarMensajeVideo(
-                                "No se pudo recibir el video. Verifica que el servidor esté activo."
-                            )
-                        }
-                    }
-                }
-            } finally {
-                try {
-                    flujo?.close()
-                } catch (_: Exception) {
-                }
-                conexion?.disconnect()
-
-                if (generacion == generacionVideo) {
-                    flujoVideo = null
-                    conexionVideo = null
-                    hiloVideo = null
+                if (generacion == generacionVideo && isAdded) {
+                    tvEstadoConexion.text = "Video desconectado"
+                    mostrarMensajeVideo(
+                        "No se pudo conectar a LiveKit: " +
+                            (error.message ?: "error desconocido")
+                    )
                 }
             }
-        }, "GerIApp-MJPEG-${camara.idCamara}").apply {
-            isDaemon = true
-            start()
         }
     }
 
