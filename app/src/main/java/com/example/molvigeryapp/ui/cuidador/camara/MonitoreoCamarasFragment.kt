@@ -2,6 +2,13 @@
 package com.example.molvigeryapp.ui.cuidador.camara
 
 import android.os.Bundle
+import android.graphics.BitmapFactory
+import android.widget.ImageView
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,6 +36,20 @@ class MonitoreoCamarasFragment : Fragment() {
     private lateinit var tvHabitacionCamara: TextView
     private lateinit var tvEstadoConexion: TextView
     private lateinit var tvEstadoVideo: TextView
+    private lateinit var imagenVideoCamara: ImageView
+    private lateinit var contenedorSinVideo: View
+
+    @Volatile
+    private var generacionVideo = 0
+
+    @Volatile
+    private var conexionVideo: HttpURLConnection? = null
+
+    @Volatile
+    private var flujoVideo: InputStream? = null
+
+    private var hiloVideo: Thread? = null
+    private var camaraActual: Camara? = null
     private lateinit var tvEstadoGeneral: TextView
 
     private lateinit var recyclerOtrasCamaras: androidx.recyclerview.widget.RecyclerView
@@ -43,6 +64,24 @@ class MonitoreoCamarasFragment : Fragment() {
 
     private var cargandoHabitaciones = false
     private var cargandoCamaras = false
+
+    override fun onStart() {
+        super.onStart()
+        camaraActual?.let { iniciarVideo(it) }
+    }
+
+    override fun onStop() {
+        detenerVideo()
+        super.onStop()
+    }
+
+    override fun onDestroyView() {
+        detenerVideo()
+        if (::imagenVideoCamara.isInitialized) {
+            imagenVideoCamara.setImageDrawable(null)
+        }
+        super.onDestroyView()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,6 +120,8 @@ class MonitoreoCamarasFragment : Fragment() {
         tvHabitacionCamara = view.findViewById(R.id.tvHabitacionCamara)
         tvEstadoConexion = view.findViewById(R.id.tvEstadoConexion)
         tvEstadoVideo = view.findViewById(R.id.tvEstadoVideo)
+        imagenVideoCamara = view.findViewById(R.id.imagenVideoCamara)
+        contenedorSinVideo = view.findViewById(R.id.contenedorSinVideo)
         tvEstadoGeneral = view.findViewById(R.id.tvEstadoGeneralMonitoreo)
 
         recyclerOtrasCamaras =
@@ -247,6 +288,7 @@ class MonitoreoCamarasFragment : Fragment() {
     }
 
     private fun mostrarCamaraSeleccionada(camara: Camara) {
+        camaraActual = camara
         tvNombreCamara.text = camara.nombre
         idCamaraSeleccionada = camara.idCamara
         actualizarOtrasCamaras()
@@ -265,25 +307,194 @@ class MonitoreoCamarasFragment : Fragment() {
             "Estado registrado: inactiva"
         }
 
-        tvEstadoVideo.text = when {
-            !camara.estado ->
-                "Esta cámara está registrada como inactiva"
-
-            camara.direccionStream.isNullOrBlank() ->
-                "La cámara no tiene una dirección de transmisión configurada"
-
-            else ->
-                "Cámara seleccionada. La transmisión aún no está conectada"
+        if (camara.estado) {
+            iniciarVideo(camara)
+        } else {
+            detenerVideo()
+            mostrarMensajeVideo("Esta cámara está registrada como inactiva")
         }
     }
 
     private fun mostrarSinCamara() {
+        camaraActual = null
+        detenerVideo()
         tvNombreCamara.text = "Cámara no disponible"
         tvHabitacionCamara.text = "Habitación: sin cámaras registradas"
         tvEstadoConexion.text = "Estado: sin cámara disponible"
-        tvEstadoVideo.text = "No hay cámaras registradas para esta selección"
+        mostrarMensajeVideo("No hay cámaras registradas para esta selección")
         idCamaraSeleccionada = null
         actualizarOtrasCamaras()
+    }
+
+    private fun mostrarMensajeVideo(mensaje: String) {
+        if (!isAdded || !::imagenVideoCamara.isInitialized) return
+        imagenVideoCamara.setImageDrawable(null)
+        imagenVideoCamara.visibility = View.GONE
+        contenedorSinVideo.visibility = View.VISIBLE
+        tvEstadoVideo.text = mensaje
+    }
+
+    private fun detenerVideo() {
+        generacionVideo++
+        try {
+            flujoVideo?.close()
+        } catch (_: Exception) {
+        }
+        flujoVideo = null
+
+        try {
+            conexionVideo?.disconnect()
+        } catch (_: Exception) {
+        }
+        conexionVideo = null
+
+        hiloVideo?.interrupt()
+        hiloVideo = null
+    }
+
+    private fun iniciarVideo(camara: Camara) {
+        detenerVideo()
+
+        if (!camara.estado || !isAdded || view == null) return
+
+        val generacion = generacionVideo
+        val nombreCodificado = URLEncoder.encode(camara.nombre, "UTF-8")
+        val contexto = context ?: return
+        val servidor = ConfiguracionServidorCamaras.obtenerServidor(contexto)
+        val direccion =
+            "$servidor/video?camara=$nombreCodificado"
+
+        imagenVideoCamara.setImageDrawable(null)
+        imagenVideoCamara.visibility = View.VISIBLE
+        contenedorSinVideo.visibility = View.GONE
+        tvEstadoVideo.text = "Conectando con la cámara..."
+
+        val vista = view ?: return
+
+        hiloVideo = Thread({
+            var conexion: HttpURLConnection? = null
+            var flujo: InputStream? = null
+
+            try {
+                conexion = (URL(direccion).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 10000
+                    readTimeout = 15000
+                    requestMethod = "GET"
+                    setRequestProperty("Accept", "multipart/x-mixed-replace")
+                    useCaches = false
+                }
+
+                conexionVideo = conexion
+                conexion.connect()
+
+                if (generacion != generacionVideo) return@Thread
+
+                val respuesta = conexion.responseCode
+                if (respuesta != HttpURLConnection.HTTP_OK) {
+                    throw IllegalStateException("El servidor de video respondió HTTP $respuesta")
+                }
+
+                flujo = conexion.inputStream
+                flujoVideo = flujo
+
+                val fotograma = ByteArrayOutputStream()
+                var dentroDeImagen = false
+                var anterior = -1
+                var primerFotograma = true
+
+                while (
+                    generacion == generacionVideo &&
+                    !Thread.currentThread().isInterrupted
+                ) {
+                    val byte = flujo.read()
+                    if (byte == -1) break
+
+                    if (!dentroDeImagen) {
+                        if (anterior == 0xFF && byte == 0xD8) {
+                            fotograma.reset()
+                            fotograma.write(0xFF)
+                            fotograma.write(0xD8)
+                            dentroDeImagen = true
+                            anterior = -1
+                        } else {
+                            anterior = byte
+                        }
+                    } else {
+                        fotograma.write(byte)
+
+                        if (anterior == 0xFF && byte == 0xD9) {
+                            val bytesImagen = fotograma.toByteArray()
+                            val bitmap = BitmapFactory.decodeByteArray(
+                                bytesImagen, 0, bytesImagen.size
+                            )
+
+                            if (bitmap != null && generacion == generacionVideo) {
+                                vista.post {
+                                    if (
+                                        generacion == generacionVideo &&
+                                        isAdded &&
+                                        ::imagenVideoCamara.isInitialized
+                                    ) {
+                                        imagenVideoCamara.setImageBitmap(bitmap)
+                                        imagenVideoCamara.visibility = View.VISIBLE
+                                        contenedorSinVideo.visibility = View.GONE
+
+                                        if (primerFotograma) {
+                                            tvEstadoConexion.text = "Transmisión conectada"
+                                            primerFotograma = false
+                                        }
+                                        tvEstadoVideo.text = "Transmisión en vivo"
+                                    } else {
+                                        bitmap.recycle()
+                                    }
+                                }
+                            }
+                            dentroDeImagen = false
+                            anterior = -1
+                        } else {
+                            anterior = byte
+                        }
+
+                        // Evita acumular datos indefinidamente si llega una imagen corrupta.
+                        if (fotograma.size() > 10 * 1024 * 1024) {
+                            fotograma.reset()
+                            dentroDeImagen = false
+                            anterior = -1
+                        }
+                    }
+                }
+
+                if (generacion == generacionVideo) {
+                    throw IllegalStateException("La transmisión de video se interrumpió")
+                }
+            } catch (error: Exception) {
+                if (generacion == generacionVideo) {
+                    vista.post {
+                        if (generacion == generacionVideo && isAdded) {
+                            tvEstadoConexion.text = "Video desconectado"
+                            mostrarMensajeVideo(
+                                "No se pudo recibir el video. Verifica que el servidor esté activo."
+                            )
+                        }
+                    }
+                }
+            } finally {
+                try {
+                    flujo?.close()
+                } catch (_: Exception) {
+                }
+                conexion?.disconnect()
+
+                if (generacion == generacionVideo) {
+                    flujoVideo = null
+                    conexionVideo = null
+                    hiloVideo = null
+                }
+            }
+        }, "GerIApp-MJPEG-${camara.idCamara}").apply {
+            isDaemon = true
+            start()
+        }
     }
 
     private fun actualizarEstadoGeneral() {
