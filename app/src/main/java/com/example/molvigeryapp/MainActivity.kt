@@ -23,6 +23,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import android.view.View
 
 class MainActivity : AppCompatActivity() {
 
@@ -110,6 +111,15 @@ class MainActivity : AppCompatActivity() {
             TAG,
             "Rol recibido en MainActivity: $idRolActual"
         )
+
+        binding.fabLlamada.visibility =
+            if (idRolActual == ROL_CUIDADOR) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+
 
         Log.e(
             TAG_PANTALLA,
