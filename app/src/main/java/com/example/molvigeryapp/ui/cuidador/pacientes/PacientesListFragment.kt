@@ -62,7 +62,7 @@ class PacientesListFragment : Fragment() {
             preferences.getInt("ID_USUARIO", -1)
 
         // Recuperar las selecciones guardadas del cuidador.
-        viewModel.cargarPacientes(idUsuarioLogueado)
+        viewModel.cargarPacientesParaSeleccion(idUsuarioLogueado,preferences)
     }
 
     private fun setupRecyclerView() {
@@ -178,7 +178,7 @@ class PacientesListFragment : Fragment() {
 
             // El mensaje de éxito NO va aquí.
             // El observador lo mostrará cuando termine el guardado.
-            viewModel.confirmarSeleccionDelDia(idUsuarioLogueado)
+            viewModel.confirmarSeleccionDelDia(idUsuarioLogueado, preferences)
         }
     }
 

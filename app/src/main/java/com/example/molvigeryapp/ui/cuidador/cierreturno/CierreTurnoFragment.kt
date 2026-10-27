@@ -1,5 +1,6 @@
 package com.example.molvigeryapp.ui.cuidador.cierreturno
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
@@ -9,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.molvigeryapp.R
@@ -18,12 +20,16 @@ import com.example.molvigeryapp.data.model.CierreTurnoRequest
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentCierreTurnoBinding
+import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
+import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class CierreTurnoFragment : Fragment() {
+
+    private val pacienteViewModel: PacienteViewModel by activityViewModels()
 
     private var _binding: FragmentCierreTurnoBinding? = null
     private val binding get() = _binding!!
@@ -242,6 +248,9 @@ class CierreTurnoFragment : Fragment() {
                 .addToBackStack("citas_cierre_turno")
                 .commit()
         }
+
+        val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
+        pacienteViewModel.reiniciarSeleccionDespuesDelCierre(idUsuario = idUsuario, preferencias = preferenciasSesion)
 
         configurarResumenInicial()
         configurarFotoPredeterminada()
@@ -467,7 +476,10 @@ class CierreTurnoFragment : Fragment() {
                 return
             }
 
-            // Consultar las asignaciones de pacientes.
+            Log.d("CIERRE_TURNO", "Cuidador: $idCuidador")
+            Log.d("CIERRE_TURNO", "Fecha del turno: $fechaTurno")
+
+            // 1. Consultar las asignaciones paciente-cuidador.
             val respuestaAsignaciones =
                 api.getAsignacionesPacienteCuidador()
 
@@ -477,33 +489,33 @@ class CierreTurnoFragment : Fragment() {
                 return
             }
 
-            // Pacientes activos del cuidador durante la fecha del turno.
-            val pacientesAsignados =
-                respuestaAsignaciones.body()
-                    .orEmpty()
-                    .filter { asignacion ->
+            val todasLasAsignaciones =
+                respuestaAsignaciones.body().orEmpty()
 
-                        val inicio = asignacion.fechaInicio.take(10)
-                        val fin = asignacion.fechaFin?.take(10)
+            Log.d(
+                "CIERRE_TURNO",
+                "Total de asignaciones recibidas: ${todasLasAsignaciones.size}"
+            )
 
-                        asignacion.idUsuario == idCuidador &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
-                                ) &&
-                                inicio <= fechaTurno &&
-                                (fin.isNullOrBlank() || fin >= fechaTurno)
-                    }
-                    .map { it.idPaciente }
-                    .toSet()
+            // 2. Usar el mismo criterio de cuidador y estado
+            // que funciona en CitasCierreTurnoFragment.
+            val pacientesAsignados = todasLasAsignaciones
+                .filter { asignacion ->
+                    asignacion.idUsuario == idCuidador &&
+                            asignacion.estado.equals(
+                                "Activo",
+                                ignoreCase = true
+                            )
+                }
+                .map { it.idPaciente }
+                .toSet()
 
-            if (pacientesAsignados.isEmpty()) {
-                binding.tvResumenCitasCierre.text =
-                    "No hay pacientes asignados para este turno"
-                return
-            }
+            Log.d(
+                "CIERRE_TURNO",
+                "Pacientes activos del cuidador: $pacientesAsignados"
+            )
 
-            // Consultar citas.
+            // 3. Consultar citas del día del turno.
             val respuestaCitas = api.getCitas()
 
             if (!respuestaCitas.isSuccessful) {
@@ -512,35 +524,38 @@ class CierreTurnoFragment : Fragment() {
                 return
             }
 
-            // Filtrar por pacientes y fecha.
-            val citasDelTurno =
-                respuestaCitas.body()
-                    .orEmpty()
-                    .filter { cita ->
-                        cita.idPaciente in pacientesAsignados &&
-                                cita.fecha.take(10) == fechaTurno
-                    }
+            val todasLasCitas = respuestaCitas.body().orEmpty()
 
+            Log.d(
+                "CIERRE_TURNO",
+                "Total de citas recibidas: ${todasLasCitas.size}"
+            )
+
+            // 4. Filtrar por paciente asignado y fecha.
+            val citasDelTurno = todasLasCitas.filter { cita ->
+                cita.idPaciente != null &&
+                        cita.idPaciente in pacientesAsignados &&
+                        cita.fecha.take(10) == fechaTurno
+            }
+
+            Log.d(
+                "CIERRE_TURNO",
+                "Citas encontradas para el turno: ${citasDelTurno.size}"
+            )
+
+            // 5. Contabilizar los estados.
             val finalizadas = citasDelTurno.count {
-                it.estado.equals(
-                    "Finalizada",
-                    ignoreCase = true
-                )
+                it.estado.equals("Finalizada", ignoreCase = true)
             }
 
             val programadas = citasDelTurno.count {
-                it.estado.equals(
-                    "Programada",
-                    ignoreCase = true
-                )
+                it.estado.equals("Programada", ignoreCase = true)
             }
 
-            val totalContabilizado = finalizadas + programadas
-
             binding.tvResumenCitasCierre.text =
-                "$totalContabilizado citas · " +
-                        "$finalizadas finalizadas · " +
-                        "$programadas programadas"
+                "${citasDelTurno.size} citas · " +
+                        "$programadas programadas · " +
+                        "$finalizadas finalizadas"
 
         } catch (e: Exception) {
             Log.e(
@@ -631,13 +646,32 @@ class CierreTurnoFragment : Fragment() {
                     RetrofitClient.apiService.crearCierreTurno(solicitud)
 
                 if (respuesta.estado.equals("Finalizado", true)) {
+
                     Toast.makeText(
                         requireContext(),
                         "Turno finalizado correctamente.",
                         Toast.LENGTH_LONG
                     ).show()
 
-                    parentFragmentManager.popBackStack()
+                    // Obtener el contenedor donde se muestra el fragmento actual.
+                    val contenedorId =
+                        (view?.parent as? View)?.id
+                            ?: R.id.fragmentContainer
+
+                    // Limpiar la navegación anterior del cierre del turno.
+                    parentFragmentManager.popBackStack(
+                        null,
+                        androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
+                    )
+
+                    // Ir a verificar llegada después de cerrar correctamente.
+                    parentFragmentManager.beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(
+                            contenedorId,
+                            VerificacionLlegadaFragment()
+                        )
+                        .commit()
 
                 } else {
                     binding.btnContinuarCierre.isEnabled = true
@@ -692,6 +726,8 @@ class CierreTurnoFragment : Fragment() {
             }
         }
     }
+
+
 
     // =========================================================
     // FORMATO DE FECHA
