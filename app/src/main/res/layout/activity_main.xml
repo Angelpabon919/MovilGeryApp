@@ -19,15 +19,18 @@
         android:id="@+id/fabLlamada"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="95dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="110dp"
         android:contentDescription="Llamada de emergencia"
         android:src="@drawable/ic_call_24"
         app:backgroundTint="@android:color/white"
-        app:tint="#D32F2F"
-        app:elevation="10dp"
+        app:tint="@color/azul_principal"
+        app:maxImageSize="20dp"
+        app:shapeAppearanceOverlay="@style/GeriAppFabCircular"
+        app:elevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:useCompatPadding="true"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
