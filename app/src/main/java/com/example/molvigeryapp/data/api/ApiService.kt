@@ -31,6 +31,8 @@ import okhttp3.ResponseBody
 import okhttp3.MultipartBody
 import retrofit2.http.Part
 import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
+import com.example.molvigeryapp.data.model.CierreTurnoRequest
+import com.example.molvigeryapp.data.model.CierreTurnoResponse
 import com.example.molvigeryapp.data.model.RespuestaMensaje
 import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.CrearCitaRequest
@@ -520,4 +522,12 @@ interface ApiService {
     suspend fun crearImagenEventoAdverso(
         @Body imagen: ImagenEventoAdverso
     ): ImagenEventoAdverso
+
+    //Cierre de turnos
+
+    @POST("cierre_turno/")
+    suspend fun crearCierreTurno(
+        @Body cierre : CierreTurnoRequest
+    ): CierreTurnoResponse
+
 }
