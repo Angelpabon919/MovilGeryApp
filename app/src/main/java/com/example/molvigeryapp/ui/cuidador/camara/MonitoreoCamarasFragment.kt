@@ -2,6 +2,7 @@
 package com.example.molvigeryapp.ui.cuidador.camara
 
 import android.content.Context
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.lifecycle.lifecycleScope
@@ -394,6 +395,7 @@ class MonitoreoCamarasFragment : Fragment() {
     }
 
     private fun iniciarVideo(camara: Camara) {
+        Log.d("GerIAppLiveKit", "iniciarVideo: camara=${camara.idCamara}, habitacion=${camara.idHabitacion}, activa=${camara.estado}")
         detenerVideo()
 
         val idHabitacion = camara.idHabitacion
@@ -439,6 +441,7 @@ class MonitoreoCamarasFragment : Fragment() {
                         "No se encontró el token de sesión de GerIApp"
                     )
 
+                Log.d("GerIAppLiveKit", "Solicitando token para habitacion=$idHabitacion")
                 // Solicitar al backend el token temporal de esta habitación.
                 val respuesta = withContext(Dispatchers.IO) {
                     val cuerpo = JSONObject()
@@ -458,6 +461,7 @@ class MonitoreoCamarasFragment : Fragment() {
 
                     OkHttpClient().newCall(peticion).execute().use { resultado ->
                         val contenido = resultado.body?.string().orEmpty()
+                        Log.d("GerIAppLiveKit", "Respuesta token HTTP ${resultado.code}")
 
                         if (!resultado.isSuccessful) {
                             val detalle = try {
@@ -479,6 +483,7 @@ class MonitoreoCamarasFragment : Fragment() {
 
                 val tokenLiveKit = respuesta.getString("token")
                 val urlLiveKit = respuesta.getString("url")
+                Log.d("GerIAppLiveKit", "Token recibido; URL presente=${urlLiveKit.isNotBlank()}")
                 val identidadPublicador =
                     "geriapp-publicador-camara-${camara.idCamara}"
 
@@ -495,6 +500,7 @@ class MonitoreoCamarasFragment : Fragment() {
 
                         when (evento) {
                             is RoomEvent.TrackSubscribed -> {
+                                Log.d("GerIAppLiveKit", "TrackSubscribed: participante=${evento.participant.identity}, tipo=${evento.track.kind}")
                                 val pista = evento.track
                                 val esCamaraCorrecta =
                                     evento.participant.identity?.value == identidadPublicador
@@ -522,7 +528,9 @@ class MonitoreoCamarasFragment : Fragment() {
                     }
                 }
 
+                Log.d("GerIAppLiveKit", "Conectando a la sala LiveKit")
                 sala.connect(urlLiveKit, tokenLiveKit)
+                Log.d("GerIAppLiveKit", "Conexión a sala completada")
 
                 if (generacion == generacionVideo) {
                     tvEstadoConexion.text = "Conectado a LiveKit"
@@ -531,6 +539,7 @@ class MonitoreoCamarasFragment : Fragment() {
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
+                Log.e("GerIAppLiveKit", "Error en el proceso de video", error)
                 if (generacion == generacionVideo && isAdded) {
                     tvEstadoConexion.text = "Video desconectado"
                     mostrarMensajeVideo(
