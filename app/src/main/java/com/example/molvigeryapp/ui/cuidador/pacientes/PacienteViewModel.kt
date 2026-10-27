@@ -48,10 +48,26 @@ class PacienteViewModel(
     var tienePacientesSeleccionados: Boolean = false
         private set
 
+    // null = todavía no hay resultado
+    // true = guardado correcto
+    // false = error al guardar
+    private val _seleccionGuardada = MutableLiveData<Boolean?>()
+    val seleccionGuardada: LiveData<Boolean?> get() = _seleccionGuardada
+
     // =========================================================
-// REINICIAR SELECCIÓN AL FINALIZAR EL TURNO
-// No modifica las asignaciones del backend.
-// =========================================================
+    // SELECCIÓN DE PACIENTES
+    // =========================================================
+
+    private fun claveSeleccion(idUsuario: Int) =
+        "seleccion_pacientes_usuario_$idUsuario"
+
+    private fun claveIdsSeleccionados(idUsuario: Int) =
+        "pacientes_seleccionados_ids_usuario_$idUsuario"
+
+    /**
+     * Reinicia el estado local al finalizar el turno.
+     * No modifica las asignaciones del backend.
+     */
     fun reiniciarSeleccionDespuesDelCierre(
         idUsuario: Int,
         preferencias: SharedPreferences
@@ -61,60 +77,63 @@ class PacienteViewModel(
             return
         }
 
-        // Limpiar la selección que conserva el ViewModel.
         listaPacientesCompleta.forEach { paciente ->
             paciente.isSelected = false
         }
 
+        tienePacientesSeleccionados = false
         _pacientes.value = listaPacientesCompleta.toList()
         _pacientesSeleccionadosHome.value = emptyList()
-        tienePacientesSeleccionados = false
+        _seleccionGuardada.value = null
 
-        // Marcar la selección como reiniciada.
         preferencias.edit()
             .putBoolean(claveSeleccion(idUsuario), false)
+            .remove(claveIdsSeleccionados(idUsuario))
             .apply()
 
         Log.d(
             "SELECCION_PACIENTES",
-            "Selección reiniciada para el usuario $idUsuario"
+            "Selección reiniciada para usuario $idUsuario"
         )
     }
-
-    // null = todavía no hay resultado
-    // true = guardado correcto
-    // false = error al guardar
-    private val _seleccionGuardada = MutableLiveData<Boolean?>()
-    val seleccionGuardada: LiveData<Boolean?> get() = _seleccionGuardada
 
     fun cargarPacientes() {
         viewModelScope.launch {
             try {
                 if (listaPacientesCompleta.isEmpty()) {
-                    listaPacientesCompleta = repository.obtenerPacientes()
+                    listaPacientesCompleta =
+                        repository.obtenerPacientes()
                 }
 
-                _pacientes.value = listaPacientesCompleta
+                _pacientes.value = listaPacientesCompleta.toList()
 
                 if (tienePacientesSeleccionados) {
                     _pacientesSeleccionadosHome.value =
-                        listaPacientesCompleta.filter { it.isSelected }
+                        listaPacientesCompleta.filter {
+                            it.isSelected
+                        }
                 }
             } catch (e: Exception) {
-                Log.e("API_ERROR_REAL", "Error al cargar pacientes", e)
+                Log.e(
+                    "API_ERROR_REAL",
+                    "Error al cargar pacientes",
+                    e
+                )
                 _pacientes.value = emptyList()
             }
         }
     }
 
     /**
-     * Carga los pacientes y recupera la selección activa del cuidador.
+     * Carga los pacientes y recupera las asignaciones activas
+     * del cuidador desde el backend.
      */
     fun cargarPacientes(idUsuarioLogueado: Int) {
         viewModelScope.launch {
             try {
                 if (listaPacientesCompleta.isEmpty()) {
-                    listaPacientesCompleta = repository.obtenerPacientes()
+                    listaPacientesCompleta =
+                        repository.obtenerPacientes()
                 }
 
                 if (idUsuarioLogueado <= 0) {
@@ -122,7 +141,8 @@ class PacienteViewModel(
                         "ASIGNACION_DEBUG",
                         "ID de usuario inválido: $idUsuarioLogueado"
                     )
-                    _pacientes.value = listaPacientesCompleta
+                    _pacientes.value =
+                        listaPacientesCompleta.toList()
                     return@launch
                 }
 
@@ -132,7 +152,10 @@ class PacienteViewModel(
                 val idsSeleccionados = asignaciones
                     .filter { asignacion ->
                         asignacion.idUsuario == idUsuarioLogueado &&
-                                asignacion.estado.equals("Activo", ignoreCase = true)
+                                asignacion.estado.equals(
+                                    "Activo",
+                                    ignoreCase = true
+                                )
                     }
                     .mapNotNull { it.idPaciente }
                     .toSet()
@@ -142,18 +165,32 @@ class PacienteViewModel(
                         paciente.idPaciente in idsSeleccionados
                 }
 
-                tienePacientesSeleccionados = idsSeleccionados.isNotEmpty()
+                tienePacientesSeleccionados =
+                    idsSeleccionados.isNotEmpty()
 
-                _pacientes.value = listaPacientesCompleta
+                _pacientes.value = listaPacientesCompleta.toList()
+
                 _pacientesSeleccionadosHome.value =
-                    listaPacientesCompleta.filter { it.isSelected }
+                    listaPacientesCompleta.filter {
+                        it.isSelected
+                    }
 
-                Log.d("ASIGNACION_DEBUG", "Usuario: $idUsuarioLogueado")
-                Log.d("ASIGNACION_DEBUG", "IDs seleccionados: $idsSeleccionados")
-
+                Log.d(
+                    "ASIGNACION_DEBUG",
+                    "Usuario: $idUsuarioLogueado"
+                )
+                Log.d(
+                    "ASIGNACION_DEBUG",
+                    "IDs seleccionados: $idsSeleccionados"
+                )
             } catch (e: Exception) {
-                Log.e("ASIGNACION_DEBUG", "Error al recuperar la selección", e)
-                _pacientes.value = listaPacientesCompleta
+                Log.e(
+                    "ASIGNACION_DEBUG",
+                    "Error al recuperar la selección",
+                    e
+                )
+                _pacientes.value =
+                    listaPacientesCompleta.toList()
             }
         }
     }
@@ -172,7 +209,10 @@ class PacienteViewModel(
         _seleccionGuardada.value = null
 
         if (idUsuarioLogueado <= 0) {
-            Log.e("ASIGNACION_DEBUG", "ID de usuario inválido")
+            Log.e(
+                "ASIGNACION_DEBUG",
+                "ID de usuario inválido"
+            )
             _seleccionGuardada.value = false
             return
         }
@@ -185,7 +225,10 @@ class PacienteViewModel(
             .toSet()
 
         if (idsSeleccionados.isEmpty()) {
-            Log.e("ASIGNACION_DEBUG", "No hay pacientes seleccionados")
+            Log.e(
+                "ASIGNACION_DEBUG",
+                "No hay pacientes seleccionados"
+            )
             _seleccionGuardada.value = false
             return
         }
@@ -208,7 +251,14 @@ class PacienteViewModel(
                     tienePacientesSeleccionados = true
 
                     preferences.edit()
-                        .putBoolean(claveSeleccion(idUsuarioLogueado), true)
+                        .putBoolean(
+                            claveSeleccion(idUsuarioLogueado),
+                            true
+                        )
+                        .putStringSet(
+                            claveIdsSeleccionados(idUsuarioLogueado),
+                            idsSeleccionados.map { it.toString() }.toSet()
+                        )
                         .apply()
 
                     _pacientesSeleccionadosHome.value =
@@ -221,27 +271,238 @@ class PacienteViewModel(
 
                     _seleccionGuardada.value = true
                 } else {
-                    Log.e("ASIGNACION_DEBUG", "No se confirmó el guardado")
+                    Log.e(
+                        "ASIGNACION_DEBUG",
+                        "No se confirmó el guardado"
+                    )
                     _seleccionGuardada.value = false
                 }
             } catch (e: Exception) {
-                Log.e("ASIGNACION_DEBUG", "Error al sincronizar la selección", e)
+                Log.e(
+                    "ASIGNACION_DEBUG",
+                    "Error al sincronizar selección del cuidador",
+                    e
+                )
                 _seleccionGuardada.value = false
             }
         }
     }
 
     /**
-     * Limpia la selección local; no elimina asignaciones del servidor.
+     * Limpia la selección local; no elimina asignaciones
+     * del servidor.
      */
     fun restaurarListaCompleta() {
         tienePacientesSeleccionados = false
 
-        listaPacientesCompleta.forEach { it.isSelected = false }
+        listaPacientesCompleta.forEach {
+            it.isSelected = false
+        }
 
-        _pacientes.value = listaPacientesCompleta
+        _pacientes.value = listaPacientesCompleta.toList()
         _pacientesSeleccionadosHome.value = emptyList()
         _seleccionGuardada.value = null
+    }
+
+    /**
+     * Recupera siempre las asignaciones activas del backend.
+     *
+     * No depende de la preferencia local para decidir si
+     * consulta las asignaciones.
+     */
+    fun cargarPacientesParaSeleccion(
+        idUsuario: Int,
+        preferencias: SharedPreferences
+    ) {
+        viewModelScope.launch {
+            if (idUsuario <= 0) {
+                Log.e(
+                    "SELECCION_PACIENTES",
+                    "ID de usuario inválido: $idUsuario"
+                )
+                return@launch
+            }
+
+            try {
+                // Cargar el catálogo actualizado.
+                val pacientesNuevos = repository.obtenerPacientes()
+
+                val claveEstado = claveSeleccion(idUsuario)
+                val claveIds = claveIdsSeleccionados(idUsuario)
+
+                val tieneEstadoGuardado =
+                    preferencias.contains(claveEstado)
+
+                val seleccionActivaLocal =
+                    preferencias.getBoolean(claveEstado, false)
+
+                val idsGuardadosLocal = preferencias
+                    .getStringSet(claveIds, emptySet())
+                    .orEmpty()
+                    .mapNotNull { it.toIntOrNull() }
+                    .toSet()
+
+                /*
+                 * Si el cierre del turno o de sesión reinició
+                 * explícitamente la selección, no restaurarla.
+                 */
+                if (tieneEstadoGuardado && !seleccionActivaLocal) {
+                    pacientesNuevos.forEach {
+                        it.isSelected = false
+                    }
+
+                    listaPacientesCompleta = pacientesNuevos
+                    tienePacientesSeleccionados = false
+
+                    _pacientes.value = pacientesNuevos.toList()
+                    _pacientesSeleccionadosHome.value = emptyList()
+
+                    Log.d(
+                        "SELECCION_PACIENTES",
+                        "Selección reiniciada; no se restauran pacientes"
+                    )
+
+                    return@launch
+                }
+
+                // Consultar las asignaciones activas del cuidador.
+                val asignaciones =
+                    repository.obtenerAsignacionesPacienteCuidador()
+
+                val idsBackend = asignaciones
+                    .filter { asignacion ->
+                        asignacion.idUsuario == idUsuario &&
+                                asignacion.estado.equals(
+                                    "Activo",
+                                    ignoreCase = true
+                                )
+                    }
+                    .mapNotNull { it.idPaciente }
+                    .toSet()
+
+                /*
+                 * Priorizar el backend si devuelve pacientes.
+                 * Si no devuelve ninguno, conservar la selección
+                 * local mientras siga marcada como activa.
+                 */
+                val idsSeleccionados = when {
+                    idsBackend.isNotEmpty() -> idsBackend
+
+                    seleccionActivaLocal && idsGuardadosLocal.isNotEmpty() ->
+                        idsGuardadosLocal
+
+                    else -> emptySet()
+                }
+
+                pacientesNuevos.forEach { paciente ->
+                    paciente.isSelected =
+                        paciente.idPaciente in idsSeleccionados
+                }
+
+                listaPacientesCompleta = pacientesNuevos
+                tienePacientesSeleccionados = idsSeleccionados.isNotEmpty()
+
+                _pacientes.value = pacientesNuevos.toList()
+                _pacientesSeleccionadosHome.value =
+                    pacientesNuevos.filter { it.isSelected }
+
+                /*
+                 * Guardar el resultado si el backend confirmó
+                 * asignaciones. No guardar false automáticamente
+                 * cuando el resultado viene vacío.
+                 */
+                if (idsBackend.isNotEmpty()) {
+                    preferencias.edit()
+                        .putBoolean(claveEstado, true)
+                        .putStringSet(
+                            claveIds,
+                            idsBackend.map { it.toString() }.toSet()
+                        )
+                        .apply()
+                } else if (
+                    !tieneEstadoGuardado &&
+                    idsSeleccionados.isNotEmpty()
+                ) {
+                    preferencias.edit()
+                        .putBoolean(claveEstado, true)
+                        .putStringSet(
+                            claveIds,
+                            idsSeleccionados.map { it.toString() }.toSet()
+                        )
+                        .apply()
+                }
+
+                Log.d("SELECCION_PACIENTES", "Usuario=$idUsuario")
+                Log.d("SELECCION_PACIENTES", "IDs backend=$idsBackend")
+                Log.d(
+                    "SELECCION_PACIENTES",
+                    "IDs locales=$idsGuardadosLocal"
+                )
+                Log.d(
+                    "SELECCION_PACIENTES",
+                    "IDs mostrados=$idsSeleccionados"
+                )
+
+            } catch (e: Exception) {
+                Log.e(
+                    "SELECCION_PACIENTES",
+                    "Error al recuperar la selección",
+                    e
+                )
+
+                /*
+                 * Si falla la consulta, intentar restaurar desde
+                 * el respaldo local, siempre que no se haya
+                 * reiniciado explícitamente la selección.
+                 */
+                val claveEstado = claveSeleccion(idUsuario)
+                val claveIds = claveIdsSeleccionados(idUsuario)
+
+                val seleccionActiva =
+                    preferencias.getBoolean(claveEstado, false)
+
+                if (seleccionActiva) {
+                    val idsLocales = preferencias
+                        .getStringSet(claveIds, emptySet())
+                        .orEmpty()
+                        .mapNotNull { it.toIntOrNull() }
+                        .toSet()
+
+                    if (listaPacientesCompleta.isNotEmpty()) {
+                        listaPacientesCompleta.forEach { paciente ->
+                            paciente.isSelected =
+                                paciente.idPaciente in idsLocales
+                        }
+
+                        tienePacientesSeleccionados =
+                            idsLocales.isNotEmpty()
+
+                        _pacientes.value =
+                            listaPacientesCompleta.toList()
+
+                        _pacientesSeleccionadosHome.value =
+                            listaPacientesCompleta.filter {
+                                it.isSelected
+                            }
+                    }
+                }
+            }
+        }
+    }
+    /**
+     * Fuerza una nueva consulta de pacientes y asignaciones.
+     * No elimina asignaciones ni modifica el estado del turno.
+     */
+    fun actualizarSeleccionDespuesDelCierre(
+        idUsuario: Int,
+        preferencias: SharedPreferences
+    ) {
+        listaPacientesCompleta = emptyList()
+
+        cargarPacientesParaSeleccion(
+            idUsuario,
+            preferencias
+        )
     }
 
     // =========================================================
@@ -251,9 +512,14 @@ class PacienteViewModel(
     fun cargarPacientePorId(id: Int) {
         viewModelScope.launch {
             try {
-                _pacienteSeleccionado.value = repository.obtenerPacientePorId(id)
+                _pacienteSeleccionado.value =
+                    repository.obtenerPacientePorId(id)
             } catch (e: Exception) {
-                Log.e("API_ERROR_REAL", "Error al obtener paciente $id", e)
+                Log.e(
+                    "API_ERROR_REAL",
+                    "Error al obtener paciente $id",
+                    e
+                )
                 _pacienteSeleccionado.value = null
             }
         }
@@ -274,15 +540,22 @@ class PacienteViewModel(
         _idBitacora.value = id
     }
 
-    private val _cuidados = MutableLiveData<List<CuidadoEnfermeria>?>()
+    private val _cuidados =
+        MutableLiveData<List<CuidadoEnfermeria>?>()
+
     val cuidados: LiveData<List<CuidadoEnfermeria>?> get() = _cuidados
 
     fun cargarCuidados(idPaciente: Int) {
         viewModelScope.launch {
             try {
-                _cuidados.value = repository.getCuidadosPorPaciente(idPaciente)
+                _cuidados.value =
+                    repository.getCuidadosPorPaciente(idPaciente)
             } catch (e: Exception) {
-                Log.e("CUIDADOS_ERROR", "Error al cargar cuidados", e)
+                Log.e(
+                    "CUIDADOS_ERROR",
+                    "Error al cargar cuidados",
+                    e
+                )
                 _cuidados.value = emptyList()
             }
         }
@@ -291,13 +564,18 @@ class PacienteViewModel(
     fun guardarCuidado(cuidado: CuidadoEnfermeria) {
         viewModelScope.launch {
             try {
-                val exito = repository.guardarCuidadoEnfermeria(cuidado)
+                val exito =
+                    repository.guardarCuidadoEnfermeria(cuidado)
 
                 if (exito && cuidado.idPaciente != null) {
                     cargarCuidados(cuidado.idPaciente)
                 }
             } catch (e: Exception) {
-                Log.e("CUIDADOS_ERROR", "Error al guardar cuidado", e)
+                Log.e(
+                    "CUIDADOS_ERROR",
+                    "Error al guardar cuidado",
+                    e
+                )
             }
         }
     }
@@ -306,17 +584,27 @@ class PacienteViewModel(
     // RECOMENDACIONES
     // =========================================================
 
-    private val _recomendaciones = MutableLiveData<List<Recomendacion>>()
-    val recomendaciones: LiveData<List<Recomendacion>> get() = _recomendaciones
+    private val _recomendaciones =
+        MutableLiveData<List<Recomendacion>>()
+
+    val recomendaciones: LiveData<List<Recomendacion>>
+        get() = _recomendaciones
 
     fun cargarRecomendaciones(idPaciente: Int) {
         viewModelScope.launch {
             try {
                 _recomendaciones.value = emptyList()
-                val lista = repository.getRecomendaciones(idPaciente)
+
+                val lista =
+                    repository.getRecomendaciones(idPaciente)
+
                 _recomendaciones.value = lista ?: emptyList()
             } catch (e: Exception) {
-                Log.e("RECOMENDACIONES_ERROR", "Error al cargar recomendaciones", e)
+                Log.e(
+                    "RECOMENDACIONES_ERROR",
+                    "Error al cargar recomendaciones",
+                    e
+                )
                 _recomendaciones.value = emptyList()
             }
         }
@@ -327,7 +615,11 @@ class PacienteViewModel(
             try {
                 repository.guardarRecomendacion(recomendacion)
             } catch (e: Exception) {
-                Log.e("RECOMENDACIONES_ERROR", "Error al guardar recomendación", e)
+                Log.e(
+                    "RECOMENDACIONES_ERROR",
+                    "Error al guardar recomendación",
+                    e
+                )
             }
         }
     }
@@ -336,16 +628,25 @@ class PacienteViewModel(
     // ELEMENTOS DEL PACIENTE
     // =========================================================
 
-    private val _elementos = MutableLiveData<List<ElementoPaciente>>(emptyList())
+    private val _elementos =
+        MutableLiveData<List<ElementoPaciente>>(emptyList())
+
     val elementos: LiveData<List<ElementoPaciente>> get() = _elementos
-    val elementosPaciente: LiveData<List<ElementoPaciente>> get() = _elementos
+
+    val elementosPaciente: LiveData<List<ElementoPaciente>>
+        get() = _elementos
 
     fun cargarElementosPaciente(idPaciente: Int) {
         viewModelScope.launch {
             try {
-                _elementos.value = repository.getElementosPorPaciente(idPaciente)
+                _elementos.value =
+                    repository.getElementosPorPaciente(idPaciente)
             } catch (e: Exception) {
-                Log.e("PACIENTE_VM", "Error al cargar elementos", e)
+                Log.e(
+                    "PACIENTE_VM",
+                    "Error al cargar elementos",
+                    e
+                )
                 _elementos.value = emptyList()
             }
         }
@@ -358,16 +659,26 @@ class PacienteViewModel(
     fun guardarElementoPaciente(elemento: ElementoPaciente) {
         viewModelScope.launch {
             try {
-                val exito = repository.guardarElementoPaciente(elemento)
+                val exito =
+                    repository.guardarElementoPaciente(elemento)
 
                 if (exito) {
                     kotlinx.coroutines.delay(300)
-                    elemento.idPaciente?.let { cargarElementosPaciente(it) }
+                    elemento.idPaciente?.let {
+                        cargarElementosPaciente(it)
+                    }
                 } else {
-                    Log.e("PACIENTE_VM", "Error al guardar elemento")
+                    Log.e(
+                        "PACIENTE_VM",
+                        "Error al guardar elemento"
+                    )
                 }
             } catch (e: Exception) {
-                Log.e("PACIENTE_VM", "Error al guardar elemento", e)
+                Log.e(
+                    "PACIENTE_VM",
+                    "Error al guardar elemento",
+                    e
+                )
             }
         }
     }
@@ -376,20 +687,35 @@ class PacienteViewModel(
     // CATÁLOGO DE INSUMOS
     // =========================================================
 
-    private val _tiposInsumosCatalogo = MutableLiveData<List<TipoInsumo>?>()
-    val tiposInsumosCatalogo: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
-    val tiposInsumos: LiveData<List<TipoInsumo>?> get() = _tiposInsumosCatalogo
+    private val _tiposInsumosCatalogo =
+        MutableLiveData<List<TipoInsumo>?>()
 
-    private val _insumosCatalogo = MutableLiveData<List<Insumo>?>()
-    val insumosCatalogo: LiveData<List<Insumo>?> get() = _insumosCatalogo
-    val insumosPorTipo: LiveData<List<Insumo>?> get() = _insumosCatalogo
+    val tiposInsumosCatalogo: LiveData<List<TipoInsumo>?>
+        get() = _tiposInsumosCatalogo
+
+    val tiposInsumos: LiveData<List<TipoInsumo>?>
+        get() = _tiposInsumosCatalogo
+
+    private val _insumosCatalogo =
+        MutableLiveData<List<Insumo>?>()
+
+    val insumosCatalogo: LiveData<List<Insumo>?>
+        get() = _insumosCatalogo
+
+    val insumosPorTipo: LiveData<List<Insumo>?>
+        get() = _insumosCatalogo
 
     fun cargarTiposInsumos() {
         viewModelScope.launch {
             try {
-                _tiposInsumosCatalogo.value = repository.getTiposInsumos()
+                _tiposInsumosCatalogo.value =
+                    repository.getTiposInsumos()
             } catch (e: Exception) {
-                Log.e("INSUMOS_ERROR", "Error al cargar tipos de insumos", e)
+                Log.e(
+                    "INSUMOS_ERROR",
+                    "Error al cargar tipos de insumos",
+                    e
+                )
                 _tiposInsumosCatalogo.value = emptyList()
             }
         }
@@ -398,9 +724,14 @@ class PacienteViewModel(
     fun cargarInsumosPorTipo(idTipoInsumo: Int) {
         viewModelScope.launch {
             try {
-                _insumosCatalogo.value = repository.getInsumosPorTipo(idTipoInsumo)
+                _insumosCatalogo.value =
+                    repository.getInsumosPorTipo(idTipoInsumo)
             } catch (e: Exception) {
-                Log.e("INSUMOS_ERROR", "Error al cargar insumos", e)
+                Log.e(
+                    "INSUMOS_ERROR",
+                    "Error al cargar insumos",
+                    e
+                )
                 _insumosCatalogo.value = emptyList()
             }
         }
@@ -412,30 +743,49 @@ class PacienteViewModel(
 
     private val _formulacionesMedicamentos =
         MutableLiveData<List<FormulacionMedicamento>>()
+
     val formulacionesMedicamentos: LiveData<List<FormulacionMedicamento>>
         get() = _formulacionesMedicamentos
 
-    val medicamentosManana = MutableLiveData<List<FormulacionMedicamento>>()
-    val medicamentosTarde = MutableLiveData<List<FormulacionMedicamento>>()
-    val medicamentosNoche = MutableLiveData<List<FormulacionMedicamento>>()
+    val medicamentosManana =
+        MutableLiveData<List<FormulacionMedicamento>>()
 
-    fun obtenerMedicamentosPaciente(idPaciente: Int): List<FormulacionMedicamento> {
+    val medicamentosTarde =
+        MutableLiveData<List<FormulacionMedicamento>>()
+
+    val medicamentosNoche =
+        MutableLiveData<List<FormulacionMedicamento>>()
+
+    fun obtenerMedicamentosPaciente(
+        idPaciente: Int
+    ): List<FormulacionMedicamento> {
         return (formulacionesMedicamentos.value ?: emptyList())
             .filter { it.idPaciente == idPaciente }
     }
 
-    private val _gruposMedicacion = MutableLiveData<List<GrupoMedicacion>>()
-    val gruposMedicacion: LiveData<List<GrupoMedicacion>> get() = _gruposMedicacion
+    private val _gruposMedicacion =
+        MutableLiveData<List<GrupoMedicacion>>()
 
-    private val _medicamentosCatalogo = MutableLiveData<List<Medicamento>?>()
-    val medicamentosCatalogo: LiveData<List<Medicamento>?> get() = _medicamentosCatalogo
+    val gruposMedicacion: LiveData<List<GrupoMedicacion>>
+        get() = _gruposMedicacion
+
+    private val _medicamentosCatalogo =
+        MutableLiveData<List<Medicamento>?>()
+
+    val medicamentosCatalogo: LiveData<List<Medicamento>?>
+        get() = _medicamentosCatalogo
 
     fun cargarCatalogoMedicamentos() {
         viewModelScope.launch {
             try {
-                _medicamentosCatalogo.value = repository.getMedicamentos()
+                _medicamentosCatalogo.value =
+                    repository.getMedicamentos()
             } catch (e: Exception) {
-                Log.e("MEDICAMENTOS_ERROR", "Error al cargar catálogo", e)
+                Log.e(
+                    "MEDICAMENTOS_ERROR",
+                    "Error al cargar catálogo",
+                    e
+                )
                 _medicamentosCatalogo.value = emptyList()
             }
         }
@@ -444,15 +794,26 @@ class PacienteViewModel(
     fun cargarFormulacionesMedicamentos() {
         viewModelScope.launch {
             try {
-                val lista = repository.getFormulacionesMedicamentos() ?: emptyList()
-                val grupos = _gruposMedicacion.value ?: emptyList()
+                val lista =
+                    repository.getFormulacionesMedicamentos()
+                        ?: emptyList()
+
+                val grupos =
+                    _gruposMedicacion.value ?: emptyList()
 
                 _formulacionesMedicamentos.value = lista
                 separarMedicamentosPorHorario(lista, grupos)
             } catch (e: Exception) {
-                Log.e("FORMULACION_ERROR", "Error al cargar formulaciones", e)
+                Log.e(
+                    "FORMULACION_ERROR",
+                    "Error al cargar formulaciones",
+                    e
+                )
                 _formulacionesMedicamentos.value = emptyList()
-                separarMedicamentosPorHorario(emptyList(), emptyList())
+                separarMedicamentosPorHorario(
+                    emptyList(),
+                    emptyList()
+                )
             }
         }
     }
@@ -460,9 +821,14 @@ class PacienteViewModel(
     fun cargarGruposMedicacion() {
         viewModelScope.launch {
             try {
-                _gruposMedicacion.value = repository.getGrupoMedicacion() ?: emptyList()
+                _gruposMedicacion.value =
+                    repository.getGrupoMedicacion() ?: emptyList()
             } catch (e: Exception) {
-                Log.e("GRUPO_MEDICACION_ERROR", "Error al cargar grupos", e)
+                Log.e(
+                    "GRUPO_MEDICACION_ERROR",
+                    "Error al cargar grupos",
+                    e
+                )
                 _gruposMedicacion.value = emptyList()
             }
         }
@@ -476,23 +842,37 @@ class PacienteViewModel(
             .get(java.util.Calendar.HOUR_OF_DAY)
 
         val medicamentosConGrupo = lista.filter { medicamento ->
-            grupos.any { it.idGrupo == medicamento.idGrupo }
+            grupos.any {
+                it.idGrupo == medicamento.idGrupo
+            }
         }
 
-        medicamentosManana.value = medicamentosConGrupo.filter {
-            val hora = it.horaAdministrada?.substringBefore(":")?.toIntOrNull() ?: 0
-            hora in 6..11
-        }
+        medicamentosManana.value =
+            medicamentosConGrupo.filter {
+                val hora = it.horaAdministrada
+                    ?.substringBefore(":")
+                    ?.toIntOrNull() ?: 0
 
-        medicamentosTarde.value = medicamentosConGrupo.filter {
-            val hora = it.horaAdministrada?.substringBefore(":")?.toIntOrNull() ?: 0
-            hora in 12..17
-        }
+                hora in 6..11
+            }
 
-        medicamentosNoche.value = medicamentosConGrupo.filter {
-            val hora = it.horaAdministrada?.substringBefore(":")?.toIntOrNull() ?: 0
-            hora >= 18 || hora < 6
-        }
+        medicamentosTarde.value =
+            medicamentosConGrupo.filter {
+                val hora = it.horaAdministrada
+                    ?.substringBefore(":")
+                    ?.toIntOrNull() ?: 0
+
+                hora in 12..17
+            }
+
+        medicamentosNoche.value =
+            medicamentosConGrupo.filter {
+                val hora = it.horaAdministrada
+                    ?.substringBefore(":")
+                    ?.toIntOrNull() ?: 0
+
+                hora >= 18 || hora < 6
+            }
 
         Log.d(
             "MEDICAMENTOS_HOME",
@@ -504,97 +884,14 @@ class PacienteViewModel(
     }
 
     // =========================================================
-    // SELECCIONADOR DE PACIENTES
-    // =========================================================
-
-    private fun claveSeleccion(idUsuario: Int) =
-        "seleccion_pacientes_usuario_$idUsuario"
-
-    fun cargarPacientesParaSeleccion(
-        idUsuario: Int,
-        preferencias: SharedPreferences
-    ) {
-        viewModelScope.launch {
-            try {
-                if (idUsuario <= 0) {
-                    Log.e("SELECCION_PACIENTES", "ID de usuario inválido: $idUsuario")
-                    listaPacientesCompleta = repository.obtenerPacientes()
-                    listaPacientesCompleta.forEach { it.isSelected = false }
-                    _pacientes.value = listaPacientesCompleta
-                    _pacientesSeleccionadosHome.value = emptyList()
-                    tienePacientesSeleccionados = false
-                    return@launch
-                }
-
-                // Consultar nuevamente el catálogo para evitar usar datos viejos.
-                listaPacientesCompleta = repository.obtenerPacientes()
-
-                val seleccionGuardada =
-                    preferencias.getBoolean(claveSeleccion(idUsuario), false)
-
-                if (seleccionGuardada) {
-                    val asignaciones =
-                        repository.obtenerAsignacionesPacienteCuidador()
-
-                    val ids = asignaciones
-                        .filter {
-                            it.idUsuario == idUsuario &&
-                                    it.estado.equals("Activo", ignoreCase = true)
-                        }
-                        .mapNotNull { it.idPaciente }
-                        .toSet()
-
-                    listaPacientesCompleta.forEach { paciente ->
-                        paciente.isSelected = paciente.idPaciente in ids
-                    }
-                } else {
-                    listaPacientesCompleta.forEach { it.isSelected = false }
-                }
-
-                tienePacientesSeleccionados =
-                    listaPacientesCompleta.any { it.isSelected }
-
-                _pacientes.value = listaPacientesCompleta
-                _pacientesSeleccionadosHome.value =
-                    listaPacientesCompleta.filter { it.isSelected }
-
-                Log.d(
-                    "SELECCION_PACIENTES",
-                    "Usuario=$idUsuario, selección guardada=$seleccionGuardada, " +
-                            "seleccionados=${listaPacientesCompleta.count { it.isSelected }}"
-                )
-            } catch (e: Exception) {
-                Log.e(
-                    "SELECCION_PACIENTES",
-                    "Error al cargar la lista de selección",
-                    e
-                )
-                _pacientes.value = listaPacientesCompleta
-            }
-        }
-    }
-
-    /**
-     * Fuerza una nueva consulta de pacientes y asignaciones.
-     * No elimina asignaciones ni modifica las preferencias de sesión.
-     */
-    fun actualizarSeleccionDespuesDelCierre(
-        idUsuario: Int,
-        preferencias: SharedPreferences
-    ) {
-        // Invalidar datos en memoria para evitar reutilizar una lista antigua.
-        listaPacientesCompleta = emptyList()
-
-        // La función de carga vuelve a consultar el servidor.
-        cargarPacientesParaSeleccion(idUsuario, preferencias)
-    }
-
-    // =========================================================
     // REGISTRO DE APLICACIÓN DE MEDICAMENTO
     // =========================================================
 
-    private val _registroAplicacionState = MutableLiveData<Result<String>>()
-    val registroAplicacionState: LiveData<Result<String>> get() = _registroAplicacionState
+    private val _registroAplicacionState =
+        MutableLiveData<Result<String>>()
+
+    val registroAplicacionState: LiveData<Result<String>>
+        get() = _registroAplicacionState
 
     fun registrarAplicacionMedicamento(
         idTratamientoMedicamento: Int,
@@ -614,29 +911,40 @@ class PacienteViewModel(
         viewModelScope.launch {
             try {
                 val cantidadADescontar =
-                    if (cantidadAplicada > 0) cantidadAplicada
-                    else (dosis.toIntOrNull() ?: 1)
+                    if (cantidadAplicada > 0) {
+                        cantidadAplicada
+                    } else {
+                        dosis.toIntOrNull() ?: 1
+                    }
 
                 val idPaciente =
                     _pacienteSeleccionado.value?.idPaciente
                         ?: return@launch
 
-                val listaInventario = repository.obtenerInventario()
+                val listaInventario =
+                    repository.obtenerInventario()
 
-                val inventarioEncontrado = listaInventario.find { inventario ->
-                    inventario.idPaciente == idPaciente &&
-                            (
-                                    inventario.idMedicamentos == idTratamientoMedicamento ||
-                                            inventario.idElemento == idElementoPaciente
-                                    )
-                }
+                val inventarioEncontrado =
+                    listaInventario.find { inventario ->
+                        inventario.idPaciente == idPaciente &&
+                                (
+                                        inventario.idMedicamentos ==
+                                                idTratamientoMedicamento ||
+                                                inventario.idElemento ==
+                                                idElementoPaciente
+                                        )
+                    }
 
-                val idInventarioValido = inventarioEncontrado?.idInventario
+                val idInventarioValido =
+                    inventarioEncontrado?.idInventario
 
                 if (idInventarioValido == null) {
-                    _registroAplicacionState.value = Result.failure(
-                        Exception("No se encontró el inventario correcto para este medicamento")
-                    )
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception(
+                                "No se encontró el inventario correcto para este medicamento"
+                            )
+                        )
                     return@launch
                 }
 
@@ -669,7 +977,8 @@ class PacienteViewModel(
                     cantidadAplicada = cantidadADescontar
                 )
 
-                val result = repository.registrarAplicacionMedicamento(request)
+                val result =
+                    repository.registrarAplicacionMedicamento(request)
 
                 if (result.isSuccess) {
                     val stockRestante =
@@ -692,11 +1001,16 @@ class PacienteViewModel(
                             )
                         }
                     } catch (e: Exception) {
-                        Log.e("INVENTARIO_UPDATE", "Error al actualizar stock", e)
+                        Log.e(
+                            "INVENTARIO_UPDATE",
+                            "Error al actualizar stock",
+                            e
+                        )
                     }
 
                     if (stockRestante <= 3) {
-                        val notificationHelper = NotificationHelper(context)
+                        val notificationHelper =
+                            NotificationHelper(context)
 
                         notificationHelper.enviarNotificacionStockBajo(
                             nombreMedicamento = nombreMedicamento,
@@ -705,20 +1019,26 @@ class PacienteViewModel(
                         )
 
                         try {
-                            val notificacionReq = NotificacionRequest(
-                                titulo = "⚠️ Stock Bajo: $nombreMedicamento",
-                                mensaje = "El medicamento $nombreMedicamento para el paciente $nombrePaciente se está agotando. Quedan $stockRestante unidades.",
-                                fecha_creacion = fechaActual,
-                                enviar_correo = false
-                            )
+                            val notificacionReq =
+                                NotificacionRequest(
+                                    titulo =
+                                        "⚠️ Stock Bajo: $nombreMedicamento",
+                                    mensaje =
+                                        "El medicamento $nombreMedicamento para el paciente $nombrePaciente se está agotando. Quedan $stockRestante unidades.",
+                                    fecha_creacion = fechaActual,
+                                    enviar_correo = false
+                                )
 
                             val respNotif =
-                                repository.crearNotificacion(notificacionReq)
+                                repository.crearNotificacion(
+                                    notificacionReq
+                                )
 
                             respNotif.getOrNull()?.let { notifCreada ->
                                 val destinatarioReq =
                                     NotificacionDestinatarioRequest(
-                                        id_notificacion = notifCreada.id_notificacion,
+                                        id_notificacion =
+                                            notifCreada.id_notificacion,
                                         id_usuario = idEncargado,
                                         leido = false
                                     )
@@ -728,22 +1048,32 @@ class PacienteViewModel(
                                 )
                             }
                         } catch (e: Exception) {
-                            Log.e("NOTIF_ERROR", "Error al registrar notificación", e)
+                            Log.e(
+                                "NOTIF_ERROR",
+                                "Error al registrar notificación",
+                                e
+                            )
                         }
                     }
 
                     _registroAplicacionState.value =
-                        Result.success("Aplicación registrada con éxito")
+                        Result.success(
+                            "Aplicación registrada con éxito"
+                        )
 
                     cargarElementosPaciente(idPaciente)
                 } else {
-                    _registroAplicacionState.value = Result.failure(
-                        result.exceptionOrNull()
-                            ?: Exception("Error al registrar aplicación")
-                    )
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            result.exceptionOrNull()
+                                ?: Exception(
+                                    "Error al registrar aplicación"
+                                )
+                        )
                 }
             } catch (e: Exception) {
-                _registroAplicacionState.value = Result.failure(e)
+                _registroAplicacionState.value =
+                    Result.failure(e)
             }
         }
     }
