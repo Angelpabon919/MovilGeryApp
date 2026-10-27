@@ -535,7 +535,7 @@ class MonitoreoCamarasFragment : Fragment() {
                     tvEstadoConexion.text = "Video desconectado"
                     mostrarMensajeVideo(
                         "No se pudo conectar a LiveKit: " +
-                            (error.message ?: "error desconocido")
+                                (error.message ?: "error desconocido")
                     )
                 }
             }

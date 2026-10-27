@@ -11,6 +11,8 @@ constraintlayout = "2.2.2"
 navigation = "2.10.1"
 googleServices = "4.5.0"     #librerias de firebase para los push
 firebaseBom = "34.19.0"
+compiler = "3.2.0-alpha11"
+roomKtx = "2.8.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,6 +28,8 @@ androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation
 #libreria firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+androidx-compiler = { group = "androidx.databinding", name = "compiler", version.ref = "compiler" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 
 [plugins]

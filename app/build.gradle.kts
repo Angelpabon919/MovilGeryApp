@@ -39,13 +39,16 @@ android {
 
 dependencies {
     implementation("io.livekit:livekit-android:2.29.1")
+    implementation("com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava")
     implementation(platform(libs.firebase.bom))
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.vanniktech:android-image-cropper:4.6.0")
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.compiler)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.room.ktx)
     implementation(libs.material)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
