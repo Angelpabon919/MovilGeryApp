@@ -204,8 +204,34 @@ class PerfilCuidadorFragment : Fragment() {
 
     private fun configurarCerrarSesion() {
         binding.btnCerrarSesion.setOnClickListener {
+
+            // 1. Guardamos el ID antes de limpiar la sesión.
+            val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
+
+            // 2. Limpiamos los datos de sesión.
             preferenciasSesion.edit().clear().apply()
 
+            // 3. Conservamos la marca que indica que la selección
+            // debe permanecer vacía después del próximo inicio de sesión.
+            if (idUsuario > 0) {
+                preferenciasSesion.edit()
+                    .putBoolean(
+                        "seleccion_pacientes_usuario_$idUsuario",
+                        false
+                    )
+                    .remove(
+                        "pacientes_seleccionados_ids_usuario_$idUsuario"
+                    )
+                    .apply()
+
+                Log.d(
+                    "CIERRE_SESION",
+                    "Selección de pacientes reiniciada para usuario $idUsuario"
+                )
+            }
+
+            // 4. Regresamos al login y eliminamos la pantalla anterior
+            // de la pila de navegación.
             val intent = Intent(
                 requireContext(),
                 LoginActivity::class.java

@@ -25,6 +25,11 @@ class PacientesListFragment : Fragment() {
 
     private lateinit var adapter: PacienteAdapter
 
+    companion object {
+        private const val PREF_FLUJO_COMPLETADO =
+            "FLUJO_CUIDADOR_COMPLETADO"
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -44,8 +49,7 @@ class PacientesListFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        // IMPORTANTE: borrar el resultado anterior ANTES
-        // de observarlo, para no reutilizar un true antiguo.
+        // Evitar reutilizar el resultado de una selección anterior.
         viewModel.reiniciarResultadoSeleccion()
 
         setupRecyclerView()
@@ -53,16 +57,17 @@ class PacientesListFragment : Fragment() {
         observarResultadoSeleccion()
         configurarBotones()
 
-        val preferences = requireContext().getSharedPreferences(
-            "SESION",
-            Context.MODE_PRIVATE
-        )
+        val preferences = requireContext()
+            .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
         val idUsuarioLogueado =
             preferences.getInt("ID_USUARIO", -1)
 
         // Recuperar las selecciones guardadas del cuidador.
-        viewModel.cargarPacientesParaSeleccion(idUsuarioLogueado,preferences)
+        viewModel.cargarPacientesParaSeleccion(
+            idUsuarioLogueado,
+            preferences
+        )
     }
 
     private fun setupRecyclerView() {
@@ -70,6 +75,7 @@ class PacientesListFragment : Fragment() {
             emptyList(),
             true
         ) { totalSeleccionados ->
+
             binding.tvContadorSeleccionados.text =
                 "Pacientes seleccionados: $totalSeleccionados"
         }
@@ -82,6 +88,7 @@ class PacientesListFragment : Fragment() {
 
     private fun observarDatos() {
         viewModel.pacientes.observe(viewLifecycleOwner) { listaPacientes ->
+
             adapter.actualizarLista(listaPacientes)
 
             val totalSeleccionados =
@@ -94,8 +101,32 @@ class PacientesListFragment : Fragment() {
 
     private fun observarResultadoSeleccion() {
         viewModel.seleccionGuardada.observe(viewLifecycleOwner) { resultado ->
+
             when (resultado) {
+
                 true -> {
+                    val preferences = requireContext()
+                        .getSharedPreferences(
+                            "SESION",
+                            Context.MODE_PRIVATE
+                        )
+
+                    // Guardar el estado antes de abrir el Home.
+                    // commit() confirma la escritura antes de continuar.
+                    val guardado = preferences.edit()
+                        .putBoolean(PREF_FLUJO_COMPLETADO, true)
+                        .commit()
+
+                    if (!guardado) {
+                        Toast.makeText(
+                            requireContext(),
+                            "No se pudo guardar el estado del turno.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        return@observe
+                    }
+
                     Toast.makeText(
                         requireContext(),
                         "Selección guardada correctamente",
@@ -120,13 +151,14 @@ class PacientesListFragment : Fragment() {
                 }
 
                 null -> {
-                    // No hay resultado nuevo que mostrar.
+                    // Todavía no hay un resultado nuevo.
                 }
             }
         }
     }
 
     private fun configurarBotones() {
+
         binding.btnBack.setOnClickListener {
             requireActivity()
                 .onBackPressedDispatcher
@@ -145,6 +177,7 @@ class PacientesListFragment : Fragment() {
         }
 
         binding.btnGuardarSeleccion.setOnClickListener {
+
             val totalSeleccionados =
                 adapter.obtenerCantidadSeleccionados()
 
@@ -158,10 +191,11 @@ class PacientesListFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val preferences = requireContext().getSharedPreferences(
-                "SESION",
-                Context.MODE_PRIVATE
-            )
+            val preferences = requireContext()
+                .getSharedPreferences(
+                    "SESION",
+                    Context.MODE_PRIVATE
+                )
 
             val idUsuarioLogueado =
                 preferences.getInt("ID_USUARIO", -1)
@@ -176,9 +210,12 @@ class PacientesListFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // El mensaje de éxito NO va aquí.
-            // El observador lo mostrará cuando termine el guardado.
-            viewModel.confirmarSeleccionDelDia(idUsuarioLogueado, preferences)
+            // El estado se marca como completado únicamente
+            // cuando el observador recibe el resultado true.
+            viewModel.confirmarSeleccionDelDia(
+                idUsuarioLogueado,
+                preferences
+            )
         }
     }
 

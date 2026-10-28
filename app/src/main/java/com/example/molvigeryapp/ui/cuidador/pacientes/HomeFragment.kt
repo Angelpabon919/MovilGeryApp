@@ -71,6 +71,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         setupBuscador()
         setupBotonEditar()
         observarDatos()
+        restaurarPacientesSeleccionadosHome()
         observarMedicamentos()
         configurarNavegacion()
         configurarBotonNotificaciones()
@@ -535,6 +536,32 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 homeAdapter.actualizarLista(lista)
             }
         }
+    }
+
+    // =====================================================
+// RESTAURAR PACIENTES AL VOLVER A ABRIR HOME
+// =====================================================
+
+    private fun restaurarPacientesSeleccionadosHome() {
+        val preferencias = requireContext()
+            .getSharedPreferences("SESION", Context.MODE_PRIVATE)
+
+        val idUsuario = preferencias.getInt("ID_USUARIO", -1)
+
+        if (idUsuario <= 0) {
+            Log.e("HOME_PACIENTES", "No se encontró el ID del cuidador")
+            return
+        }
+
+        Log.d(
+            "HOME_PACIENTES",
+            "Restaurando pacientes seleccionados del cuidador $idUsuario"
+        )
+
+        viewModel.cargarPacientesParaSeleccion(
+            idUsuario,
+            preferencias
+        )
     }
 
     // =====================================================

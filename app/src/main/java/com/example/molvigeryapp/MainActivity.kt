@@ -18,6 +18,7 @@ import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.actualizador.ActualizadorGeriApp
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.DetalleNotificacionCuidadorFragment
+import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.delay
@@ -136,6 +137,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
+
             when (idRolActual) {
 
                 ROL_ENCARGADO -> {
@@ -153,17 +155,40 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 ROL_CUIDADOR -> {
-                    Log.e(
-                        TAG_PANTALLA,
-                        "Abriendo VerificacionLlegadaFragment"
+
+                    val flujoCompletado = preferencias.getBoolean(
+                        "FLUJO_CUIDADOR_COMPLETADO",
+                        false
                     )
 
-                    supportFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            VerificacionLlegadaFragment()
+                    if (flujoCompletado) {
+
+                        Log.e(
+                            TAG_PANTALLA,
+                            "Flujo completado: recuperando HomeFragment"
                         )
-                        .commit()
+
+                        supportFragmentManager.beginTransaction()
+                            .replace(
+                                R.id.fragmentContainer,
+                                HomeFragment()
+                            )
+                            .commit()
+
+                    } else {
+
+                        Log.e(
+                            TAG_PANTALLA,
+                            "Flujo pendiente: abriendo verificación de llegada"
+                        )
+
+                        supportFragmentManager.beginTransaction()
+                            .replace(
+                                R.id.fragmentContainer,
+                                VerificacionLlegadaFragment()
+                            )
+                            .commit()
+                    }
                 }
 
                 else -> {
