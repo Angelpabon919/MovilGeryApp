@@ -38,8 +38,7 @@ class CuidadorAsignarTurnoAdapter(
             // Si no tiene foto o falla la carga, mostrar la imagen predeterminada.
             Glide.with(binding.iconoCuidador)
                 .load(cuidador.foto)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .placeholder(R.drawable.persona_encargado)
                 .error(R.drawable.persona_encargado)
                 .fallback(R.drawable.persona_encargado)

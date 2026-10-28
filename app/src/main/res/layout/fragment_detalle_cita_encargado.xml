@@ -107,7 +107,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text=""
+                    android:text="Gestiona las citas medicas de cada paciente"
                     android:textColor="#98A2B3"
                     android:textSize="13sp" />
 

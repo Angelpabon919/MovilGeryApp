@@ -19,6 +19,7 @@ import com.example.molvigeryapp.ui.encargado.WindowInsetsEncargado
 import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.citas.CitasEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
+import com.example.molvigeryapp.MainActivity
 import com.example.molvigeryapp.ui.encargado.notificaciones.ContadorNotificaciones
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
 import kotlinx.coroutines.CancellationException
@@ -767,64 +768,24 @@ class PerfilEncargadoFragment : Fragment() {
             // INICIO
             // =================================================
 
+
             onInicio = {
-
-                if (!isAdded) {
-                    return@configurar
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        HomeEncargadoFragment()
-                    )
-                    .commit()
+                (activity as? MainActivity)?.navegarPantallaEncargado(
+                    NavegacionEncargado.Pantalla.INICIO
+                )
             },
-
-
-            // =================================================
-            // ASIGNAR TURNO
-            // =================================================
 
             onAsignarTurno = {
-
-                if (!isAdded) {
-                    return@configurar
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        AsignarTurnoEncargadoFragment()
-                    )
-                    .commit()
+                (activity as? MainActivity)?.navegarPantallaEncargado(
+                    NavegacionEncargado.Pantalla.ASIGNAR_TURNO
+                )
             },
-
-
-            // =================================================
-            // CITAS
-            // =================================================
 
             onCitas = {
-
-                if (!isAdded) {
-                    return@configurar
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        CitasEncargadoFragment()
-                    )
-                    .commit()
+                (activity as? MainActivity)?.navegarPantallaEncargado(
+                    NavegacionEncargado.Pantalla.CITAS
+                )
             },
-
 
             // =================================================
             // PERFIL ACTUAL

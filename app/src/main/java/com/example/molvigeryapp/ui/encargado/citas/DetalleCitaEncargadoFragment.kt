@@ -279,7 +279,8 @@ class DetalleCitaEncargadoFragment : Fragment() {
     // =========================================================
 
     private fun cargarDetalle(
-        mostrarLoading: Boolean = true
+        mostrarLoading: Boolean = true,
+        forceRefresh: Boolean = false
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
 
@@ -298,7 +299,9 @@ class DetalleCitaEncargadoFragment : Fragment() {
                 }
 
                 // Obtener las citas.
-                val citas = CitasRepository.obtenerCitasDesdeApi()
+                val citas = CitasRepository.obtenerCitasDesdeApi(
+                    forceRefresh = forceRefresh
+                )
 
                 if (_binding == null) return@launch
 
@@ -315,7 +318,9 @@ class DetalleCitaEncargadoFragment : Fragment() {
                 }
 
                 // Obtener el paciente asociado a la cita.
-                val pacientes = RetrofitClient.apiService.getPacientes()
+                val pacientes = CitasRepository.obtenerPacientesDesdeApi(
+                    forceRefresh = forceRefresh
+                )
 
                 if (_binding == null) return@launch
 
@@ -751,7 +756,10 @@ class DetalleCitaEncargadoFragment : Fragment() {
 
                     if (!isActive) break
 
-                    cargarDetalle(mostrarLoading = false)
+                    cargarDetalle(
+                        mostrarLoading = false,
+                        forceRefresh = true
+                    )
                 }
             }
         }
