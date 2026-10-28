@@ -29,6 +29,7 @@ import com.example.molvigeryapp.ui.encargado.notificaciones.ContadorNotificacion
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.perfil.PerfilEncargadoFragment
 import kotlinx.coroutines.CancellationException
+import com.example.molvigeryapp.MainActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -78,6 +79,10 @@ class HomeEncargadoFragment : Fragment() {
 
     private var primeraCarga = true
 
+    // Evita solicitar el perfil repetidamente
+    private var nombreEncargadoCargado = false
+
+    private var nombreEncargado: String? = null
 
     // =====================================================
     // CONSTANTES
@@ -87,7 +92,10 @@ class HomeEncargadoFragment : Fragment() {
 
         private const val TAG = "HOME_ENCARGADO"
 
-        private const val INTERVALO_ACTUALIZACION = 2_000L
+        private const val INTERVALO_ACTUALIZACION = 30_000L
+
+        private var cuidadoresCache: List<Cuidador> = emptyList()
+        private var cacheCuidadoresValida = false
     }
 
 
@@ -137,6 +145,10 @@ class HomeEncargadoFragment : Fragment() {
             menuInferior = binding.bottomNavigation
         )
 
+        if (cacheCuidadoresValida) {
+            listaCuidadores = cuidadoresCache
+            primeraCarga = false
+        }
 
         // =================================================
         // CONFIGURACIONES
@@ -152,6 +164,7 @@ class HomeEncargadoFragment : Fragment() {
 
         configurarMenuInferior()
 
+        mostrarNombreEncargado()
 
         // =================================================
         // ACTUALIZACIÓN AUTOMÁTICA
@@ -175,28 +188,29 @@ class HomeEncargadoFragment : Fragment() {
     // RECYCLER VIEW
     // =====================================================
 
-    private fun configurarRecyclerView() {
 
+    private fun configurarRecyclerView() {
         val contexto = context ?: return
 
         binding.recyclerCuidadores.layoutManager =
             LinearLayoutManager(contexto)
 
+        adapter = CuidadorAdapter(listaCuidadores) { cuidador ->
+            abrirDetalleCuidador(cuidador)
+        }
 
-        adapter =
-            CuidadorAdapter(
-                emptyList()
-            ) { cuidador ->
+        binding.recyclerCuidadores.adapter = adapter
 
-                abrirDetalleCuidador(
-                    cuidador
-                )
-            }
+        if (listaCuidadores.isNotEmpty()) {
+            // Mostrar inmediatamente la lista almacenada en caché.
+            binding.progressBarCuidadores.visibility = View.GONE
+            binding.recyclerCuidadores.visibility = View.VISIBLE
 
-
-        binding.recyclerCuidadores.adapter =
-            adapter
+            // Aplicar el buscador y el filtro actuales.
+            aplicarFiltros()
+        }
     }
+
 
 
     // =====================================================
@@ -204,215 +218,118 @@ class HomeEncargadoFragment : Fragment() {
     // =====================================================
 
     private fun iniciarActualizacionCuidadores() {
-
         viewLifecycleOwner.lifecycleScope.launch {
-
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (true) {
-
                     cargarCuidadores(
                         mostrarCargaInicial = primeraCarga
                     )
 
                     primeraCarga = false
 
-                    delay(
-                        INTERVALO_ACTUALIZACION
-                    )
+                    delay(INTERVALO_ACTUALIZACION)
                 }
             }
         }
     }
-
 
     // =====================================================
     // CARGAR CUIDADORES
     // =====================================================
 
-    private fun cargarCuidadores(
+
+    private suspend fun cargarCuidadores(
         mostrarCargaInicial: Boolean = false
     ) {
+        if (!isAdded || _binding == null) return
 
-        if (cargandoCuidadores) {
-            return
-        }
-
-
-        if (!isAdded || _binding == null) {
-            return
-        }
-
+        if (cargandoCuidadores) return
 
         cargandoCuidadores = true
 
-
-        if (mostrarCargaInicial) {
-
+        if (mostrarCargaInicial && listaCuidadores.isEmpty()) {
             mostrarCargando()
         }
 
+        try {
+            val usuarios = usuarioRepository.obtenerUsuarios()
 
-        viewLifecycleOwner.lifecycleScope.launch {
+            android.util.Log.d(
+                TAG,
+                "Total de usuarios recibidos: ${usuarios.size}"
+            )
 
-            try {
+            if (_binding == null) return
 
-                // =================================================
-                // OBTENER USUARIOS
-                // =================================================
+            val respuestaAsignaciones =
+                RetrofitClient.apiService.getAsignacionesPacienteCuidador()
 
-                val usuarios =
-                    RetrofitClient.apiService
-                        .getUsuarios()
+            if (_binding == null) return
 
-                android.util.Log.d(
-                    "HOME_ENCARGADO",
-                    "Total de usuarios recibidos: ${usuarios.size}"
-                )
-
-                android.util.Log.d(
-                    "HOME_ENCARGADO",
-                    "Roles recibidos: ${usuarios.map { it.idRol }}"
-                )
-
-
-                if (_binding == null) {
-                    return@launch
-                }
-
-
-                // =================================================
-                // MOSTRAR NOMBRE DEL ENCARGADO
-                // =================================================
-
-                mostrarNombreEncargado()
-
-
-                // =================================================
-                // OBTENER ASIGNACIONES
-                // =================================================
-
-                val respuestaAsignaciones =
-                    RetrofitClient.apiService
-                        .getAsignacionesPacienteCuidador()
-
-
-                if (_binding == null) {
-                    return@launch
-                }
-
-
-
-                if (!respuestaAsignaciones.isSuccessful) {
-                    android.util.Log.e(
-                        TAG,
-                        "Error al consultar asignaciones: HTTP ${respuestaAsignaciones.code()}"
-                    )
-                    return@launch
-                }
-
-                val asignacionesPacientes =
-                    respuestaAsignaciones.body() ?: run {
-                        android.util.Log.e(
-                            TAG,
-                            "La API no devolvió el contenido de las asignaciones"
-                        )
-                        return@launch
-                    }
-
-
-
-                // =================================================
-                // CREAR LISTA DE CUIDADORES
-                // =================================================
-
-                listaCuidadores =
-                    usuarios
-                        .filter { usuario ->
-
-                            usuario.idRol == 3
-                        }
-                        .map { usuario ->
-
-                            val idUsuario =
-                                usuario.idUsuario ?: 0
-
-
-                            val cantidadPacientes =
-                                obtenerCantidadPacientes(
-                                    idUsuario,
-                                    asignacionesPacientes
-                                )
-
-
-                            convertirACuidador(
-                                usuario,
-                                cantidadPacientes
-                            )
-                        }
-
-
-                if (_binding == null) {
-                    return@launch
-                }
-
-
-                // =================================================
-                // APLICAR FILTROS
-                // =================================================
-
-                aplicarFiltros()
-
-
-            } catch (e: CancellationException) {
-
-                // La navegación o destrucción de la vista
-                // canceló la corrutina. Es un comportamiento normal.
-
-                throw e
-
-            } catch (e: Exception) {
-
+            if (!respuestaAsignaciones.isSuccessful) {
                 android.util.Log.e(
                     TAG,
-                    "Error al actualizar cuidadores",
-                    e
+                    "Error al consultar asignaciones: HTTP ${respuestaAsignaciones.code()}"
                 )
+                return
+            }
 
+            val asignacionesPacientes = respuestaAsignaciones.body()
 
-                if (!isAdded || _binding == null) {
-                    return@launch
+            if (asignacionesPacientes == null) {
+                android.util.Log.e(
+                    TAG,
+                    "La API no devolvió las asignaciones"
+                )
+                return
+            }
+
+            listaCuidadores = usuarios
+                .filter { it.idRol == 3 }
+                .map { usuario ->
+                    val idUsuario = usuario.idUsuario ?: 0
+
+                    val cantidadPacientes = obtenerCantidadPacientes(
+                        idUsuario,
+                        asignacionesPacientes
+                    )
+
+                    convertirACuidador(
+                        usuario,
+                        cantidadPacientes
+                    )
                 }
 
+            cuidadoresCache = listaCuidadores.toList()
+            cacheCuidadoresValida = true
 
-                // Solo mostramos estado de error durante
-                // la carga inicial.
-                //
-                // Durante las actualizaciones automáticas
-                // no mostramos Toast repetidamente.
+            if (_binding == null) return
 
-                if (mostrarCargaInicial) {
+            aplicarFiltros()
 
-                    mostrarErrorCarga()
-                }
+        } catch (e: CancellationException) {
+            throw e
 
-            } finally {
+        } catch (e: Exception) {
+            android.util.Log.e(
+                TAG,
+                "Error al actualizar cuidadores",
+                e
+            )
 
-                cargandoCuidadores = false
+            if (mostrarCargaInicial && _binding != null) {
+                mostrarErrorCarga()
+            }
 
+        } finally {
+            cargandoCuidadores = false
 
-                if (
-                    mostrarCargaInicial &&
-                    _binding != null
-                ) {
-
-                    ocultarCargando()
-                }
+            if (mostrarCargaInicial && _binding != null) {
+                ocultarCargando()
             }
         }
     }
+
 
 
     // =====================================================
@@ -504,7 +421,6 @@ class HomeEncargadoFragment : Fragment() {
     // =====================================================
 
 
-
     private fun mostrarNombreEncargado() {
         val bindingActual = _binding ?: return
         val contexto = context ?: return
@@ -521,36 +437,57 @@ class HomeEncargadoFragment : Fragment() {
             return
         }
 
+        // Mostrar inmediatamente el nombre guardado en la sesión.
+        val nombreGuardado = preferencias.getString(
+            "NOMBRE_ENCARGADO",
+            null
+        )
+
+        if (!nombreGuardado.isNullOrBlank()) {
+            bindingActual.txtBienvenida.text =
+                "Hola encargado $nombreGuardado"
+        } else {
+            bindingActual.txtBienvenida.text = "Hola encargado"
+        }
+
+        // Si ya hay un nombre guardado, no repetir la petición.
+        if (!nombreGuardado.isNullOrBlank()) {
+            nombreEncargadoCargado = true
+            return
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val usuarioActual =
-                    usuarioRepository.obtenerUsuarioPorId(idUsuario)
+                val usuario = usuarioRepository.obtenerUsuarioPorId(idUsuario)
 
                 if (_binding == null) return@launch
 
-                val nombre = usuarioActual?.nombres
+                val nombre = usuario?.nombres
                     ?.trim()
                     ?.split(Regex("\\s+"))
                     ?.firstOrNull()
                     ?.replaceFirstChar { it.uppercase() }
 
-                bindingActual.txtBienvenida.text =
-                    if (!nombre.isNullOrBlank()) {
+                if (!nombre.isNullOrBlank()) {
+                    preferencias.edit()
+                        .putString("NOMBRE_ENCARGADO", nombre)
+                        .apply()
+
+                    bindingActual.txtBienvenida.text =
                         "Hola encargado $nombre"
-                    } else {
-                        "Hola encargado"
-                    }
+
+                    nombreEncargadoCargado = true
+                }
+
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
 
             } catch (e: Exception) {
                 android.util.Log.e(
                     "HOME_ENCARGADO",
-                    "Error al cargar el nombre del usuario $idUsuario",
+                    "Error al recuperar el nombre del Encargado",
                     e
                 )
-
-                if (_binding != null) {
-                    bindingActual.txtBienvenida.text = "Hola encargado"
-                }
             }
         }
     }
@@ -1051,53 +988,21 @@ class HomeEncargadoFragment : Fragment() {
 
 
             onAsignarTurno = {
-
-                if (!isAdded) {
-                    return@configurar
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        AsignarTurnoEncargadoFragment()
-                    )
-                    .commit()
+                (activity as? MainActivity)?.navegarPantallaEncargado(
+                    NavegacionEncargado.Pantalla.ASIGNAR_TURNO
+                )
             },
-
 
             onCitas = {
-
-                if (!isAdded) {
-                    return@configurar
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        CitasEncargadoFragment()
-                    )
-                    .commit()
+                (activity as? MainActivity)?.navegarPantallaEncargado(
+                    NavegacionEncargado.Pantalla.CITAS
+                )
             },
 
-
             onPerfil = {
-
-                if (!isAdded) {
-                    return@configurar
-                }
-
-
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(
-                        R.id.fragmentContainer,
-                        PerfilEncargadoFragment()
-                    )
-                    .commit()
+                (activity as? MainActivity)?.navegarPantallaEncargado(
+                    NavegacionEncargado.Pantalla.PERFIL
+                )
             }
         )
     }

@@ -10,6 +10,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.repository.FcmTokenRepository
 import com.example.molvigeryapp.data.repository.NotificacionesRepository
@@ -19,8 +21,13 @@ import com.example.molvigeryapp.ui.cuidador.actualizador.ActualizadorGeriApp
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.DetalleNotificacionCuidadorFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+import com.example.molvigeryapp.ui.encargado.NavegacionEncargado
+import com.example.molvigeryapp.ui.encargado.asignarturno.AsignarTurnoEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.citas.CitasEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.home.HomeEncargadoFragment
+import com.example.molvigeryapp.ui.encargado.perfil.PerfilEncargadoFragment
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -48,10 +55,12 @@ class MainActivity : AppCompatActivity() {
         private const val ROL_ENCARGADO = 2
         private const val ROL_CUIDADOR = 3
 
-        ///boton de llamada
+        private const val TELEFONO_EMERGENCIA = "+573146767639"
 
-        private const val TELEFONO_EMERGENCIA =
-            "+573146767639"
+        private const val TAG_ENCARGADO_INICIO = "encargado_inicio"
+        private const val TAG_ENCARGADO_PERFIL = "encargado_perfil"
+        private const val TAG_ENCARGADO_CITAS = "encargado_citas"
+        private const val TAG_ENCARGADO_TURNOS = "encargado_turnos"
     }
 
     private var idRolActual = -1
@@ -60,10 +69,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.e(
-            TAG_PANTALLA,
-            "MainActivity: entrando a onCreate"
-        )
+        Log.d(TAG_PANTALLA, "MainActivity: entrando a onCreate")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -72,25 +78,16 @@ class MainActivity : AppCompatActivity() {
             abrirMarcadorEmergencia()
         }
 
-        Log.e(
-            TAG_PANTALLA,
-            "MainActivity: pantalla principal cargada"
-        )
-
         solicitarPermisoNotificaciones()
-        obtenerTokenFCM()
 
-        val preferencias = getSharedPreferences(
-            "SESION",
-            MODE_PRIVATE
-        )
+        val preferencias = getSharedPreferences("SESION", MODE_PRIVATE)
 
         val rolRecibido = intent.getIntExtra(
             "ID_ROL",
             preferencias.getInt("ID_ROL", -1)
         )
 
-        // Compatibilidad con los roles anteriores.
+        // Compatibilidad con los identificadores de rol anteriores.
         idRolActual = when (rolRecibido) {
             5 -> ROL_CUIDADOR
             6 -> ROL_ENCARGADO
@@ -108,11 +105,10 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        Log.d(
-            TAG,
-            "Rol recibido en MainActivity: $idRolActual"
-        )
+        Log.d(TAG, "Rol recibido en MainActivity: $idRolActual")
 
+        // Registrar el token después de tener disponible la sesión.
+        obtenerTokenFCM()
         binding.fabLlamada.visibility =
             if (idRolActual == ROL_CUIDADOR) {
                 View.VISIBLE
@@ -128,33 +124,25 @@ class MainActivity : AppCompatActivity() {
         )
 
         if (idRolActual == ROL_CUIDADOR) {
-            Log.e(
-                TAG_PANTALLA,
-                "Iniciando actualizador del cuidador"
-            )
-
             iniciarActualizadorGeriApp()
         }
 
         if (savedInstanceState == null) {
 
             when (idRolActual) {
-
                 ROL_ENCARGADO -> {
-                    Log.e(
-                        TAG_PANTALLA,
-                        "Abriendo HomeEncargadoFragment"
+                    navegarPantallaEncargado(
+                        NavegacionEncargado.Pantalla.INICIO
                     )
-
-                    supportFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            HomeEncargadoFragment()
-                        )
-                        .commit()
                 }
 
                 ROL_CUIDADOR -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.fragmentContainer,
+                            VerificacionLlegadaFragment()
+                        )
+                        .commit()
 
                     val flujoCompletado = preferencias.getBoolean(
                         "FLUJO_CUIDADOR_COMPLETADO",
@@ -194,7 +182,7 @@ class MainActivity : AppCompatActivity() {
                 else -> {
                     Log.e(
                         TAG_PANTALLA,
-                        "No se abrió ningún fragmento. Rol=$idRolActual"
+                        "Rol no válido: $idRolActual"
                     )
                 }
             }
@@ -210,6 +198,112 @@ class MainActivity : AppCompatActivity() {
         procesarIntentNotificacion(intent)
     }
 
+    // =========================================================
+    // NAVEGACIÓN OPTIMIZADA DEL ENCARGADO
+    // =========================================================
+
+    fun navegarPantallaEncargado(
+        pantalla: NavegacionEncargado.Pantalla
+    ) {
+        if (
+            idRolActual != ROL_ENCARGADO ||
+            isFinishing ||
+            isDestroyed
+        ) return
+
+        val fm = supportFragmentManager
+
+        if (fm.isStateSaved) {
+            Log.d(
+                TAG_PANTALLA,
+                "Navegación omitida: estado de FragmentManager guardado"
+            )
+            return
+        }
+
+        val destinos = listOf(
+            NavegacionEncargado.Pantalla.INICIO to TAG_ENCARGADO_INICIO,
+            NavegacionEncargado.Pantalla.PERFIL to TAG_ENCARGADO_PERFIL,
+            NavegacionEncargado.Pantalla.CITAS to TAG_ENCARGADO_CITAS,
+            NavegacionEncargado.Pantalla.ASIGNAR_TURNO to TAG_ENCARGADO_TURNOS
+        )
+
+        val tagDestino = destinos
+            .firstOrNull { it.first == pantalla }
+            ?.second
+            ?: return
+
+        // No realizar una transacción si ya estamos en el destino visible.
+        val destinoExistente = fm.findFragmentByTag(tagDestino)
+
+        if (
+            destinoExistente != null &&
+            destinoExistente.isAdded &&
+            !destinoExistente.isHidden
+        ) {
+            return
+        }
+
+        val transaccion = fm.beginTransaction()
+            .setReorderingAllowed(true)
+
+        // Ocultar los fragmentos principales que ya existen.
+        destinos.forEach { (_, tag) ->
+            fm.findFragmentByTag(tag)?.let { fragmento ->
+                if (fragmento.isAdded && !fragmento.isHidden) {
+                    transaccion.hide(fragmento)
+                    transaccion.setMaxLifecycle(
+                        fragmento,
+                        Lifecycle.State.CREATED
+                    )
+                }
+            }
+        }
+
+        // Reutilizar el fragmento o crearlo si es la primera visita.
+        val fragmento = destinoExistente
+            ?: crearFragmentoEncargado(pantalla)
+
+        if (!fragmento.isAdded) {
+            transaccion.add(
+                R.id.fragmentContainer,
+                fragmento,
+                tagDestino
+            )
+        } else {
+            transaccion.show(fragmento)
+        }
+
+        transaccion.setMaxLifecycle(
+            fragmento,
+            Lifecycle.State.RESUMED
+        )
+
+        transaccion.commit()
+    }
+
+    private fun crearFragmentoEncargado(
+        pantalla: NavegacionEncargado.Pantalla
+    ): Fragment {
+        return when (pantalla) {
+            NavegacionEncargado.Pantalla.INICIO ->
+                HomeEncargadoFragment()
+
+            NavegacionEncargado.Pantalla.PERFIL ->
+                PerfilEncargadoFragment()
+
+            NavegacionEncargado.Pantalla.CITAS ->
+                CitasEncargadoFragment()
+
+            NavegacionEncargado.Pantalla.ASIGNAR_TURNO ->
+                AsignarTurnoEncargadoFragment()
+        }
+    }
+
+    // =========================================================
+    // NOTIFICACIONES
+    // =========================================================
+
     private fun procesarIntentNotificacion(intent: Intent?) {
         if (
             intent?.getBooleanExtra(
@@ -222,15 +316,9 @@ class MainActivity : AppCompatActivity() {
 
         if (procesandoNotificacion) return
 
-        val preferencias = getSharedPreferences(
-            "SESION",
-            MODE_PRIVATE
-        )
+        val preferencias = getSharedPreferences("SESION", MODE_PRIVATE)
 
-        val idUsuario = preferencias.getInt(
-            "ID_USUARIO",
-            -1
-        )
+        val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
         val rolGuardado = preferencias.getInt(
             "ID_ROL",
@@ -255,9 +343,8 @@ class MainActivity : AppCompatActivity() {
         if (idRol != ROL_CUIDADOR) {
             Log.d(
                 TAG,
-                "No se abrirá el detalle del cuidador. Rol=$idRol"
+                "El detalle de esta notificación no corresponde al rol $idRol"
             )
-
             limpiarExtrasNotificacion(intent)
             return
         }
@@ -265,10 +352,9 @@ class MainActivity : AppCompatActivity() {
         if (idUsuario <= 0 || idNotificacion <= 0) {
             Log.e(
                 TAG,
-                "ID_USUARIO o ID_NOTIFICACION inválido. " +
-                        "Usuario=$idUsuario, notificación=$idNotificacion"
+                "Identificadores inválidos: usuario=$idUsuario, " +
+                        "notificación=$idNotificacion"
             )
-
             limpiarExtrasNotificacion(intent)
             return
         }
@@ -295,15 +381,21 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                if (isFinishing || isDestroyed) {
+                if (isFinishing || isDestroyed) return@launch
+
+                val fm = supportFragmentManager
+
+                // Esperar si Android ya guardó el estado de la actividad.
+                if (fm.isStateSaved) {
+                    Log.w(
+                        TAG,
+                        "No se puede abrir el detalle: estado guardado"
+                    )
                     return@launch
                 }
 
                 val bundle = Bundle().apply {
-                    putSerializable(
-                        "notificacion",
-                        notificacion
-                    )
+                    putSerializable("notificacion", notificacion)
                 }
 
                 val detalle =
@@ -311,7 +403,8 @@ class MainActivity : AppCompatActivity() {
                         arguments = bundle
                     }
 
-                supportFragmentManager.beginTransaction()
+                fm.beginTransaction()
+                    .setReorderingAllowed(true)
                     .replace(
                         R.id.fragmentContainer,
                         detalle
@@ -323,17 +416,17 @@ class MainActivity : AppCompatActivity() {
                     val marcada =
                         NotificacionesRepository
                             .marcarCualquierNotificacionLeida(
-                                idNotificacion =
-                                    notificacion.idNotificacion,
+                                idNotificacion = notificacion.idNotificacion,
                                 idUsuario = idUsuario
                             )
 
                     Log.d(
                         TAG,
-                        "Resultado al marcar notificación como leída: $marcada"
+                        "Resultado al marcar como leída: $marcada"
                     )
                 }
-
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(
                     TAG,
@@ -353,13 +446,17 @@ class MainActivity : AppCompatActivity() {
         intent.removeExtra(EXTRA_TIPO_NOTIFICACION)
     }
 
+    // =========================================================
+    // ACTUALIZADOR DEL CUIDADOR
+    // =========================================================
+
     private fun iniciarActualizadorGeriApp() {
         lifecycleScope.launch {
             while (isActive) {
                 try {
-                    ActualizadorGeriApp.actualizar(
-                        applicationContext
-                    )
+                    ActualizadorGeriApp.actualizar(applicationContext)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Log.e(
                         TAG,
@@ -368,23 +465,21 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
-                delay(
-                    ActualizadorGeriApp.obtenerIntervalo()
-                )
+                delay(ActualizadorGeriApp.obtenerIntervalo())
             }
         }
     }
 
+    // =========================================================
+    // FIREBASE CLOUD MESSAGING
+    // =========================================================
+
     private fun obtenerTokenFCM() {
-        Log.d(
-            TAG,
-            "Solicitando token FCM..."
-        )
+        Log.d(TAG, "Solicitando token FCM...")
 
         FirebaseMessaging.getInstance()
             .token
             .addOnCompleteListener { tarea ->
-
                 if (!tarea.isSuccessful) {
                     Log.e(
                         TAG,
@@ -396,31 +491,19 @@ class MainActivity : AppCompatActivity() {
 
                 val token = tarea.result
 
-                Log.d(
-                    TAG,
-                    "Token FCM obtenido correctamente"
-                )
+                Log.d(TAG, "Token FCM obtenido correctamente")
 
                 registrarTokenEnDjango(token)
             }
     }
 
     private fun registrarTokenEnDjango(token: String) {
-        val preferencias = getSharedPreferences(
-            "SESION",
-            MODE_PRIVATE
-        )
+        val preferencias = getSharedPreferences("SESION", MODE_PRIVATE)
 
-        val idUsuario = preferencias.getInt(
-            "ID_USUARIO",
-            -1
-        )
+        val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
         if (idUsuario <= 0) {
-            Log.d(
-                TAG,
-                "No hay un ID_USUARIO válido en la sesión"
-            )
+            Log.d(TAG, "No hay un ID_USUARIO válido en la sesión")
             return
         }
 
@@ -432,17 +515,12 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 if (registrado) {
-                    Log.d(
-                        TAG,
-                        "Token FCM registrado correctamente en Django"
-                    )
+                    Log.d(TAG, "Token FCM registrado correctamente")
                 } else {
-                    Log.e(
-                        TAG,
-                        "Django rechazó el token FCM"
-                    )
+                    Log.e(TAG, "Django rechazó el token FCM")
                 }
-
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(
                     TAG,
@@ -463,13 +541,15 @@ class MainActivity : AppCompatActivity() {
         ) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(
-                    Manifest.permission.POST_NOTIFICATIONS
-                ),
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                 REQUEST_NOTIFICATION_PERMISSION
             )
         }
     }
+
+    // =========================================================
+    // LLAMADA DE EMERGENCIA
+    // =========================================================
 
     private fun abrirMarcadorEmergencia() {
         val numero = TELEFONO_EMERGENCIA
@@ -501,6 +581,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // =========================================================
+    // CERRAR SESIÓN
+    // =========================================================
 
     fun cerrarSesion() {
         getSharedPreferences("SESION", MODE_PRIVATE)

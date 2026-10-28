@@ -48,6 +48,9 @@ class CitasEncargadoFragment : Fragment() {
 
     private var cargandoDatos = false
 
+    // Conserva la pestaña seleccionada al abrir y cerrar el detalle.
+    private var mostrandoCitas = false
+
     companion object {
         private const val INTERVALO_ACTUALIZACION = 2_000L
         private const val TAG = "CITAS_ENCARGADO"
@@ -85,7 +88,12 @@ class CitasEncargadoFragment : Fragment() {
         configurarNotificaciones()
         configurarNavegacion()
 
-        mostrarPacientes()
+        if (mostrandoCitas) {
+            mostrarCitas()
+        } else {
+            mostrarPacientes()
+        }
+
         cargarDatos()
         iniciarActualizacionAutomatica()
 
@@ -239,25 +247,34 @@ class CitasEncargadoFragment : Fragment() {
             .map { it.value }
     }
 
-    private fun cargarDatos(mostrarError: Boolean = true) {
+
+    private fun cargarDatos(
+        mostrarError: Boolean = true,
+        forceRefresh: Boolean = false
+    ) {
         if (_binding == null || cargandoDatos) return
 
         cargandoDatos = true
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val pacientes = RetrofitClient.apiService.getPacientes()
+                // Obtener pacientes usando la caché compartida.
+                val pacientes = CitasRepository.obtenerPacientesDesdeApi(
+                    forceRefresh = forceRefresh
+                )
 
                 if (!isActive || _binding == null) return@launch
 
                 listaPacientes = pacientes
 
-                // Actualizar las fotos y los datos de los pacientes en las citas.
+                // Mantener actualizados los datos de los pacientes en las citas.
                 citaAdapter.actualizarPacientes(listaPacientes)
-
                 actualizarListaPacientes()
 
-                val citas = CitasRepository.obtenerCitasDesdeApi()
+                // Obtener citas, reutilizando o renovando la caché según corresponda.
+                val citas = CitasRepository.obtenerCitasDesdeApi(
+                    forceRefresh = forceRefresh
+                )
 
                 if (!isActive || _binding == null) return@launch
 
@@ -266,6 +283,7 @@ class CitasEncargadoFragment : Fragment() {
 
             } catch (e: CancellationException) {
                 throw e
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error actualizando pacientes y citas", e)
 
@@ -283,6 +301,7 @@ class CitasEncargadoFragment : Fragment() {
             }
         }
     }
+
 
     private fun actualizarListaCitas() {
         if (_binding == null) return
@@ -346,6 +365,8 @@ class CitasEncargadoFragment : Fragment() {
     private fun mostrarPacientes() {
         if (_binding == null) return
 
+        mostrandoCitas = false
+
         binding.contenedorPacientesCitas.visibility = View.VISIBLE
         binding.contenedorCitasProgramadas.visibility = View.GONE
 
@@ -354,6 +375,8 @@ class CitasEncargadoFragment : Fragment() {
 
     private fun mostrarCitas() {
         if (_binding == null) return
+
+        mostrandoCitas = true
 
         binding.contenedorPacientesCitas.visibility = View.GONE
         binding.contenedorCitasProgramadas.visibility = View.VISIBLE
@@ -471,7 +494,10 @@ class CitasEncargadoFragment : Fragment() {
 
                     if (!isActive) break
 
-                    cargarDatos(mostrarError = false)
+                    cargarDatos(
+                        mostrarError = false,
+                        forceRefresh = true
+                    )
                 }
             }
         }
@@ -554,7 +580,10 @@ class CitasEncargadoFragment : Fragment() {
         super.onResume()
 
         if (_binding != null) {
-            cargarDatos(mostrarError = false)
+            cargarDatos(
+                mostrarError = false,
+                forceRefresh = true
+            )
         }
     }
 

@@ -1,3 +1,4 @@
+
 package com.example.molvigeryapp.data.api
 
 import android.content.Context
@@ -7,13 +8,13 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
     private const val BASE_URL =
         "https://geriapp-backend.onrender.com/api/"
 
-    // Agrega el token de la sesión a las peticiones protegidas.
     private val authInterceptor = Interceptor { chain ->
 
         val solicitudOriginal = chain.request()
@@ -36,22 +37,24 @@ object RetrofitClient {
         chain.proceed(solicitud)
     }
 
+    /* Desactiva los registros HTTP para evitar trabajo innecesario y no exponer información personal durante las peticiones */
     private val logging = HttpLoggingInterceptor().apply {
-        // Evita mostrar el token en los registros HTTP.
         redactHeader("Authorization")
-        level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.NONE
     }
 
-    private val client =
-        OkHttpClient.Builder()
-            .connectTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
-            .writeTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
-            .addInterceptor(authInterceptor)
-            .addInterceptor(logging)
-            .build()
+    /* Cliente HTTP compartido por toda la aplicación */
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(45, TimeUnit.SECONDS)
+        .writeTimeout(45, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
+        .addInterceptor(authInterceptor)
+        .addInterceptor(logging)
+        .build()
 
-    val apiService: ApiService =
+    /* Instancia única de Retrofit y ApiService */
+    val apiService: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(client)
@@ -60,4 +63,5 @@ object RetrofitClient {
             )
             .build()
             .create(ApiService::class.java)
+    }
 }

@@ -49,6 +49,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".ui.auth.RegistroActivity"
             android:exported="false" />
@@ -56,14 +57,24 @@
             android:name=".ui.auth.RecuperarContrasena"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- Inicio de sesión: ya no es la actividad lanzadora -->
         <activity
             android:name=".ui.auth.LoginActivity"
+            android:exported="false" />
+
+        <!-- Splash animado: primera pantalla al abrir la aplicación -->
+        <activity
+            android:name=".SplashActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
     </application>
 
 </manifest>

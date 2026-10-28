@@ -61,8 +61,7 @@ class CuidadorResumenAsignacionAdapter(
 
             Glide.with(binding.imgCuidadorResumen)
                 .load(cuidador.foto)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .placeholder(R.drawable.persona_encargado)
                 .error(R.drawable.persona_encargado)
                 .fallback(R.drawable.persona_encargado)
