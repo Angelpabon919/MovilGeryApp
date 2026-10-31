@@ -1,177 +1,512 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC">
+    android:orientation="vertical"
+    android:background="#F8FAFC"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <!-- HEADER AZUL SUPERIOR AMPLIADO CON ESQUINAS REDONDEADAS -->
-    <LinearLayout
-        android:id="@+id/headerBar"
+    <!--
+        ENCABEZADO SUPERIOR
+        FrameLayout permite superponer la tarjeta beige
+        sobre el fondo azul sin utilizar ConstraintLayout.
+    -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_header_curved"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="24dp"
-        android:elevation="4dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="190dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <!-- Fila Superior de Navegación -->
-        <RelativeLayout
+        <!-- Fondo azul -->
+        <FrameLayout
+            android:id="@+id/headerBar"
             android:layout_width="match_parent"
-            android:layout_height="56dp">
+            android:layout_height="120dp"
+            android:layout_gravity="top"
+            android:background="@drawable/bg_rounded">
 
-            <ImageView
-                android:id="@+id/btnBack"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_centerVertical="true"
-                android:src="@drawable/arrow_back"
-                app:tint="#FFFFFF" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="Asignación de Pacientes"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/btnNotification"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
-                android:padding="15dp"
-                android:background="@drawable/bg_notifi"
-                android:contentDescription="Notificaciones"
-                android:src="@drawable/notifications"
-                android:layout_alignParentRight="true"
-
-                />
-        </RelativeLayout>
-
-        <!-- Tarjeta / Contenido de Bienvenida dentro del Header -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="8dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Bienvenido Cuidador"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginTop="4dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/clock"
+                    android:id="@+id/btnBack"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:padding="10dp"
+                    android:src="@drawable/arrow_back"
+                    android:contentDescription="Volver"
                     app:tint="#FFFFFF" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="Inicio de turno: 7:00 AM"
+                    android:layout_centerInParent="true"
+                    android:text="Asignación de Pacientes"
                     android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
-            </LinearLayout>
 
-            <TextView
+            </RelativeLayout>
+        </FrameLayout>
+
+        <!-- Tarjeta de bienvenida superpuesta -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardBienvenida"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="70dp"
+            app:cardBackgroundColor="#F5E8D5"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="5dp">
+
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Indique los pacientes bajo su custodia en esta jornada para sincronizar alertas y horarios de dosis."
-                android:textColor="#E2E8F0"
-                android:textSize="13sp" />
-        </LinearLayout>
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_bienvenida_cuidador"
+                android:clipToOutline="true">
 
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:paddingStart="20dp"
+                    android:paddingTop="13dp"
+                    android:paddingEnd="111dp"
+                    android:paddingBottom="13dp">
 
-    <!-- Contenido Scrollable (Empieza limpio desde la lista de selección) -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Hola, Cuidador"
+                        android:textColor="#172B4D"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Selecciona los pacientes que estarán a tu cargo en esta jornada."
+                        android:textColor="#475569"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/imgBienvenidaCuidador"
+                    android:layout_width="204dp"
+                    android:layout_height="204dp"
+                    android:layout_gravity="end|bottom"
+                    android:contentDescription="Cuidadora acompañando a una adulta mayor"
+                    android:scaleType="fitEnd"
+                    android:src="@drawable/cuidadora_abuelita" />
+
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
+
+    </FrameLayout>
+
+    <!--
+        CONTENIDO DESPLAZABLE
+        layout_weight=1 ocupa el espacio disponible
+        entre la bienvenida y el panel inferior.
+    -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/headerBar"
-        app:layout_constraintBottom_toTopOf="@id/btnGuardarSeleccion">
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:clipChildren="false"
+        android:fillViewport="false"
+        android:overScrollMode="ifContentScrolls"
+        android:paddingBottom="18dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        android:scrollbars="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="18dp">
 
-            <!-- Titulo y Contador -->
+            <!-- Tarjeta de turno y jornada -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardJornada"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="3dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingTop="15dp"
+                    android:paddingBottom="15dp">
+
+                    <FrameLayout
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:background="@drawable/bg_clock_circle">
+
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Horario del turno"
+                            android:src="@drawable/clock"
+                            app:tint="#FFFFFF" />
+
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Inicio de turno"
+                            android:textColor="#7183A3"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvHoraInicioTurno"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="7:00 AM – 3:00 PM"
+                            android:textColor="#172B4D"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:background="#DCE4F0" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="42dp"
+                            android:layout_height="46dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/bg_calendar_titulo">
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="Calendario"
+                                android:src="@drawable/ic_calendar_blue" />
+
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Jornada"
+                                android:textColor="#7183A3"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvFechaJornada"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:text="Hoy"
+                                android:textColor="#2563EB"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvFechaCompleta"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="28 de octubre"
+                                android:textColor="#7183A3"
+                                android:textSize="11sp" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Buscador -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="30dp"
+                app:cardElevation="3dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp">
+
+                    <ImageView
+                        android:layout_width="23dp"
+                        android:layout_height="23dp"
+                        android:contentDescription="Buscar"
+                        android:src="@drawable/search"
+                        app:tint="#7183A3" />
+
+                    <EditText
+                        android:id="@+id/etBuscarPaciente"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="Buscar por nombre o habitación..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:padding="0dp"
+                        android:singleLine="true"
+                        android:textColor="#172B4D"
+                        android:textColorHint="#8293B1"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Filtros horizontales -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:clipToPadding="false"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFiltroTodos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="104dp"
+                        android:text="Todos"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#3B5BDB"
+                        app:cornerRadius="24dp"
+                        app:icon="@drawable/ic_filtro_2"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="#FFFFFF"
+                        app:strokeWidth="0dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFiltroHabitacion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="10dp"
+                        android:minWidth="138dp"
+                        android:text="Habitación"
+                        android:textAllCaps="false"
+                        android:textColor="#172B4D"
+                        android:textSize="14sp"
+                        app:backgroundTint="#F0F4FF"
+                        app:cornerRadius="24dp"
+                        app:icon="@drawable/ic_acostado"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="#3158B8"
+                        app:strokeColor="#E1E9FA"
+                        app:strokeWidth="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFiltroCuidado"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="10dp"
+                        android:minWidth="132dp"
+                        android:text="EPS"
+                        android:textAllCaps="false"
+                        android:textColor="#172B4D"
+                        android:textSize="14sp"
+                        app:backgroundTint="#F0F4FF"
+                        app:cornerRadius="24dp"
+                        app:icon="@drawable/ic_corazon_blue"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="#3158B8"
+                        app:strokeColor="#E1E9FA"
+                        app:strokeWidth="1dp" />
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Encabezado de pacientes -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:layout_marginTop="24dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Seleccione sus pacientes"
-                    android:textColor="#1E293B"
-                    android:textSize="15sp"
+                    android:text="Pacientes disponibles"
+                    android:textColor="#172B4D"
+                    android:textSize="19sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvContadorSeleccionados"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
                     android:text="0 seleccionados"
-                    android:textColor="#2563EB"
-                    android:textSize="12sp"
+                    android:textColor="#315BEB"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:gravity="end" />
+                    android:visibility="gone" />
 
             </LinearLayout>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="10dp"
+                android:text="Selecciona los pacientes de tu jornada"
+                android:textColor="#7183A3"
+                android:textSize="12sp" />
 
-            <!-- Lista de Pacientes -->
+            <!-- Lista de pacientes obtenidos desde la API -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvPacientes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
                 tools:listitem="@layout/item_paciente" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Botón Principal Fijo al Fondo -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGuardarSeleccion"
+    <!--
+        PANEL INFERIOR FIJO
+        Está fuera del NestedScrollView para permanecer visible.
+    -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/panelGuardarSeleccion"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:text="Guardar Selección ✓"
-        android:textAllCaps="false"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:backgroundTint="#2563EB"
-        app:cornerRadius="12dp"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="12dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="18dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvResumenSeleccion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0 pacientes seleccionados"
+                    android:textColor="#172B4D"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Revisa tu selección antes de continuar"
+                    android:textColor="#7183A3"
+                    android:textSize="10sp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGuardarSeleccion"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginStart="10dp"
+                android:minWidth="0dp"
+                android:text="Guardar selección  ›"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:backgroundTint="#315BEB"
+                app:cornerRadius="26dp" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

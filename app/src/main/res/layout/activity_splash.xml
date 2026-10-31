@@ -5,108 +5,63 @@
     android:id="@+id/splashRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC">
+    android:background="#F8FAFC"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
+    <!-- Fondo decorativo: ondas suaves -->
     <FrameLayout
-        android:id="@+id/contenedorAnimacion"
+        android:id="@+id/contenedorOndas"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipChildren="false"
         android:clipToPadding="false"
-        app:layout_constraintWidth_percent="0.92"
-        app:layout_constraintHeight_percent="0.58"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <View
-            android:id="@+id/luzAzul"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_gravity="center"
-            android:background="@drawable/splash_luz"
-            android:alpha="0" />
-
-        <ImageView
-            android:id="@+id/imagenLinea"
+            android:id="@+id/ondaSuperior"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/splash_02_linea"
-            android:scaleType="fitCenter"
-            android:contentDescription="@null"
-            android:visibility="invisible" />
+            android:layout_height="230dp"
+            android:layout_gravity="top"
+            android:background="@drawable/splash_onda_superior" />
 
-        <ImageView
-            android:id="@+id/imagenCorazon"
+        <View
+            android:id="@+id/ondaInferior"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/splash_03_corazon_mano"
-            android:scaleType="fitCenter"
-            android:contentDescription="@null"
-            android:visibility="invisible" />
-
-        <ImageView
-            android:id="@+id/imagenPareja"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/splash_04_pareja"
-            android:scaleType="fitCenter"
-            android:contentDescription="@null"
-            android:visibility="invisible" />
-
-        <ImageView
-            android:id="@+id/imagenCompleta"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/splash_05_pareja_completa"
-            android:scaleType="fitCenter"
-            android:contentDescription="@null"
-            android:visibility="invisible" />
-
-        <ImageView
-            android:id="@+id/imagenDestellos"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/splash_06_pareja_destellos"
-            android:scaleType="fitCenter"
-            android:contentDescription="@null"
-            android:visibility="invisible" />
+            android:layout_height="250dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/splash_onda_inferior" />
 
     </FrameLayout>
 
-    <LinearLayout
-        android:id="@+id/indicadores"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="42dp"
+    <!-- Iconos decorativos flotantes -->
+    <FrameLayout
+        android:id="@+id/contenedorIconos"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <View
-            android:id="@+id/punto1"
-            android:layout_width="7dp"
-            android:layout_height="7dp"
-            android:layout_margin="5dp"
-            android:background="#2563C7" />
-
-        <View
-            android:id="@+id/punto2"
-            android:layout_width="7dp"
-            android:layout_height="7dp"
-            android:layout_margin="5dp"
-            android:background="#BBD7F7" />
-
-        <View
-            android:id="@+id/punto3"
-            android:layout_width="7dp"
-            android:layout_height="7dp"
-            android:layout_margin="5dp"
-            android:background="#BBD7F7" />
-
-    </LinearLayout>
+    <!-- Logo central de GerIApp -->
+    <ImageView
+        android:id="@+id/imagenLogo"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:contentDescription="Logo de GerIApp"
+        android:scaleType="fitCenter"
+        android:foregroundGravity="center"
+        android:src="@drawable/logo_geriapp1"
+        android:alpha="0"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

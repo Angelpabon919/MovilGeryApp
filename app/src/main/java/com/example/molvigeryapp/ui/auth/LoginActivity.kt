@@ -17,6 +17,7 @@ import com.example.molvigeryapp.databinding.ActivityLoginBinding
 import kotlinx.coroutines.launch
 import com.example.molvigeryapp.data.repository.FcmTokenRepository
 import com.google.firebase.messaging.FirebaseMessaging
+import com.example.molvigeryapp.CargaAccesoActivity
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -181,8 +182,16 @@ class LoginActivity : AppCompatActivity() {
                 registrarTokenFCM(idUsuario)
 
 
-                val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                intent.putExtra("ID_ROL", usuario.id_rol)
+                val intent = Intent(
+                    this@LoginActivity,
+                    CargaAccesoActivity::class.java
+                ).apply {
+                    putExtra(
+                        CargaAccesoActivity.EXTRA_ID_ROL,
+                        idRol
+                    )
+                }
+
                 startActivity(intent)
                 finish()
 

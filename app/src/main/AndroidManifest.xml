@@ -75,6 +75,10 @@
 
         </activity>
 
+        <activity
+            android:name=".CargaAccesoActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
