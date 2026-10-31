@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cargaAccesoRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <ImageView
+        android:id="@+id/imagenLogoCarga"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:alpha="0.25"
+        android:contentDescription="Logo de GerIApp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/logo_geriapp1"
+        app:layout_constraintBottom_toTopOf="@id/tvMensajeCarga"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.45" />
+
+    <TextView
+        android:id="@+id/tvMensajeCarga"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Preparando tu espacio de trabajo..."
+        android:textColor="#64748B"
+        android:textSize="14sp"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/imagenLogoCarga"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/progresoCarga" />
+
+    <ProgressBar
+        android:id="@+id/progresoCarga"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="54dp"
+        android:layout_height="3dp"
+        android:layout_marginTop="18dp"
+        android:indeterminate="true"
+        android:indeterminateTint="#3B5BDB"
+        android:progressTint="#3B5BDB"
+        android:backgroundTint="#DCE7FA"
+        app:layout_constraintTop_toBottomOf="@id/tvMensajeCarga"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.45" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

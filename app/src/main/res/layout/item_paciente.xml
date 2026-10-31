@@ -1,78 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardPaciente"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="4dp"
-    android:layout_marginVertical="6dp"
+    android:layout_marginVertical="8dp"
     app:cardBackgroundColor="#FFFFFF"
-    app:cardCornerRadius="14dp"
-    app:cardElevation="1dp">
+    app:cardCornerRadius="26dp"
+    app:cardElevation="3dp"
+    app:strokeColor="#EEF1F6"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <!-- Foto del paciente o icono predeterminado -->
-        <FrameLayout
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/shape_rounded_avatar"
-            android:clipToOutline="true">
-
-            <ImageView
-                android:id="@+id/imgAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Foto del paciente"
-                android:scaleType="centerCrop"
-                android:src="@drawable/person_icon"
-                />
-
-        </FrameLayout>
-
-        <!-- Información del paciente -->
+        <!-- INFORMACIÓN PRINCIPAL DEL PACIENTE -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvNombrePaciente"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nombre del Paciente"
-                android:textColor="#1E293B"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+            <!-- AVATAR CON BORDE AZUL -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#65A5FF"
+                app:strokeWidth="2dp">
 
-            <TextView
-                android:id="@+id/tvDetallesPaciente"
-                android:layout_width="wrap_content"
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="3dp">
+
+                    <ImageView
+                        android:id="@+id/imgAvatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/shape_rounded_avatar"
+                        android:clipToOutline="true"
+                        android:contentDescription="Foto del paciente"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/person_icon" />
+
+                </FrameLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- NOMBRE Y DETALLES -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Habitación -- • C.C. --"
-                android:textColor="#64748B"
-                android:textSize="13sp" />
+                android:layout_weight="1"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="4dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNombrePaciente"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nombre del paciente"
+                    android:textColor="#14284A"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tvDetallesPaciente"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text=""
+                    android:textColor="#7183A3"
+                    android:textSize="14sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
+
+                <!-- ETIQUETAS: MOSTRAR SOLO CUANDO HAYA DATOS REALES -->
+                <LinearLayout
+                    android:id="@+id/layoutEtiquetasCuidado"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="9dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvEtiquetaCuidado"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_chip_cuidado"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="7dp"
+                        android:textColor="#315BEB"
+                        android:textSize="12sp"
+                        android:textStyle="normal"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/tvEtiquetaRiesgo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:background="@drawable/bg_chip_adulto"
+
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="7dp"
+                        android:textColor="#956000"
+                        android:textSize="12sp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- CASILLA DE SELECCIÓN -->
+            <CheckBox
+                android:id="@+id/cbSeleccionado"
+                android:layout_width="40dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical"
+                android:buttonTint="#315BEB"
+                android:focusable="false"
+                android:clickable="false"
+                android:contentDescription="Seleccionar paciente" />
 
         </LinearLayout>
 
-        <!-- Checkbox de selección -->
-        <CheckBox
-            android:id="@+id/cbSeleccionado"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:buttonTint="#2563EB"
-            android:focusable="false"
-            android:clickable="false" />
+        <!-- SEPARADOR INFERIOR SUTIL -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="#E8EDF5" />
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>
