@@ -27,6 +27,9 @@ import com.example.molvigeryapp.data.model.NotificacionRequest
 import com.example.molvigeryapp.data.model.NotificacionResponse
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Usuario
+import com.example.molvigeryapp.data.model.ConfiguracionControlesPeriodicos
+import com.example.molvigeryapp.data.model.ControlesPeriodicosBitacora
+import com.example.molvigeryapp.data.model.EstadoControlesPeriodicos
 import okhttp3.ResponseBody
 import okhttp3.MultipartBody
 import retrofit2.http.Part
@@ -529,5 +532,29 @@ interface ApiService {
     suspend fun crearCierreTurno(
         @Body cierre : CierreTurnoRequest
     ): CierreTurnoResponse
+
+    // CONFIGURACIÓN DE CONTROLES PERIÓDICOS
+
+    @GET("configuracion_controles_periodicos/")
+    suspend fun getConfiguracionesControlesPeriodicos():
+            List<ConfiguracionControlesPeriodicos>
+
+    // CONTROLES PERIÓDICOS DE BITÁCORA
+
+    @GET("controles_periodicos_bitacora/")
+    suspend fun getControlesPeriodicosBitacora():
+            List<ControlesPeriodicosBitacora>
+
+    @POST("controles_periodicos_bitacora/")
+    suspend fun guardarControlesPeriodicosBitacora(
+        @Body controles: ControlesPeriodicosBitacora
+    ): ControlesPeriodicosBitacora
+
+    //Estado controles periodicos
+
+    @GET("configuracion_controles_periodicos/estado_paciente/")
+    suspend fun consultarEstadoControlesPeriodicos(
+        @Query("id_paciente") idPaciente: Int
+    ): Response<EstadoControlesPeriodicos>
 
 }

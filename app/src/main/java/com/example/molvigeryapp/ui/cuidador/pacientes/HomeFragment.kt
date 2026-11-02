@@ -67,7 +67,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         _binding = FragmentHomeCuidadorBinding.bind(view)
 
         setupDespliegueMedicamentos()
-        setupRecyclerViewPacientes()
+        setupRecyclerViewPacientes()                             
         setupBuscador()
         setupBotonEditar()
         observarDatos()
@@ -580,6 +580,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     after: Int
                 ) {}
 
+                @RequiresApi(Build.VERSION_CODES.GINGERBREAD)
                 override fun onTextChanged(
                     s: CharSequence?,
                     start: Int,
@@ -594,6 +595,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.GINGERBREAD)
     private fun filtrarLista(texto: String) {
 
         val consulta = texto.trim().lowercase(Locale.ROOT)
