@@ -30,6 +30,7 @@ import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.data.model.ConfiguracionControlesPeriodicos
 import com.example.molvigeryapp.data.model.ControlesPeriodicosBitacora
 import com.example.molvigeryapp.data.model.EstadoControlesPeriodicos
+import com.example.molvigeryapp.data.model.ResumenCuidadosTurno
 import okhttp3.ResponseBody
 import okhttp3.MultipartBody
 import retrofit2.http.Part
@@ -556,5 +557,14 @@ interface ApiService {
     suspend fun consultarEstadoControlesPeriodicos(
         @Query("id_paciente") idPaciente: Int
     ): Response<EstadoControlesPeriodicos>
+
+    // =========================================================
+// RESUMEN DE CUIDADOS DEL TURNO
+// =========================================================
+
+    @GET("resumen-cuidados-turno/{id_asignacion}/")
+    suspend fun obtenerResumenCuidadosTurno(
+        @Path("id_asignacion") idAsignacion: Int
+    ): ResumenCuidadosTurno
 
 }
