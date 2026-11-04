@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.data.repository.FcmTokenRepository
@@ -18,6 +19,9 @@ import com.example.molvigeryapp.data.repository.NotificacionesRepository
 import com.example.molvigeryapp.databinding.ActivityMainBinding
 import com.example.molvigeryapp.ui.auth.LoginActivity
 import com.example.molvigeryapp.ui.cuidador.actualizador.ActualizadorGeriApp
+import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
+import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
+import com.example.molvigeryapp.ui.cuidador.camara.MonitoreoCamarasFragment
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.DetalleNotificacionCuidadorFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
@@ -107,16 +111,11 @@ class MainActivity : AppCompatActivity() {
 
         Log.d(TAG, "Rol recibido en MainActivity: $idRolActual")
 
+        // Configurar visibilidad del botón de llamada.
+        configurarControlFabLlamada()
+
         // Registrar el token después de tener disponible la sesión.
         obtenerTokenFCM()
-        binding.fabLlamada.visibility =
-            if (idRolActual == ROL_CUIDADOR) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-
-
 
         Log.e(
             TAG_PANTALLA,
@@ -189,6 +188,57 @@ class MainActivity : AppCompatActivity() {
 
             procesarIntentNotificacion(intent)
         }
+    }
+
+    // =========================================================
+    // CONTROL DEL BOTÓN FLOTANTE DE LLAMADA
+    // =========================================================
+
+    private fun configurarControlFabLlamada() {
+
+        // Inicialmente permanece oculto.
+        binding.fabLlamada.visibility = View.GONE
+
+        supportFragmentManager.registerFragmentLifecycleCallbacks(
+            object : FragmentManager.FragmentLifecycleCallbacks() {
+
+                override fun onFragmentResumed(
+                    fm: FragmentManager,
+                    fragment: Fragment
+                ) {
+                    // Solo evaluamos los fragmentos principales
+                    // que se muestran en fragmentContainer.
+                    if (fragment.id == R.id.fragmentContainer) {
+                        actualizarVisibilidadFabLlamada(fragment)
+                    }
+                }
+            },
+            false
+        )
+
+        // Comprobar si ya existe un fragmento cargado.
+        actualizarVisibilidadFabLlamada(
+            supportFragmentManager.findFragmentById(
+                R.id.fragmentContainer
+            )
+        )
+    }
+
+    private fun actualizarVisibilidadFabLlamada(
+        fragment: Fragment?
+    ) {
+
+        val mostrar =
+            idRolActual == ROL_CUIDADOR &&
+                    (
+                            fragment is HomeFragment ||
+                                    fragment is AgendaFragment ||
+                                    fragment is EventosCamaraFragment ||
+                                    fragment is MonitoreoCamarasFragment
+                            )
+
+        binding.fabLlamada.visibility =
+            if (mostrar) View.VISIBLE else View.GONE
     }
 
     override fun onNewIntent(intent: Intent) {

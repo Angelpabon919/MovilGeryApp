@@ -249,8 +249,52 @@ class CierreTurnoFragment : Fragment() {
                 .commit()
         }
 
+        // =========================================================
+        // RESUMEN DE CUIDADOS DE ENFERMERÍA
+        // =========================================================
+        binding.cardCuidadosCierre.setOnClickListener {
+
+            val idAsignacion =
+                asignacionActual?.id_asignacion_turno_usuario
+
+            if (idAsignacion == null || idAsignacion <= 0) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró la asignación del turno.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
+            val contenedor = requireView().parent as? ViewGroup
+
+            if (contenedor == null || contenedor.id == View.NO_ID) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró el contenedor de navegación.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
+            parentFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(
+                    contenedor.id,
+                    ResumenCuidadosTurnoFragment.newInstance(
+                        idAsignacion
+                    )
+                )
+                .addToBackStack("resumen_cuidados_turno")
+                .commit()
+        }
+
         val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
-        pacienteViewModel.reiniciarSeleccionDespuesDelCierre(idUsuario = idUsuario, preferencias = preferenciasSesion)
+
+        pacienteViewModel.reiniciarSeleccionDespuesDelCierre(
+            idUsuario = idUsuario,
+            preferencias = preferenciasSesion
+        )
 
         configurarResumenInicial()
         configurarFotoPredeterminada()
@@ -726,8 +770,6 @@ class CierreTurnoFragment : Fragment() {
             }
         }
     }
-
-
 
     // =========================================================
     // FORMATO DE FECHA
