@@ -1,9 +1,7 @@
 package com.example.molvigeryapp.ui.cuidador.cierreturno
 
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +16,7 @@ import com.example.molvigeryapp.data.model.ControlesPeriodicosBitacora
 import com.example.molvigeryapp.data.model.PacienteResumenTurno
 import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.databinding.FragmentResumenCuidadosTurnoBinding
-import com.google.android.material.card.MaterialCardView
+import com.example.molvigeryapp.databinding.ItemPacienteResumenBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -72,6 +70,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // CARGAR RESUMEN DESDE EL BACKEND
     // =========================================================
+
     private fun cargarResumen() {
 
         val idAsignacion =
@@ -145,54 +144,20 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     }
 
     // =========================================================
-    // TARJETA DESPLEGABLE POR PACIENTE
+    // TARJETA PRINCIPAL DEL PACIENTE - XML
     // =========================================================
+
     private fun agregarTarjetaPaciente(
         paciente: PacienteResumenTurno
     ) {
 
-        val tarjeta = MaterialCardView(requireContext()).apply {
-            radius = dp(16).toFloat()
-            cardElevation = dp(3).toFloat()
-            setCardBackgroundColor(Color.WHITE)
-            strokeWidth = dp(1)
-            strokeColor = Color.parseColor("#E2E8F0")
+        val itemBinding = ItemPacienteResumenBinding.inflate(
+            layoutInflater,
+            binding.contenedorPacientesResumen,
+            false
+        )
 
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(16)
-            }
-        }
-
-        val contenidoTarjeta = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-
-        val encabezado = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(
-                dp(16),
-                dp(18),
-                dp(16),
-                dp(18)
-            )
-            setBackgroundResource(
-                android.R.drawable.list_selector_background
-            )
-        }
-
-        val informacionPaciente = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-        }
-
+        // Nombre completo.
         val nombre = listOfNotNull(
             paciente.nombre,
             paciente.apellido
@@ -200,15 +165,9 @@ class ResumenCuidadosTurnoFragment : Fragment() {
             "Paciente"
         }
 
-        informacionPaciente.addView(
-            crearTexto(
-                nombre,
-                17f,
-                "#1E293B",
-                true
-            )
-        )
+        itemBinding.tvNombrePaciente.text = nombre
 
+        // Habitación y cama.
         val ubicacion = buildString {
 
             if (!paciente.habitacion.isNullOrBlank()) {
@@ -221,53 +180,36 @@ class ResumenCuidadosTurnoFragment : Fragment() {
             }
         }
 
-        if (ubicacion.isNotBlank()) {
-            informacionPaciente.addView(
-                crearTexto(
-                    ubicacion,
-                    12f,
-                    "#64748B"
-                ).apply {
-                    setPadding(0, dp(4), 0, 0)
-                }
-            )
-        }
+        itemBinding.tvUbicacionPaciente.text =
+            ubicacion.ifBlank {
+                "Ubicación no disponible"
+            }
 
-        encabezado.addView(informacionPaciente)
+        // Cantidad de bitácoras y controles.
+        val cantidadBitacoras = paciente.bitacoras.size
+        val cantidadControles = paciente.controlesPeriodicos.size
 
-        val flecha = crearTexto(
-            "⌄",
-            26f,
-            "#2459C4",
-            true
-        ).apply {
-            gravity = Gravity.CENTER
-            setPadding(dp(12), 0, 0, 0)
-        }
+        itemBinding.tvCantidadBitacoras.text =
+            "$cantidadBitacoras " +
+                    if (cantidadBitacoras == 1) "registro" else "registros"
 
-        encabezado.addView(flecha)
+        itemBinding.tvCantidadControles.text =
+            "$cantidadControles " +
+                    if (cantidadControles == 1) "registro" else "registros"
 
-        val contenido = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(
-                dp(16),
-                dp(4),
-                dp(16),
-                dp(18)
-            )
-            visibility = View.VISIBLE
-        }
+        // =====================================================
+        // BITÁCORAS
+        // =====================================================
 
-        // Bitácoras del paciente.
-        agregarTituloSeccion(
-            contenido,
-            "Bitácoras diarias"
-        )
+        val contenedorBitacoras =
+            itemBinding.contenedorBitacorasResumen
+
+        contenedorBitacoras.removeAllViews()
 
         if (paciente.bitacoras.isEmpty()) {
 
             agregarMensaje(
-                contenido,
+                contenedorBitacoras,
                 "No hay bitácoras registradas durante este turno."
             )
 
@@ -276,23 +218,26 @@ class ResumenCuidadosTurnoFragment : Fragment() {
             paciente.bitacoras.forEachIndexed { index, bitacora ->
 
                 agregarBitacora(
-                    contenido,
+                    contenedorBitacoras,
                     bitacora,
                     index + 1
                 )
             }
         }
 
-        // Controles periódicos.
-        agregarTituloSeccion(
-            contenido,
-            "Controles periódicos"
-        )
+        // =====================================================
+        // CONTROLES PERIÓDICOS
+        // =====================================================
+
+        val contenedorControles =
+            itemBinding.contenedorControlesPeriodicosResumen
+
+        contenedorControles.removeAllViews()
 
         if (paciente.controlesPeriodicos.isEmpty()) {
 
             agregarMensaje(
-                contenido,
+                contenedorControles,
                 "No hay controles periódicos registrados durante este turno."
             )
 
@@ -301,92 +246,90 @@ class ResumenCuidadosTurnoFragment : Fragment() {
             paciente.controlesPeriodicos.forEachIndexed { index, control ->
 
                 agregarControlPeriodico(
-                    contenido,
+                    contenedorControles,
                     control,
                     index + 1
                 )
             }
         }
 
-        encabezado.setOnClickListener {
+        // =====================================================
+        // EXPANDIR Y CONTRAER
+        // =====================================================
 
-            if (contenido.visibility == View.VISIBLE) {
-                contenido.visibility = View.GONE
-                flecha.text = "⌄"
-            } else {
-                contenido.visibility = View.VISIBLE
-                flecha.text = "⌃"
-            }
+        itemBinding.contenedorContenidoPaciente.visibility =
+            View.GONE
+
+        itemBinding.ivFlechaPaciente.rotation = 0f
+
+        itemBinding.encabezadoPaciente.setOnClickListener {
+
+            val expandido =
+                itemBinding.contenedorContenidoPaciente.visibility ==
+                        View.VISIBLE
+
+            itemBinding.contenedorContenidoPaciente.visibility =
+                if (expandido) View.GONE else View.VISIBLE
+
+            itemBinding.ivFlechaPaciente.rotation =
+                if (expandido) 0f else 180f
         }
 
-        contenidoTarjeta.addView(encabezado)
-        contenidoTarjeta.addView(contenido)
-
-        tarjeta.addView(contenidoTarjeta)
-
-        binding.contenedorPacientesResumen.addView(tarjeta)
+        // Agregar tarjeta al listado.
+        binding.contenedorPacientesResumen.addView(
+            itemBinding.root
+        )
     }
 
     // =========================================================
-    // BITÁCORA
+    // BITÁCORAS DIARIAS
     // =========================================================
+
     private fun agregarBitacora(
         contenedor: LinearLayout,
         bitacora: BitacoraResumenTurno,
         numero: Int
     ) {
 
-        val tarjeta = crearTarjetaInterna()
-
-        tarjeta.addView(
-            crearTexto(
-                "Registro $numero",
-                15f,
-                "#2459C4",
-                true
-            )
+        agregarTituloSeccion(
+            contenedor,
+            "Registro $numero"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Fecha y hora",
             formatearFechaHora(bitacora.fechaHora)
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Tipo de registro",
             bitacora.tipoRegistro
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Descripción",
             bitacora.descripcion
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Estado",
             if (bitacora.estado) "Registrada" else "Inactiva"
         )
 
-        // Signos vitales asociados a esta bitácora.
-        tarjeta.addView(
-            crearTexto(
-                "Signos vitales",
-                14f,
-                "#2459C4",
-                true
-            ).apply {
-                setPadding(0, dp(14), 0, dp(6))
-            }
+        // Signos vitales asociados a la bitácora.
+        agregarTituloSeccion(
+            contenedor,
+            "Signos vitales"
         )
 
         if (bitacora.signosVitales.isEmpty()) {
 
             agregarMensaje(
-                tarjeta,
+                contenedor,
                 "No se registraron signos vitales."
             )
 
@@ -395,19 +338,18 @@ class ResumenCuidadosTurnoFragment : Fragment() {
             bitacora.signosVitales.forEachIndexed { index, signo ->
 
                 agregarSignosVitales(
-                    tarjeta,
+                    contenedor,
                     signo,
                     index + 1
                 )
             }
         }
-
-        contenedor.addView(tarjeta)
     }
 
     // =========================================================
     // SIGNOS VITALES
     // =========================================================
+
     private fun agregarSignosVitales(
         contenedor: LinearLayout,
         signo: SignosVitales,
@@ -421,73 +363,119 @@ class ResumenCuidadosTurnoFragment : Fragment() {
                 "#64748B",
                 true
             ).apply {
-                setPadding(0, dp(6), 0, dp(4))
+                setPadding(
+                    0,
+                    dp(6),
+                    0,
+                    dp(4)
+                )
             }
         )
 
-        agregarDato(contenedor, "Temperatura", signo.temperatura, "°C")
-        agregarDato(contenedor, "Presión sistólica", signo.presionSistolica, "mmHg")
-        agregarDato(contenedor, "Presión diastólica", signo.presionDiastolica, "mmHg")
-        agregarDato(contenedor, "Frecuencia cardíaca", signo.frecuenciaCardiaca, "lpm")
-        agregarDato(contenedor, "Frecuencia respiratoria", signo.frecuenciaRespiratoria, "rpm")
-        agregarDato(contenedor, "Saturación de oxígeno", signo.saturacionOxigeno, "%")
-        agregarDato(contenedor, "Peso", signo.peso, "kg")
-        agregarDato(contenedor, "Observaciones", signo.observaciones)
+        agregarDato(
+            contenedor,
+            "Temperatura",
+            signo.temperatura,
+            "°C"
+        )
+
+        agregarDato(
+            contenedor,
+            "Presión sistólica",
+            signo.presionSistolica,
+            "mmHg"
+        )
+
+        agregarDato(
+            contenedor,
+            "Presión diastólica",
+            signo.presionDiastolica,
+            "mmHg"
+        )
+
+        agregarDato(
+            contenedor,
+            "Frecuencia cardíaca",
+            signo.frecuenciaCardiaca,
+            "lpm"
+        )
+
+        agregarDato(
+            contenedor,
+            "Frecuencia respiratoria",
+            signo.frecuenciaRespiratoria,
+            "rpm"
+        )
+
+        agregarDato(
+            contenedor,
+            "Saturación de oxígeno",
+            signo.saturacionOxigeno,
+            "%"
+        )
+
+        agregarDato(
+            contenedor,
+            "Peso",
+            signo.peso,
+            "kg"
+        )
+
+        agregarDato(
+            contenedor,
+            "Observaciones",
+            signo.observaciones
+        )
     }
 
     // =========================================================
     // CONTROLES PERIÓDICOS
     // =========================================================
+
     private fun agregarControlPeriodico(
         contenedor: LinearLayout,
         control: ControlesPeriodicosBitacora,
         numero: Int
     ) {
 
-        val tarjeta = crearTarjetaInterna()
-
-        tarjeta.addView(
-            crearTexto(
-                "Control periódico $numero",
-                15f,
-                "#2459C4",
-                true
-            )
+        agregarTituloSeccion(
+            contenedor,
+            "Control periódico $numero"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Fecha del control",
             formatearFechaHora(control.fechaControl)
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Fecha de registro",
             formatearFechaHora(control.fechaRegistro)
         )
 
         // Peso y talla.
         agregarTituloSeccion(
-            tarjeta,
+            contenedor,
             "Peso y talla"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Estado",
             control.pesoTallaEstado
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Peso",
             control.pesoKg?.toString(),
             "kg"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Talla",
             control.tallaCm?.toString(),
             "cm"
@@ -495,18 +483,18 @@ class ResumenCuidadosTurnoFragment : Fragment() {
 
         // Glicemia.
         agregarTituloSeccion(
-            tarjeta,
+            contenedor,
             "Glicemia"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Estado",
             control.glicemiaEstado
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Valor",
             control.valorGlicemia?.toString(),
             "mg/dL"
@@ -514,113 +502,81 @@ class ResumenCuidadosTurnoFragment : Fragment() {
 
         // Terapia física.
         agregarTituloSeccion(
-            tarjeta,
+            contenedor,
             "Terapia física"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Estado",
             control.terapiaFisicaEstado
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Observaciones",
             control.terapiaFisicaObservaciones
         )
 
         // Terapia respiratoria.
         agregarTituloSeccion(
-            tarjeta,
+            contenedor,
             "Terapia respiratoria"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Estado",
             control.terapiaRespiratoriaEstado
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Observaciones",
             control.terapiaRespiratoriaObservaciones
         )
 
-        // Corte de uñas y cabello.
+        // Cuidado personal.
         agregarTituloSeccion(
-            tarjeta,
+            contenedor,
             "Cuidado personal"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Corte de uñas",
             control.corteUnasEstado
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Corte de cabello",
             control.corteCabelloEstado
         )
 
         // Observaciones generales.
         agregarTituloSeccion(
-            tarjeta,
+            contenedor,
             "Observaciones generales"
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Detalle",
             control.observacionesGenerales
         )
 
         agregarDato(
-            tarjeta,
+            contenedor,
             "Próximo control",
             formatearFechaHora(control.fechaProximoControl)
         )
-
-        contenedor.addView(tarjeta)
-    }
-
-    // =========================================================
-    // CREAR TARJETA INTERNA
-    // =========================================================
-    private fun crearTarjetaInterna(): LinearLayout {
-
-        return LinearLayout(requireContext()).apply {
-
-            orientation = LinearLayout.VERTICAL
-
-            setPadding(
-                dp(12),
-                dp(12),
-                dp(12),
-                dp(12)
-            )
-
-            setBackgroundColor(
-                Color.parseColor("#F4F7FC")
-            )
-
-            val parametros = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-
-            parametros.topMargin = dp(10)
-
-            layoutParams = parametros
-        }
     }
 
     // =========================================================
     // TÍTULOS DE SECCIÓN
     // =========================================================
+
     private fun agregarTituloSeccion(
         contenedor: LinearLayout,
         titulo: String
@@ -630,9 +586,10 @@ class ResumenCuidadosTurnoFragment : Fragment() {
             crearTexto(
                 titulo,
                 15f,
-                "#2459C4",
+                "#1E293B",
                 true
             ).apply {
+
                 setPadding(
                     0,
                     dp(16),
@@ -646,6 +603,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // AGREGAR DATO
     // =========================================================
+
     private fun agregarDato(
         contenedor: LinearLayout,
         etiqueta: String,
@@ -662,8 +620,15 @@ class ResumenCuidadosTurnoFragment : Fragment() {
         }
 
         val fila = LinearLayout(requireContext()).apply {
+
             orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(5), 0, dp(5))
+
+            setPadding(
+                0,
+                dp(5),
+                0,
+                dp(5)
+            )
         }
 
         fila.addView(
@@ -680,7 +645,12 @@ class ResumenCuidadosTurnoFragment : Fragment() {
                 14f,
                 "#1E293B"
             ).apply {
-                setPadding(0, dp(2), 0, 0)
+                setPadding(
+                    0,
+                    dp(2),
+                    0,
+                    0
+                )
             }
         )
 
@@ -690,6 +660,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // MENSAJES SIN INFORMACIÓN
     // =========================================================
+
     private fun agregarMensaje(
         contenedor: LinearLayout,
         mensaje: String
@@ -701,6 +672,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
                 13f,
                 "#64748B"
             ).apply {
+
                 setPadding(
                     0,
                     dp(8),
@@ -714,6 +686,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // CREAR TEXTO
     // =========================================================
+
     private fun crearTexto(
         texto: String,
         tamano: Float,
@@ -725,9 +698,13 @@ class ResumenCuidadosTurnoFragment : Fragment() {
 
             text = texto
             textSize = tamano
-            setTextColor(Color.parseColor(color))
+
+            setTextColor(
+                android.graphics.Color.parseColor(color)
+            )
 
             if (negrita) {
+
                 setTypeface(
                     null,
                     android.graphics.Typeface.BOLD
@@ -739,6 +716,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // FORMATEAR FECHA Y HORA A HORARIO COLOMBIANO
     // =========================================================
+
     private fun formatearFechaHora(
         fecha: String?
     ): String {
@@ -759,6 +737,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
                 "yyyy-MM-dd'T'HH:mm:ss",
                 Locale.US
             ).apply {
+
                 timeZone = TimeZone.getTimeZone("UTC")
             }
 
@@ -766,6 +745,7 @@ class ResumenCuidadosTurnoFragment : Fragment() {
                 "dd/MM/yyyy · hh:mm a",
                 Locale("es", "CO")
             ).apply {
+
                 timeZone = TimeZone.getTimeZone("America/Bogota")
             }
 
@@ -788,18 +768,29 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // ESTADOS DE LA PANTALLA
     // =========================================================
+
     private fun mostrarCargando() {
 
-        binding.contenedorCargandoResumen.visibility = View.VISIBLE
-        binding.contenedorEstadoResumen.visibility = View.GONE
-        binding.scrollResumen.visibility = View.GONE
+        binding.contenedorCargandoResumen.visibility =
+            View.VISIBLE
+
+        binding.contenedorEstadoResumen.visibility =
+            View.GONE
+
+        binding.scrollResumen.visibility =
+            View.GONE
     }
 
     private fun mostrarEstado(mensaje: String) {
 
-        binding.contenedorCargandoResumen.visibility = View.GONE
-        binding.scrollResumen.visibility = View.GONE
-        binding.contenedorEstadoResumen.visibility = View.VISIBLE
+        binding.contenedorCargandoResumen.visibility =
+            View.GONE
+
+        binding.scrollResumen.visibility =
+            View.GONE
+
+        binding.contenedorEstadoResumen.visibility =
+            View.VISIBLE
 
         binding.tvEstadoResumen.text = mensaje
     }
@@ -807,12 +798,17 @@ class ResumenCuidadosTurnoFragment : Fragment() {
     // =========================================================
     // CONVERSIÓN DP
     // =========================================================
+
     private fun dp(valor: Int): Int {
 
         return (
                 valor * resources.displayMetrics.density
                 ).toInt()
     }
+
+    // =========================================================
+    // DESTRUIR VISTA
+    // =========================================================
 
     override fun onDestroyView() {
         super.onDestroyView()
