@@ -6,325 +6,316 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background"
+    android:background="#F8FAFC"
     tools:context=".ui.auth.LoginActivity">
 
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:scrollbars="none">
+        android:id="@+id/scrollLogin"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="false"
+        android:scrollbars="none"
+        android:clipToPadding="false"
+        android:paddingTop="175dp"
+        android:paddingBottom="30dp"
+        android:overScrollMode="never"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ==================== -->
-            <!-- ENCABEZADO AZUL -->
-            <!-- ==================== -->
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="330dp">
-
-                <!-- FONDO AZUL CON CURVA -->
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/bg_header_login"
-                    android:contentDescription="@null" />
-
-                <!-- CONTENIDO DEL ENCABEZADO -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:layout_marginTop="-5dp">
-
-                    <!-- ==================== -->
-                    <!-- LOGO -->
-                    <!-- ==================== -->
-
-                    <ImageView
-                        android:id="@+id/imgLogo"
-                        android:layout_width="115dp"
-                        android:layout_height="115dp"
-                        android:src="@drawable/logo_geriapp1"
-                        android:scaleType="fitCenter"
-                        android:contentDescription="Logo de GerlApp" />
-
-                    <!-- ==================== -->
-                    <!-- NOMBRE -->
-                    <!-- ==================== -->
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="GerlApp"
-                        android:textColor="@color/white"
-                        android:textSize="38sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="2dp" />
-
-                    <!-- ==================== -->
-                    <!-- DESCRIPCIÓN -->
-                    <!-- ==================== -->
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Gestión geriátrica"
-                        android:textColor="@color/white"
-                        android:textSize="19sp"
-                        android:layout_marginTop="2dp" />
-
-                </LinearLayout>
-
-            </FrameLayout>
-
-
-            <!-- ==================== -->
-            <!-- CONTENIDO LOGIN -->
-            <!-- ==================== -->
-
-            <LinearLayout
+            <!-- TARJETA LOGIN -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="35dp"
-                android:paddingEnd="35dp"
-                android:paddingTop="25dp"
-                android:paddingBottom="30dp">
-
-
-                <!-- ==================== -->
-                <!-- BIENVENIDA -->
-                <!-- ==================== -->
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Bienvenido de nuevo"
-                    android:textColor="@color/black"
-                    android:textSize="26sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Inicia sesión para continuar"
-                    android:textColor="@color/black"
-                    android:alpha="0.6"
-                    android:textSize="16sp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="28dp" />
-
-
-                <!-- ==================== -->
-                <!-- CORREO -->
-                <!-- ==================== -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Correo electrónico"
-                    android:textColor="@color/black"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/etCorreo"
-                    android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_input"
-                    android:hint="correo@ejemplo.com"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/color_surface"
-                    android:textSize="16sp"
-                    android:inputType="textEmailAddress" />
-
-
-                <!-- ==================== -->
-                <!-- CONTRASEÑA -->
-                <!-- ==================== -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Contraseña"
-                    android:textColor="@color/black"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="24dp" />
-
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:layout_marginTop="8dp">
-
-                <EditText
-                    android:id="@+id/etContrasena"
-                    android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_input"
-                    android:hint="Ingresa tu contraseña"
-                    android:inputType="textPassword"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/color_surface"
-                    android:textSize="16sp" />
-
-                    <ImageButton
-                        android:id="@+id/btnMostrarContrasena"
-                        android:layout_width="40dp"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="end|center_vertical"
-                        android:background="@android:color/transparent"
-                        android:padding="12dp"
-                        android:layout_marginTop="7dp"
-                        android:src="@drawable/ic_visibility_off"
-                        android:tint="@color/color_text_secondary"
-                        android:contentDescription="Mostrarcontraseña"
-                        android:focusable="false"
-                        android:clickable="true"/>
-
-                </FrameLayout>
-
-
-
-
-                <!-- ==================== -->
-                <!-- BOTÓN INICIAR SESIÓN -->
-                <!-- ==================== -->
-
-                <Button
-                    android:id="@+id/btnIniciarSesion"
-                    android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:layout_marginTop="24dp"
-                    android:background="@drawable/bg_button_primary"
-                    android:text="Iniciar sesión"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null" />
-
-
-                <!-- ==================== -->
-                <!-- OLVIDASTE CONTRASEÑA -->
-                <!-- AHORA ESTÁ DEBAJO -->
-                <!-- DEL BOTÓN -->
-                <!-- ==================== -->
-
-                <TextView
-                    android:id="@+id/tvOlvidaste"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="¿Olvidaste tu contraseña?"
-                    android:textColor="@color/color_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="18dp" />
-
-
-                <!-- ==================== -->
-                <!-- SEPARADOR -->
-                <!-- ==================== -->
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="79dp"
+                android:layout_marginBottom="25dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:layout_marginBottom="18dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:paddingTop="25dp"
+                    android:paddingBottom="25dp">
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="@color/color_surface" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="17dp"
+                        android:gravity="center"
+                        android:text="Bienvenido de nuevo"
+                        android:textColor="#102A56"
+                        android:textSize="25sp"
+                        android:textStyle="bold"/>
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="25dp"
+                        android:gravity="center"
+                        android:text="Inicia sesión para continuar en GerIApp"
+                        android:textColor="#64748B"
+                        android:textSize="14sp"/>
+
+                    <!-- CORREO -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="  o  "
-                        android:textColor="@color/black"
-                        android:alpha="0.5"
-                        android:textSize="16sp" />
+                        android:text="Correo electrónico"
+                        android:textColor="#102A56"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="@color/color_surface" />
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="58dp"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_input_login_moderno">
 
-                </LinearLayout>
+                        <ImageView
+                            android:layout_width="23dp"
+                            android:layout_height="23dp"
+                            android:layout_gravity="center_vertical|start"
+                            android:layout_marginStart="15dp"
+                            android:src="@drawable/mail"
+                            android:contentDescription="@null"
+                            app:tint="#173B78"/>
 
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center_vertical|start"
+                            android:layout_marginStart="49dp"
+                            android:background="#D5E1F2"/>
 
-                <!-- ==================== -->
-                <!-- GOOGLE -->
-                <!-- ==================== -->
+                        <EditText
+                            android:id="@+id/etCorreo"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="61dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@android:color/transparent"
+                            android:hint="correo@ejemplo.com"
+                            android:inputType="textEmailAddress"
+                            android:imeOptions="actionNext"
+                            android:singleLine="true"
+                            android:padding="0dp"
+                            android:textColor="#172B4D"
+                            android:textColorHint="#8793A8"
+                            android:backgroundTint="@null"
+                            android:autofillHints="emailAddress"
+                            android:importantForAutofill="yes"
+                            android:textIsSelectable="true"
+                            android:textSize="15sp"/>
+                    </FrameLayout>
 
-                <Button
-                    android:id="@+id/btnGoogle"
-                    android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:background="@drawable/bg_button_google"
-                    android:text="G   Continuar con Google"
-                    android:textAllCaps="false"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null" />
-
-
-                <!-- ==================== -->
-                <!-- CREAR CUENTA -->
-                <!-- ==================== -->
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
+                    <!-- CONTRASEÑA -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="¿No tienes una cuenta? "
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
+                        android:layout_marginTop="22dp"
+                        android:text="Contraseña"
+                        android:textColor="#102A56"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
 
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="58dp"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_input_login_moderno">
+
+                        <ImageView
+                            android:layout_width="23dp"
+                            android:layout_height="23dp"
+                            android:layout_gravity="center_vertical|start"
+                            android:layout_marginStart="15dp"
+                            android:src="@drawable/ic_lock"
+                            android:contentDescription="@null"
+                            app:tint="#173B78"/>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center_vertical|start"
+                            android:layout_marginStart="49dp"
+                            android:background="#D5E1F2"/>
+
+                        <EditText
+                            android:id="@+id/etContrasena"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="61dp"
+                            android:layout_marginEnd="48dp"
+                            android:background="@android:color/transparent"
+                            android:hint="Ingresa tu contraseña"
+                            android:inputType="textPassword"
+                            android:imeOptions="actionDone"
+                            android:singleLine="true"
+                            android:padding="0dp"
+                            android:textColor="#172B4D"
+                            android:textColorHint="#8793A8"
+                            android:textSize="15sp"/>
+
+                        <ImageButton
+                            android:id="@+id/btnMostrarContrasena"
+                            android:layout_width="45dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="end|center_vertical"
+                            android:background="@android:color/transparent"
+                            android:padding="12dp"
+                            android:src="@drawable/ic_visibility_off"
+                            android:tint="#64748B"
+                            android:contentDescription="Mostrar u ocultar contraseña"
+                            android:focusable="false"
+                            android:clickable="true"/>
+                    </FrameLayout>
+
+                    <!-- OLVIDASTE CONTRASEÑA -->
+                    <TextView
+                        android:id="@+id/tvOlvidaste"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:gravity="end"
+                        android:padding="4dp"
+                        android:text="¿Olvidaste tu contraseña?"
+                        android:textColor="#174FE5"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <!-- INICIAR SESIÓN -->
+                    <Button
+                        android:id="@+id/btnIniciarSesion"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:layout_marginTop="22dp"
+                        android:background="@drawable/bg_button_primary"
+                        android:text="Iniciar sesión"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"/>
+
+                    <!-- SEPARADOR -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="23dp"
+                        android:layout_marginBottom="17dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="#CBD5E1"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:text="¿No tienes una cuenta?"
+                            android:textColor="#64748B"
+                            android:textSize="13sp"/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="#CBD5E1"/>
+                    </LinearLayout>
+
+                    <!-- GOOGLE -->
+                    <Button
+                        android:id="@+id/btnGoogle"
+                        android:layout_width="match_parent"
+                        android:layout_height="55dp"
+                        android:background="@drawable/bg_button_outline_login"
+                        android:text="G   Continuar con Google"
+                        android:textAllCaps="false"
+                        android:textColor="#174FE5"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"/>
+
+                    <!-- ID CONSERVADO PARA COMPATIBILIDAD -->
                     <TextView
                         android:id="@+id/tvCrearCuenta"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Registrate"
-                        android:textColor="@color/color_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
+                        android:layout_width="1dp"
+                        android:layout_height="1dp"
+                        android:visibility="gone"
+                        android:text="Registrate"/>
                 </LinearLayout>
-
-            </LinearLayout>
-
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
-
     </ScrollView>
+    <!-- HEADER FIJO -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:elevation="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            android:src="@drawable/bg_header_login"
+            android:contentDescription="@null"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:translationY="-35dp">
+
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="115dp"
+                android:layout_height="115dp"
+                android:contentDescription="Logo GerIApp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo_geriapp1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GerIApp"
+                android:textColor="#FFFFFF"
+                android:textSize="38sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:text="Gestión geriátrica"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </FrameLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
