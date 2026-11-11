@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="250dp"
+    android:viewportWidth="400"
+    android:viewportHeight="250">
+
+    <!-- Fondo azul principal -->
+    <path
+        android:fillColor="#3B5BDB"
+        android:pathData="
+            M0,0
+            H400
+            V150
+            C350,125 315,145 270,155
+            C210,175 170,140 115,145
+            C65,150 35,180 0,160
+            Z"/>
+
+    <!-- Onda azul clara -->
+    <path
+        android:fillColor="#4DABF7"
+        android:fillAlpha="0.85"
+        android:pathData="
+            M0,125
+            C65,69 110,135 175,129
+            C235,125 280,30 390,105
+            C455,148 390,115 400,110
+            V175
+            C390,245 200,215 235,205
+            C195,215 155,185 95,185
+            C45,215 20,186 0,195
+            Z"/>
+
+    <!-- Onda inferior azul semicircular -->
+    <path
+        android:fillColor="#284FCB"
+        android:pathData="
+            M0,165
+            C59,115 125,125 185,175
+            C245,225 315,225 400,145
+            V205
+            C340,245 275,250 210,215
+            C115,165 85,245 0,205
+            Z"/>
+
+</vector>

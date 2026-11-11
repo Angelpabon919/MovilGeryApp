@@ -1,6 +1,7 @@
 package com.example.molvigeryapp.ui.cuidador.pacientes
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -26,14 +27,15 @@ import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import android.widget.TextView
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
@@ -43,6 +45,43 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private val viewModel: PacienteViewModel by activityViewModels {
         PacienteViewModelFactory(PacienteRepository())
     }
+
+
+    private var medicamentosExpandido = true
+
+
+    private fun configurarExpansionMedicamentos() {
+
+        // Sincronizar inicialmente el estado visual
+        actualizarFlechaMedicamentos()
+
+        binding.btnToggleMedicamentos.setOnClickListener {
+
+            medicamentosExpandido = !medicamentosExpandido
+
+            binding.rvMedicamentosHorario.visibility =
+                if (medicamentosExpandido) View.VISIBLE
+                else View.GONE
+
+            actualizarFlechaMedicamentos()
+        }
+    }
+
+    private fun actualizarFlechaMedicamentos() {
+
+        binding.btnToggleMedicamentos.animate()
+            .rotation(if (medicamentosExpandido) 180f else 0f)
+            .setDuration(200)
+            .start()
+
+        binding.btnToggleMedicamentos.contentDescription =
+            if (medicamentosExpandido)
+                "Ocultar medicamentos"
+            else
+                "Mostrar medicamentos"
+    }
+
+
 
     private var trabajoRevisionTurno: Job? = null
 
@@ -58,6 +97,37 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private var isExpanded = false
     private lateinit var homeAdapter: HomeAdapter
 
+    // =====================================================
+// MEDICAMENTOS HOME
+// =====================================================
+
+    private lateinit var medicamentoAdapter: MedicamentoCuidadorAdapter
+
+    private enum class HorarioMedicamento {
+        MANANA,
+        TARDE,
+        NOCHE
+    }
+
+    private var horarioMedicamentoActual =
+        obtenerHorarioActual()
+
+    private var mapaMedicamentosHome: Map<Int, String> =
+        emptyMap()
+
+    private var mapaPacientesHome: Map<Int, String> =
+        emptyMap()
+
+    private var listaMedicamentosManana:
+            List<FormulacionMedicamento> = emptyList()
+
+    private var listaMedicamentosTarde:
+            List<FormulacionMedicamento> = emptyList()
+
+    private var listaMedicamentosNoche:
+            List<FormulacionMedicamento> = emptyList()
+
+
     private var listaOriginalPacientes: List<Paciente> = emptyList()
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -67,18 +137,49 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         _binding = FragmentHomeCuidadorBinding.bind(view)
 
         setupDespliegueMedicamentos()
-        setupRecyclerViewPacientes()                             
+        setupRecyclerViewPacientes()
         setupBuscador()
         setupBotonEditar()
+
         observarDatos()
         restaurarPacientesSeleccionadosHome()
+        horarioSeleccionadoManualmente = false
+        horarioMedicamentoActual = obtenerHorarioActual()
+
         observarMedicamentos()
+
         configurarNavegacion()
         configurarBotonNotificaciones()
-
+        configurarExpansionMedicamentos()
         configurarBotonExitTurno()
         iniciarRevisionAutomaticaTurno()
+
     }
+
+    override fun onPause() {
+        super.onPause()
+
+        handlerHorarioMedicamentos.removeCallbacks(
+            actualizarHorarioMedicamentosRunnable
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (view != null) {
+            actualizarHorarioAutomatico()
+
+            handlerHorarioMedicamentos.removeCallbacks(
+                actualizarHorarioMedicamentosRunnable
+            )
+
+            handlerHorarioMedicamentos.post(
+                actualizarHorarioMedicamentosRunnable
+            )
+        }
+    }
+
 
     // =====================================================
     // NOTIFICACIONES
@@ -328,20 +429,18 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // =====================================================
 
     private fun setupDespliegueMedicamentos() {
-        binding.layoutHeaderMedicamentos.setOnClickListener {
+
+        binding.btnToggleMedicamentos.setOnClickListener {
+
             isExpanded = !isExpanded
 
-            if (isExpanded) {
-                binding.layoutListaMedicamentos.visibility = View.VISIBLE
-                binding.btnExpandMedicamentos.setImageResource(
-                    R.drawable.ic_arrow_up
-                )
-            } else {
-                binding.layoutListaMedicamentos.visibility = View.GONE
-                binding.btnExpandMedicamentos.setImageResource(
-                    R.drawable.ic_arrow_down
-                )
-            }
+            binding.layoutListaMedicamentos.visibility =
+                if (isExpanded) View.VISIBLE else View.GONE
+
+            binding.btnToggleMedicamentos.animate()
+                .rotation(if (isExpanded) 180f else 0f)
+                .setDuration(200)
+                .start()
         }
     }
 
@@ -374,142 +473,339 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // OBSERVAR MEDICAMENTOS
     // =====================================================
 
+
     private fun observarMedicamentos() {
 
+        // Configurar RecyclerView
+        configurarRecyclerMedicamentos()
+
+        // Configurar selección de horarios
+        configurarBotonesHorarioMedicamentos()
+
+        // Cargar información desde la API
         viewModel.cargarPacientes()
         viewModel.cargarCatalogoMedicamentos()
         viewModel.cargarGruposMedicacion()
-        viewModel.cargarFormulacionesMedicamentos()
 
-        viewModel.pacientes.observe(viewLifecycleOwner) { listaPacientes ->
+        // -------------------------------------------------
+        // PACIENTES
+        // -------------------------------------------------
 
-            val mapaPacientes = listaPacientes?.associateBy(
-                { it.idPaciente },
+        viewModel.pacientes.observe(viewLifecycleOwner) { pacientes ->
+
+            mapaPacientesHome = pacientes.associateBy(
+                { it.idPaciente ?: -1 },
                 { "${it.nombre} ${it.apellido}".trim() }
-            ) ?: emptyMap()
+            )
 
-            viewModel.medicamentosCatalogo.observe(viewLifecycleOwner) { catalogo ->
+            actualizarListaMedicamentosHorario()
+        }
 
-                val mapaMedicamentos = catalogo?.associateBy(
+        // -------------------------------------------------
+        // CATÁLOGO DE MEDICAMENTOS
+        // -------------------------------------------------
+
+        viewModel.medicamentosCatalogo.observe(viewLifecycleOwner) { catalogo ->
+
+            mapaMedicamentosHome = catalogo
+                ?.associateBy(
                     { it.idMedicamento },
                     { it.nombreMedicamento }
-                ) ?: emptyMap()
+                )
+                ?: emptyMap()
 
-                fun mostrarMedicamentos(
-                    lista: List<FormulacionMedicamento>
-                ): String {
+            actualizarListaMedicamentosHorario()
+        }
 
-                    if (lista.isEmpty()) {
-                        return "Sin medicamentos"
-                    }
+        // -------------------------------------------------
+        // GRUPOS DE MEDICACIÓN
+        // -------------------------------------------------
 
-                    return lista.joinToString("\n\n") { med ->
+        viewModel.gruposMedicacion.observe(viewLifecycleOwner) { grupos ->
 
-                        val paciente =
-                            mapaPacientes[med.idPaciente]
-                                ?: "Paciente ${med.idPaciente}"
+            if (!grupos.isNullOrEmpty()) {
 
-                        val medicamento =
-                            mapaMedicamentos[med.idMedicamentos]
-                                ?: "Medicamento"
+                // Los grupos deben estar cargados antes
+                // de separar las formulaciones por horario.
+                viewModel.cargarFormulacionesMedicamentos()
 
-                        val horaBase = med.horaAdministrada
-                            ?.substringBefore(":")
-                            ?.toIntOrNull()
+            } else {
 
-                        val horaActual = java.util.Calendar
-                            .getInstance()
-                            .get(java.util.Calendar.HOUR_OF_DAY)
+                listaMedicamentosManana = emptyList()
+                listaMedicamentosTarde = emptyList()
+                listaMedicamentosNoche = emptyList()
 
-                        val horaProgramada = when {
-                            med.idGrupo == 2 &&
-                                    horaBase != null &&
-                                    horaActual == ((horaBase + 12) % 24) -> {
-                                (horaBase + 12) % 24
-                            }
-
-                            else -> horaBase
-                        }
-
-                        val horaMostrar = when {
-                            horaProgramada == null -> "Sin hora"
-                            horaProgramada == 0 -> "12:00 a. m."
-                            horaProgramada < 12 ->
-                                "${horaProgramada}:00 a. m."
-
-                            horaProgramada == 12 ->
-                                "12:00 p. m."
-
-                            else ->
-                                "${horaProgramada - 12}:00 p. m."
-                        }
-
-                        "👤 $paciente\n" +
-                                "💊 $medicamento\n" +
-                                "Dosis: ${med.dosis} - Vía: ${med.via} - Hora: $horaMostrar"
-                    }
-                }
-
-                fun filtrarSeleccionados(
-                    lista: List<FormulacionMedicamento>
-                ): List<FormulacionMedicamento> {
-
-                    val seleccionados =
-                        viewModel.pacientesSeleccionadosHome.value
-                            ?.map { it.idPaciente }
-                            ?: emptyList()
-
-                    Log.d(
-                        "MEDICAMENTOS_HOME",
-                        "TODAS LAS FORMULACIONES: $lista"
-                    )
-
-                    Log.d(
-                        "MEDICAMENTOS_HOME",
-                        "PACIENTES SELECCIONADOS: $seleccionados"
-                    )
-
-                    return lista.filter {
-                        it.idPaciente in seleccionados
-                    }
-                }
-
-                val horaActual = java.util.Calendar
-                    .getInstance()
-                    .get(java.util.Calendar.HOUR_OF_DAY)
-
-                viewModel.medicamentosManana.observe(viewLifecycleOwner) { lista ->
-
-                    if (horaActual in 6..11) {
-                        binding.tvMedicamentosManana.text =
-                            mostrarMedicamentos(filtrarSeleccionados(lista))
-                    } else {
-                        binding.tvMedicamentosManana.text = "Sin medicamentos"
-                    }
-                }
-
-                viewModel.medicamentosTarde.observe(viewLifecycleOwner) { lista ->
-
-                    if (horaActual in 12..17) {
-                        binding.tvMedicamentosTarde.text =
-                            mostrarMedicamentos(filtrarSeleccionados(lista))
-                    } else {
-                        binding.tvMedicamentosTarde.text = "Sin medicamentos"
-                    }
-                }
-
-                viewModel.medicamentosNoche.observe(viewLifecycleOwner) { lista ->
-
-                    if (horaActual >= 18 || horaActual < 6) {
-                        binding.tvMedicamentosNoche.text =
-                            mostrarMedicamentos(filtrarSeleccionados(lista))
-                    } else {
-                        binding.tvMedicamentosNoche.text = "Sin medicamentos"
-                    }
-                }
+                actualizarContadoresMedicamentos()
+                actualizarListaMedicamentosHorario()
             }
         }
+
+        // -------------------------------------------------
+        // MEDICAMENTOS DE LA MAÑANA
+        // -------------------------------------------------
+
+        viewModel.medicamentosManana.observe(viewLifecycleOwner) { lista ->
+
+            listaMedicamentosManana = lista ?: emptyList()
+
+            actualizarContadoresMedicamentos()
+            actualizarListaMedicamentosHorario()
+        }
+
+        // -------------------------------------------------
+        // MEDICAMENTOS DE LA TARDE
+        // -------------------------------------------------
+
+        viewModel.medicamentosTarde.observe(viewLifecycleOwner) { lista ->
+
+            listaMedicamentosTarde = lista ?: emptyList()
+
+            actualizarContadoresMedicamentos()
+            actualizarListaMedicamentosHorario()
+        }
+
+        // -------------------------------------------------
+        // MEDICAMENTOS DE LA NOCHE
+        // -------------------------------------------------
+
+        viewModel.medicamentosNoche.observe(viewLifecycleOwner) { lista ->
+
+            listaMedicamentosNoche = lista ?: emptyList()
+
+            actualizarContadoresMedicamentos()
+            actualizarListaMedicamentosHorario()
+        }
+
+        // -------------------------------------------------
+        // FORMULACIONES COMPLETAS
+        // -------------------------------------------------
+
+        viewModel.formulacionesMedicamentos.observe(viewLifecycleOwner) { lista ->
+
+            Log.d(
+                "MEDICAMENTOS_HOME",
+                "Formulaciones recibidas: ${lista.size}"
+            )
+        }
     }
+
+
+    private fun configurarRecyclerMedicamentos() {
+
+        medicamentoAdapter = MedicamentoCuidadorAdapter()
+
+        binding.rvMedicamentosHorario.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = medicamentoAdapter
+            setHasFixedSize(false)
+        }
+    }
+
+    private fun obtenerHorarioActual(): HorarioMedicamento {
+
+        val horaActual = java.util.Calendar.getInstance()
+            .get(java.util.Calendar.HOUR_OF_DAY)
+
+        return when {
+
+            horaActual >= 19 || horaActual < 6 ->
+                HorarioMedicamento.NOCHE
+
+            horaActual >= 12 ->
+                HorarioMedicamento.TARDE
+
+            else ->
+                HorarioMedicamento.MANANA
+        }
+    }
+
+    private fun configurarBotonesHorarioMedicamentos() {
+
+        binding.btnHorarioManana.setOnClickListener {
+            horarioSeleccionadoManualmente = true
+            horarioMedicamentoActual = HorarioMedicamento.MANANA
+            actualizarListaMedicamentosHorario()
+        }
+
+        binding.btnHorarioTarde.setOnClickListener {
+            horarioSeleccionadoManualmente = true
+            horarioMedicamentoActual = HorarioMedicamento.TARDE
+            actualizarListaMedicamentosHorario()
+        }
+
+        binding.btnHorarioNoche.setOnClickListener {
+            horarioSeleccionadoManualmente = true
+            horarioMedicamentoActual = HorarioMedicamento.NOCHE
+            actualizarListaMedicamentosHorario()
+        }
+    }
+
+
+    private fun actualizarListaMedicamentosHorario() {
+
+        // -------------------------------------------------
+        // COLOR SEGÚN HORARIO
+        // -------------------------------------------------
+
+        val color = when (horarioMedicamentoActual) {
+
+            HorarioMedicamento.MANANA ->
+                Color.parseColor("#FFF3D6")
+
+            HorarioMedicamento.TARDE ->
+                Color.parseColor("#E8F1FF")
+
+            HorarioMedicamento.NOCHE ->
+                Color.parseColor("#EEE9FF")
+        }
+
+        binding.layoutListaMedicamentos.backgroundTintList =
+            android.content.res.ColorStateList.valueOf(color)
+
+        if (!::medicamentoAdapter.isInitialized) return
+
+        val idsPacientesSeleccionados = viewModel
+            .pacientesSeleccionadosHome
+            .value
+            .orEmpty()
+            .mapNotNull { it.idPaciente }
+            .toSet()
+
+        val listaHorario = when (horarioMedicamentoActual) {
+
+            HorarioMedicamento.MANANA ->
+                listaMedicamentosManana
+
+            HorarioMedicamento.TARDE ->
+                listaMedicamentosTarde
+
+            HorarioMedicamento.NOCHE ->
+                listaMedicamentosNoche
+        }
+
+        val listaFiltrada = listaHorario.filter { medicamento ->
+            medicamento.idPaciente in idsPacientesSeleccionados
+        }
+
+        medicamentoAdapter.actualizarLista(
+            nuevaLista = listaFiltrada,
+            nuevosMedicamentos = mapaMedicamentosHome,
+            nuevosPacientes = mapaPacientesHome
+        )
+
+        when (horarioMedicamentoActual) {
+
+            HorarioMedicamento.MANANA -> {
+
+                binding.tvTituloHorarioActivo.text =
+                    "Medicamentos - Mañana"
+
+                binding.tvRangoHorario.text =
+                    "06:00am – 12:00pm"
+            }
+
+            HorarioMedicamento.TARDE -> {
+
+                binding.tvTituloHorarioActivo.text =
+                    "Medicamentos - Tarde"
+
+                binding.tvRangoHorario.text =
+                    "12:00pm – 07:00pm"
+            }
+
+            HorarioMedicamento.NOCHE -> {
+
+                binding.tvTituloHorarioActivo.text =
+                    "Medicamentos - Noche"
+
+                binding.tvRangoHorario.text =
+                    "07:00pm – 06:00am"
+            }
+        }
+
+        // -------------------------------------------------
+        // MOSTRAR LISTA
+        // -------------------------------------------------
+
+        binding.rvMedicamentosHorario.visibility =
+            View.VISIBLE
+
+        actualizarFlechaMedicamentos()
+    }
+
+
+    private fun actualizarContadoresMedicamentos() {
+
+        val idsPacientesSeleccionados = viewModel
+            .pacientesSeleccionadosHome
+            .value
+            .orEmpty()
+            .mapNotNull { it.idPaciente }
+            .toSet()
+
+        val cantidadManana = listaMedicamentosManana.count {
+            it.idPaciente in idsPacientesSeleccionados
+        }
+
+        val cantidadTarde = listaMedicamentosTarde.count {
+            it.idPaciente in idsPacientesSeleccionados
+        }
+
+        val cantidadNoche = listaMedicamentosNoche.count {
+            it.idPaciente in idsPacientesSeleccionados
+        }
+
+        binding.tvCantidadManana.text =
+            cantidadManana.toString()
+
+        binding.tvCantidadTarde.text =
+            cantidadTarde.toString()
+
+        binding.tvCantidadNoche.text =
+            cantidadNoche.toString()
+    }
+
+    // =====================================================
+    // HORARIO AUTOMÁTICO DE MEDICAMENTOS
+    // =====================================================
+
+    private var horarioSeleccionadoManualmente = false
+
+    private val handlerHorarioMedicamentos =
+        android.os.Handler(android.os.Looper.getMainLooper())
+
+    private val actualizarHorarioMedicamentosRunnable =
+        object : Runnable {
+
+            override fun run() {
+
+                if (!isAdded || view == null) return
+
+                actualizarHorarioAutomatico()
+
+                handlerHorarioMedicamentos.postDelayed(
+                    this,
+                    60_000L
+                )
+            }
+        }
+
+    /* Actualiza automáticamente el horario de medicamentos segun la hora real del dispositivo
+     * No utiliza barras ni indicadores de progreso */
+    private fun actualizarHorarioAutomatico() {
+
+        val horarioReal = obtenerHorarioActual()
+
+        if (!horarioSeleccionadoManualmente &&
+            horarioMedicamentoActual != horarioReal
+        ) {
+
+            horarioMedicamentoActual = horarioReal
+
+            actualizarListaMedicamentosHorario()
+        }
+    }
+
 
     // =====================================================
     // OBSERVAR PACIENTES SELECCIONADOS
@@ -523,9 +819,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             val lista = listaSeleccionados ?: emptyList()
             listaOriginalPacientes = lista
 
-            if (lista.isNotEmpty()) {
-                viewModel.cargarFormulacionesMedicamentos()
-            }
+            actualizarListaMedicamentosHorario()
+            actualizarContadoresMedicamentos()
 
             val textoBusqueda =
                 binding.etSearchPaciente.text.toString()

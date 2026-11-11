@@ -1,0 +1,23 @@
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="56dp"
+    android:viewportWidth="48"
+    android:viewportHeight="56">
+
+    <!-- Pin azul -->
+    <path
+        android:fillColor="#3B5BDB"
+        android:pathData="M24,1 A21,21 0,0 1,45,22 C45,34 24,54 24,54 C24,54 3,34 3,22 A21,21 0,0 1,24,1 Z"/>
+
+    <!-- Casa blanca -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,23 L24,13 L36,23 L33,26 L33,37 L15,37 L15,26 Z"/>
+
+    <!-- Puerta azul -->
+    <path
+        android:fillColor="#3B5BDB"
+        android:pathData="M21,28 L27,28 L27,37 L21,37 Z"/>
+
+</vector>

@@ -5,8 +5,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.location.Location
 import android.os.Bundle
+import android.os.Looper
 import android.preference.PreferenceManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +18,7 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
@@ -25,18 +29,27 @@ import com.example.molvigeryapp.ui.cuidador.pacientes.PacientesListFragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.XYTileSource
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import android.widget.Toast
+import com.example.molvigeryapp.ui.cuidador.CuidadorLocationOverlay
+import com.example.molvigeryapp.ui.cuidador.home.BienvenidaSedeCuidadorFragment
 
 class VerificacionLlegadaFragment : Fragment() {
 
@@ -45,28 +58,49 @@ class VerificacionLlegadaFragment : Fragment() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationOverlay: MyLocationNewOverlay
+    private lateinit var locationCallback: LocationCallback
 
     private var turnosDesplegados = false
+    private var ubicacionInicializada = false
+    private var navegacionRealizada = false
+    private var actualizacionesUbicacionActivas = false
+
+    // =========================================================
+    // UBICACIÓN DE PRUEBA
+    // =========================================================
+
+    private val latitudDestino = 2.447267
+    private val longitudDestino = -76.631881
+
+    private val radioPermitido = 100.0
+
+    private var marcadorDestino: Marker? = null
+    private var circuloGeocerca: Polygon? = null
+
+    // =========================================================
+    // PERMISOS
+    // =========================================================
 
     private val locationPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permisos ->
 
-            val ubicacionPrecisa =
+            val permisoPreciso =
                 permisos[Manifest.permission.ACCESS_FINE_LOCATION] == true
 
-            val ubicacionAproximada =
+            val permisoAproximado =
                 permisos[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
-            if (ubicacionPrecisa || ubicacionAproximada) {
+            if (permisoPreciso || permisoAproximado) {
 
-                obtenerUbicacion()
+                iniciarActualizacionesUbicacion()
 
             } else {
 
                 val safeBinding = _binding ?: return@registerForActivityResult
 
+                safeBinding.tvEsperandoUbicacion.visibility = View.VISIBLE
                 safeBinding.tvEsperandoUbicacion.text =
                     "Permiso de ubicación denegado"
 
@@ -75,35 +109,79 @@ class VerificacionLlegadaFragment : Fragment() {
             }
         }
 
+
+    private data class TurnoAgrupado(
+        val turno: Turno,
+        val fechaInicio: String,
+        val fechaFin: String,
+        val estado: String
+    )
+
+
+    // =========================================================
+    // CREAR VISTA
+    // =========================================================
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
 
-        _binding =
-            FragmentVerificacionLlegadaBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+        _binding = FragmentVerificacionLlegadaBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         return binding.root
     }
+
+    // =========================================================
+    // INICIALIZAR FRAGMENT
+    // =========================================================
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
+
+        ViewCompat.setOnApplyWindowInsetsListener(
+            binding.root
+        ) { vista, insets ->
+
+            val barras = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+            )
+
+            vista.updatePadding(
+                left = barras.left,
+                right = barras.right,
+                bottom = barras.bottom
+            )
+
+            insets
+        }
+
+        // interaccion de los botones personalizados */-
+        binding.btnZoomMas.setOnClickListener {
+            binding.mapa.controller.zoomIn()
+        }
+
+        binding.btnZoomMenos.setOnClickListener {
+            binding.mapa.controller.zoomOut()
+        }
+
 
         fusedLocationClient =
             LocationServices.getFusedLocationProviderClient(
                 requireActivity()
             )
+
+        binding.btnMiUbicacion.setOnClickListener {
+            centrarEnMiUbicacion()
+        }
 
         configurarMapa()
 
@@ -114,12 +192,42 @@ class VerificacionLlegadaFragment : Fragment() {
         cargarTurnosPendientes()
 
         verificarPermisoUbicacion()
-
-        configurarBotonContinuar()
     }
 
     // =========================================================
-    // MAPA
+    // CICLO DE VIDA
+    // =========================================================
+
+    override fun onStart() {
+        super.onStart()
+
+        if (_binding != null && tienePermisoUbicacion()) {
+            iniciarActualizacionesUbicacion()
+        }
+    }
+
+    override fun onStop() {
+
+        detenerActualizacionesUbicacion()
+
+        super.onStop()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        _binding?.mapa?.onResume()
+    }
+
+    override fun onPause() {
+
+        _binding?.mapa?.onPause()
+
+        super.onPause()
+    }
+
+    // =========================================================
+    // CONFIGURAR MAPA
     // =========================================================
 
     private fun configurarMapa() {
@@ -135,42 +243,179 @@ class VerificacionLlegadaFragment : Fragment() {
             "GerIApp/1.0"
         )
 
-        val stadiaMap = XYTileSource(
-            "stadiaMaps",
+        val cartoApiKey = "cb1_51jx_1_a6886e91076599e58b727063"
+
+        val cartoPositron = XYTileSource(
+            "CARTO_Positron",
             0,
             20,
             256,
-            ".png?api_key=c308f0bd-c5a9-4d85-8b32-5896d3b10f9c",
+            ".png?key=$cartoApiKey",
             arrayOf(
-                "http://tiles.stadiamaps.com/tiles/osm_bright/"
+                "https://a.basemaps.cartocdn.com/rastertiles/light_all/",
+                "https://b.basemaps.cartocdn.com/rastertiles/light_all/",
+                "https://c.basemaps.cartocdn.com/rastertiles/light_all/",
+                "https://d.basemaps.cartocdn.com/rastertiles/light_all/"
             ),
-            "© Stadia Maps © OpenStreetMap contributors © OpenMapTiles"
+            "© OpenStreetMap contributors © CARTO"
         )
 
-        binding.mapa.setTileSource(
-            stadiaMap
+
+        binding.mapa.setTileSource(cartoPositron)
+
+        // =========================================================
+        // INICIALIZAR OVERLAY DE UBICACIÓN GPS
+        // =========================================================
+
+        locationOverlay = CuidadorLocationOverlay(
+            requireContext(),
+            binding.mapa
+        ).apply {
+            enableMyLocation()
+        }
+
+        binding.mapa.overlays.add(locationOverlay)
+
+        binding.mapa.setTileSource(cartoPositron)
+        binding.mapa.setMultiTouchControls(true)
+
+        // Ocultar controles de zoom originales de osmdroid
+        binding.mapa.setBuiltInZoomControls(false)
+
+        // Permitir desplazamiento fluido
+        binding.mapa.setFlingEnabled(true)
+
+        // Habilitar gestos multitáctiles
+        binding.mapa.setMultiTouchControls(true)
+
+
+        // =========================================================
+        // PRIORIDAD DE GESTOS PARA EL MAPA
+        // =========================================================
+
+        binding.mapa.setOnTouchListener { vista, evento ->
+
+            when (evento.action) {
+
+                android.view.MotionEvent.ACTION_DOWN,
+                android.view.MotionEvent.ACTION_MOVE -> {
+
+                    // Evitar que el scroll intercepte
+                    // los movimientos realizados sobre el mapa
+                    vista.parent.requestDisallowInterceptTouchEvent(true)
+                }
+
+                android.view.MotionEvent.ACTION_UP,
+                android.view.MotionEvent.ACTION_CANCEL -> {
+
+                    // Restaurar comportamiento normal
+                    vista.parent.requestDisallowInterceptTouchEvent(false)
+                }
+            }
+            // false permite que osmdroid procese sus propios gestos
+            false
+        }
+
+        // Configurar límites de zoom
+        binding.mapa.setMinZoomLevel(5.0)
+        binding.mapa.setMaxZoomLevel(20.0)
+
+        // Zoom inicial
+        binding.mapa.controller.setZoom(17.0)
+
+        binding.mapa.controller.setZoom(17.0)
+
+
+
+        // Crear ubicación de prueba
+        val puntoDestino = GeoPoint(
+            latitudDestino,
+            longitudDestino
         )
 
-        binding.mapa.setMultiTouchControls(
-            true
-        )
+        // Crear marcador del destino
+        val nuevoMarcador = Marker(binding.mapa).apply {
 
-        val locationProvider =
-            GpsMyLocationProvider(
-                requireContext()
+            position = puntoDestino
+
+            icon = ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.marcador_sede
             )
 
-        locationOverlay =
-            MyLocationNewOverlay(
-                locationProvider,
-                binding.mapa
+            title = "Sede asignada"
+
+            snippet = "Radio permitido: 100 metros"
+
+            setAnchor(
+                Marker.ANCHOR_CENTER,
+                Marker.ANCHOR_BOTTOM
+            )
+        }
+
+        // Guardar referencia del marcador
+        marcadorDestino = nuevoMarcador
+
+        // Crear círculo de geocerca de 100 metros
+
+        val nuevoCirculo = Polygon().apply {
+
+            points = Polygon.pointsAsCircle(
+                puntoDestino,
+                radioPermitido
             )
 
-        locationOverlay.enableMyLocation()
+            fillPaint.color = Color.argb(
+                45,
+                59,
+                91,
+                219
+            )
 
-        binding.mapa.overlays.add(
-            locationOverlay
-        )
+            outlinePaint.color = Color.parseColor(
+                "#3B5BDB"
+            )
+
+            outlinePaint.strokeWidth = 3f
+        }
+
+
+        // Guardar referencia del círculo
+        circuloGeocerca = nuevoCirculo
+
+        // Agregar overlays al mapa
+        binding.mapa.overlays.add(nuevoCirculo)
+        binding.mapa.overlays.add(nuevoMarcador)
+
+        binding.mapa.invalidate()
+
+    }
+
+
+    private fun centrarEnMiUbicacion() {
+
+        val ubicacionActual = locationOverlay.myLocation
+
+        if (ubicacionActual != null) {
+
+            binding.mapa.controller.animateTo(
+                GeoPoint(
+                    ubicacionActual.latitude,
+                    ubicacionActual.longitude
+                )
+            )
+
+            binding.mapa.controller.setZoom(18.0)
+
+        } else {
+
+            Toast.makeText(
+                requireContext(),
+                "Buscando tu ubicación GPS...",
+                Toast.LENGTH_SHORT
+            ).show()
+
+        }
     }
 
     // =========================================================
@@ -181,6 +426,9 @@ class VerificacionLlegadaFragment : Fragment() {
 
         binding.tvEstadoLlegada.text =
             "Esperando llegada..."
+
+        binding.tvEsperandoUbicacion.visibility =
+            View.VISIBLE
 
         binding.tvEsperandoUbicacion.text =
             "Obteniendo ubicación..."
@@ -195,11 +443,9 @@ class VerificacionLlegadaFragment : Fragment() {
 
     private fun configurarTarjetaTurnos() {
 
-        binding.containerTurnos.visibility =
-            View.GONE
+        binding.containerTurnos.visibility = View.GONE
 
-        binding.tvSinTurnos.visibility =
-            View.GONE
+        binding.tvSinTurnos.visibility = View.GONE
 
         binding.btnExpandirTurnos.setImageResource(
             R.drawable.ic_arrow_down
@@ -209,8 +455,7 @@ class VerificacionLlegadaFragment : Fragment() {
 
         binding.layoutTituloTurnos.setOnClickListener {
 
-            turnosDesplegados =
-                !turnosDesplegados
+            turnosDesplegados = !turnosDesplegados
 
             if (turnosDesplegados) {
 
@@ -237,65 +482,90 @@ class VerificacionLlegadaFragment : Fragment() {
     // CARGAR TURNOS PENDIENTES
     // =========================================================
 
-    // se hace correccion donde se cambia el metodo cargarTurnosPendientes y se empieza a usar
-    // viewLifecycleOwner.lifecycleScope para que compruebe que la vista sigue disponible antes de actualizarla
     private fun cargarTurnosPendientes() {
+
         val propietarioVista = viewLifecycleOwner
 
         propietarioVista.lifecycleScope.launch {
-            try {
-                val preferences = requireContext().getSharedPreferences(
-                    "SESION",
-                    Context.MODE_PRIVATE
-                )
 
-                val idUsuario = preferences.getInt("ID_USUARIO", -1)
+            try {
+
+                val preferences =
+                    requireContext().getSharedPreferences(
+                        "SESION",
+                        Context.MODE_PRIVATE
+                    )
+
+                val idUsuario =
+                    preferences.getInt("ID_USUARIO", -1)
 
                 if (idUsuario <= 0) {
-                    if (_binding != null && propietarioVista.lifecycle.currentState.isAtLeast(
-                            androidx.lifecycle.Lifecycle.State.STARTED
+
+                    if (
+                        _binding != null &&
+                        propietarioVista.lifecycle.currentState.isAtLeast(
+                            Lifecycle.State.STARTED
                         )
                     ) {
                         mostrarSinTurnos()
                     }
+
                     return@launch
                 }
 
                 val datos = withContext(Dispatchers.IO) {
-                    val asignaciones = RetrofitClient.apiService.getAsignacionesTurno()
-                    val turnos = RetrofitClient.apiService.getTurnos()
+
+                    val asignaciones =
+                        RetrofitClient.apiService.getAsignacionesTurno()
+
+                    val turnos =
+                        RetrofitClient.apiService.getTurnos()
+
                     Pair(asignaciones, turnos)
                 }
 
-                // La vista pudo destruirse mientras se consultaba la API.
-                if (_binding == null ||
+                if (
+                    _binding == null ||
                     !propietarioVista.lifecycle.currentState.isAtLeast(
-                        androidx.lifecycle.Lifecycle.State.STARTED
+                        Lifecycle.State.STARTED
                     )
                 ) {
                     return@launch
                 }
 
-                val turnosPendientes = obtenerTurnosPendientes(
+                // Actualizar horario programado del día actual
+                actualizarHorarioProgramado(
                     idUsuario,
                     datos.first,
                     datos.second
                 )
 
+                // Mostrar turnos pendientes
+                val turnosPendientes =
+                    obtenerTurnosPendientes(
+                        idUsuario,
+                        datos.first,
+                        datos.second
+                    )
+
                 mostrarTurnos(turnosPendientes)
 
             } catch (e: kotlinx.coroutines.CancellationException) {
+
                 throw e
+
             } catch (e: Exception) {
-                android.util.Log.e(
+
+                Log.e(
                     "VERIFICACION_LLEGADA",
                     "Error cargando turnos pendientes",
                     e
                 )
 
-                if (_binding != null &&
+                if (
+                    _binding != null &&
                     propietarioVista.lifecycle.currentState.isAtLeast(
-                        androidx.lifecycle.Lifecycle.State.STARTED
+                        Lifecycle.State.STARTED
                     )
                 ) {
                     mostrarSinTurnos()
@@ -304,169 +574,208 @@ class VerificacionLlegadaFragment : Fragment() {
         }
     }
 
-
     // =========================================================
     // FILTRAR TURNOS
     // =========================================================
+
 
     private fun obtenerTurnosPendientes(
         idUsuario: Int,
         asignaciones: List<AsignacionTurnoUsuario>,
         turnos: List<Turno>
-    ): List<Pair<AsignacionTurnoUsuario, Turno>> {
+    ): List<TurnoAgrupado> {
 
-        val formatoFecha =
-            SimpleDateFormat(
-                "yyyy-MM-dd",
-                Locale.getDefault()
-            )
-
-        val hoy =
-            Calendar.getInstance()
-
-        hoy.set(
-            Calendar.HOUR_OF_DAY,
-            0
+        val formatoFecha = SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.getDefault()
         )
 
-        hoy.set(
-            Calendar.MINUTE,
-            0
-        )
+        val calendarioHoy = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
 
-        hoy.set(
-            Calendar.SECOND,
-            0
-        )
+        val fechaInicioLimite = calendarioHoy.time
 
-        hoy.set(
-            Calendar.MILLISECOND,
-            0
-        )
+        val calendarioFin = calendarioHoy.clone() as Calendar
+        calendarioFin.add(Calendar.DAY_OF_YEAR, 14)
+        val fechaFinLimite = calendarioFin.time
 
-        val fechaInicio =
-            hoy.time
+        val turnosMap = turnos
+            .filter { it.id_turno != null && it.estado }
+            .associateBy { it.id_turno }
 
-        val fechaLimite =
-            Calendar.getInstance()
-
-        fechaLimite.time =
-            fechaInicio
-
-        fechaLimite.add(
-            Calendar.DAY_OF_YEAR,
-            14
-        )
-
-        val fechaFin =
-            fechaLimite.time
-
-        val turnosMap =
-            turnos
-                .filter {
-                    it.id_turno != null
-                }
-                .associateBy {
-                    it.id_turno
-                }
-
-        return asignaciones
-            .filter { asignacion ->
-
-                asignacion.id_usuario ==
-                        idUsuario
-
-            }
-            .filter { asignacion ->
-
-                asignacion.estado.equals(
-                    "Asignado",
-                    ignoreCase = true
-                )
-
+        // Obtener asignaciones válidas
+        val asignacionesValidas = asignaciones
+            .filter { it.id_usuario == idUsuario }
+            .filter {
+                it.estado.equals("Asignado", ignoreCase = true)
             }
             .mapNotNull { asignacion ->
 
-                val fechaTexto =
-                    asignacion.fecha
-                        ?: return@mapNotNull null
+                val fechaTexto = asignacion.fecha?.take(10)
+                    ?: return@mapNotNull null
 
-                val fecha =
-                    try {
+                val fecha = try {
+                    formatoFecha.parse(fechaTexto)
+                } catch (e: Exception) {
+                    null
+                } ?: return@mapNotNull null
 
-                        formatoFecha.parse(
-                            fechaTexto
-                        )
-
-                    } catch (
-                        e: Exception
-                    ) {
-
-                        null
-                    }
-
-                if (fecha == null) {
-                    return@mapNotNull null
-                }
-
-                val turno =
-                    turnosMap[
-                        asignacion.id_turno
-                    ]
-                        ?: return@mapNotNull null
-
-                if (!turno.estado) {
-                    return@mapNotNull null
-                }
-
-                /*
-                 * No mostramos el turno de hoy.
-                 *
-                 * Solo:
-                 *
-                 * mañana
-                 * hasta
-                 * 14 días después.
-                 */
+                val turno = turnosMap[asignacion.id_turno]
+                    ?: return@mapNotNull null
 
                 if (
-                    fecha.after(fechaInicio) &&
-                    !fecha.after(fechaFin)
+                    fecha.before(fechaInicioLimite) ||
+                    fecha.after(fechaFinLimite)
                 ) {
-
-                    Pair(
-                        asignacion,
-                        turno
-                    )
-
-                } else {
-
-                    null
+                    return@mapNotNull null
                 }
+
+                Triple(asignacion, turno, fecha)
             }
-            .sortedWith(
-                compareBy<Pair<AsignacionTurnoUsuario, Turno>> {
+            .sortedBy { it.third }
 
-                    it.first.fecha
-                        ?: ""
+        if (asignacionesValidas.isEmpty()) {
+            return emptyList()
+        }
 
-                }.thenBy {
+        val grupos = mutableListOf<TurnoAgrupado>()
 
-                    it.second.hora_inicio
-                }
+        var turnoActual = asignacionesValidas.first().second
+        var fechaInicioGrupo = asignacionesValidas.first().third
+        var fechaFinGrupo = asignacionesValidas.first().third
+        var estadoGrupo = asignacionesValidas.first().first.estado ?: "Asignado"
+
+        // Recorrer las asignaciones ordenadas por fecha
+        for (i in 1 until asignacionesValidas.size) {
+
+            val actual = asignacionesValidas[i]
+            val turno = actual.second
+            val fecha = actual.third
+
+            val calendarioAnterior = Calendar.getInstance().apply {
+                time = fechaFinGrupo
+            }
+
+            calendarioAnterior.add(Calendar.DAY_OF_YEAR, 1)
+
+            val esConsecutivo =
+                formatoFecha.format(calendarioAnterior.time) ==
+                        formatoFecha.format(fecha)
+
+            val mismoTurno =
+                turno.id_turno == turnoActual.id_turno
+
+            if (esConsecutivo && mismoTurno) {
+
+                fechaFinGrupo = fecha
+
+            } else {
+
+                // Guardar grupo anterior
+                grupos.add(
+                    TurnoAgrupado(
+                        turno = turnoActual,
+                        fechaInicio = formatoFecha.format(fechaInicioGrupo),
+                        fechaFin = formatoFecha.format(fechaFinGrupo),
+                        estado = estadoGrupo
+                    )
+                )
+
+                // Iniciar nuevo grupo
+                turnoActual = turno
+                fechaInicioGrupo = fecha
+                fechaFinGrupo = fecha
+                estadoGrupo = actual.first.estado ?: "Asignado"
+            }
+        }
+
+        // Guardar último grupo
+        grupos.add(
+            TurnoAgrupado(
+                turno = turnoActual,
+                fechaInicio = formatoFecha.format(fechaInicioGrupo),
+                fechaFin = formatoFecha.format(fechaFinGrupo),
+                estado = estadoGrupo
             )
+        )
+
+        return grupos
     }
+
+
+    // =========================================================
+    // HORARIO PROGRAMADO DEL DÍA ACTUAL
+    // =========================================================
+
+    private fun actualizarHorarioProgramado(
+        idUsuario: Int,
+        asignaciones: List<AsignacionTurnoUsuario>,
+        turnos: List<Turno>
+    ) {
+
+        val safeBinding = _binding ?: return
+
+        // Obtener fecha actual
+        val fechaHoy = SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.getDefault()
+        ).format(Calendar.getInstance().time)
+
+        // Buscar asignación del cuidador para hoy
+        val asignacionHoy = asignaciones.firstOrNull { asignacion ->
+
+            asignacion.id_usuario == idUsuario &&
+                    asignacion.fecha?.take(10) == fechaHoy &&
+                    asignacion.estado.equals(
+                        "Asignado",
+                        ignoreCase = true
+                    )
+        }
+
+        // Si no tiene turno para hoy
+        if (asignacionHoy == null) {
+
+            safeBinding.tvHoraProgramada.text =
+                "Sin turno programado"
+
+            return
+        }
+
+        // Buscar turno correspondiente
+        val turnoHoy = turnos.firstOrNull {
+
+            it.id_turno == asignacionHoy.id_turno &&
+                    it.estado
+        }
+
+        // Si no se encuentra el turno
+        if (turnoHoy == null) {
+
+            safeBinding.tvHoraProgramada.text =
+                "Sin turno programado"
+
+            return
+        }
+
+        // Mostrar únicamente la hora de inicio
+        safeBinding.tvHoraProgramada.text =
+            formatearHoraAMPM(turnoHoy.hora_inicio)
+    }
+
 
     // =========================================================
     // MOSTRAR TURNOS
     // =========================================================
 
 
-    // Tambien se protege
-    // ya que es una funcion que actualiza vistas asi que debe verificar que el binding existe antes de utilizarlas
     private fun mostrarTurnos(
-        turnosPendientes: List<Pair<AsignacionTurnoUsuario, Turno>>
+        turnosPendientes: List<TurnoAgrupado>
     ) {
+
         val safeBinding = _binding ?: return
 
         safeBinding.containerTurnos.removeAllViews()
@@ -478,202 +787,267 @@ class VerificacionLlegadaFragment : Fragment() {
 
         safeBinding.tvSinTurnos.visibility = View.GONE
 
-        turnosPendientes.forEach { datos ->
-            val tarjeta = crearTarjetaTurno(
-                datos.first,
-                datos.second
-            )
+        turnosPendientes.forEach { grupo ->
 
-            // La vista puede haberse destruido mientras se construia la tarjeta
+            val tarjeta = crearTarjetaTurno(grupo)
+
             val bindingActual = _binding ?: return
+
             bindingActual.containerTurnos.addView(tarjeta)
         }
     }
 
+
     // =========================================================
-    // TARJETA INDIVIDUAL
+    // CREAR TARJETA DE TURNO
     // =========================================================
+
+
 
     private fun crearTarjetaTurno(
-        asignacion: AsignacionTurnoUsuario,
-        turno: Turno
+        grupo: TurnoAgrupado
     ): View {
 
-        val contenedor =
-            LinearLayout(
-                requireContext()
+        val contexto = requireContext()
+        val turno = grupo.turno
+
+        val tarjeta = LinearLayout(contexto).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.WHITE)
+                cornerRadius = dp(18).toFloat()
+                setStroke(dp(1), Color.parseColor("#E9ECEF"))
+            }
+
+            elevation = dp(3).toFloat()
+        }
+
+        tarjeta.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            bottomMargin = dp(12)
+        }
+
+        // ENCABEZADO
+        val encabezado = LinearLayout(contexto).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+        }
+
+        val horaInicio = turno.hora_inicio ?: ""
+
+        val hora = try {
+            SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                .parse(horaInicio)
+        } catch (e: Exception) {
+            try {
+                SimpleDateFormat("HH:mm", Locale.getDefault())
+                    .parse(horaInicio)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        val horaDelDia = Calendar.getInstance().apply {
+            if (hora != null) time = hora
+        }.get(Calendar.HOUR_OF_DAY)
+
+        val esDiurno = horaDelDia >= 6 && horaDelDia < 18
+
+        val tipoTurno = if (esDiurno) "DIURNO" else "NOCTURNO"
+
+        val iconoTurno = if (esDiurno) "☀" else "☾"
+
+        val tvTipo = crearTextoTurno(
+            "$iconoTurno  $tipoTurno",
+            17f,
+            "#3B5BDB",
+            true
+        )
+
+        encabezado.addView(
+            tvTipo,
+            LinearLayout.LayoutParams(0, -2, 1f)
+        )
+
+        val tvEstado = crearTextoTurno(
+            grupo.estado,
+            11f,
+            "#3B5BDB",
+            true
+        ).apply {
+            setPadding(dp(10), dp(6), dp(10), dp(6))
+
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.parseColor("#EDF3FF"))
+                cornerRadius = dp(20).toFloat()
+            }
+        }
+
+        encabezado.addView(tvEstado)
+        tarjeta.addView(encabezado)
+
+        // SEPARADOR
+        tarjeta.addView(View(contexto).apply {
+            setBackgroundColor(Color.parseColor("#E9ECEF"))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(1)
+            ).apply {
+                topMargin = dp(12)
+                bottomMargin = dp(14)
+            }
+        })
+
+        // FECHAS
+        val filaFechas = LinearLayout(contexto).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        val columnaInicio = LinearLayout(contexto).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        columnaInicio.addView(
+            crearTextoTurno(
+                "FECHA INICIO",
+                11f,
+                "#64748B",
+                true
             )
-
-        contenedor.orientation =
-            LinearLayout.VERTICAL
-
-        contenedor.setPadding(
-            16,
-            14,
-            16,
-            14
         )
 
-        contenedor.setBackgroundResource(
-            R.drawable.bg_turno_pendiente
+        columnaInicio.addView(
+            crearTextoTurno(
+                formatearFecha(grupo.fechaInicio),
+                15f,
+                "#202124",
+                true
+            ).apply {
+                setPadding(0, dp(6), 0, 0)
+            }
         )
 
-        val parametros =
-            LinearLayout.LayoutParams(
+        val columnaFin = LinearLayout(contexto).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        columnaFin.addView(
+            crearTextoTurno(
+                "FECHA FIN",
+                11f,
+                "#64748B",
+                true
+            )
+        )
+
+        columnaFin.addView(
+            crearTextoTurno(
+                formatearFecha(grupo.fechaFin),
+                15f,
+                "#202124",
+                true
+            ).apply {
+                setPadding(0, dp(6), 0, 0)
+            }
+        )
+
+        filaFechas.addView(
+            columnaInicio,
+            LinearLayout.LayoutParams(0, -2, 1f)
+        )
+
+        filaFechas.addView(
+            columnaFin,
+            LinearLayout.LayoutParams(0, -2, 1f)
+        )
+
+        tarjeta.addView(filaFechas)
+
+        // HORARIO
+        val contenedorHorario = LinearLayout(contexto).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.parseColor("#EDF3FF"))
+                cornerRadius = dp(12).toFloat()
+            }
+        }
+
+        contenedorHorario.addView(
+            crearTextoTurno(
+                "◷  HORARIO",
+                13f,
+                "#3B5BDB",
+                true
+            ),
+            LinearLayout.LayoutParams(0, -2, 1f)
+        )
+
+        contenedorHorario.addView(
+            crearTextoTurno(
+                "${formatearHoraAMPM(turno.hora_inicio)} - " +
+                        formatearHoraAMPM(turno.hora_fin),
+                14f,
+                "#3B5BDB",
+                true
+            )
+        )
+
+        tarjeta.addView(contenedorHorario.apply {
+            val parametros = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
+            parametros.topMargin = dp(14)
+            layoutParams = parametros
+        })
 
-        parametros.setMargins(
-            0,
-            0,
-            0,
-            12
-        )
-
-        contenedor.layoutParams =
-            parametros
-
-        val tvNombre =
-            TextView(
-                requireContext()
-            )
-
-        tvNombre.text =
-            turno.nombre
-
-        tvNombre.textSize =
-            16f
-
-        tvNombre.setTextColor(
-            Color.parseColor(
-                "#202124"
-            )
-        )
-
-        tvNombre.setTypeface(
-            null,
-            android.graphics.Typeface.BOLD
-        )
-
-        val tvFecha =
-            TextView(
-                requireContext()
-            )
-
-        tvFecha.text =
-            "📅 ${formatearFecha(
-                asignacion.fecha
-            )}"
-
-        tvFecha.textSize =
-            14f
-
-        tvFecha.setTextColor(
-            Color.parseColor(
-                "#4B5563"
-            )
-        )
-
-        val tvHorario =
-            TextView(
-                requireContext()
-            )
-
-        tvHorario.text =
-            "🕐 ${formatearHora(
-                turno.hora_inicio
-            )} - ${
-                formatearHora(
-                    turno.hora_fin
-                )
-            }"
-
-        tvHorario.textSize =
-            14f
-
-        tvHorario.setTextColor(
-            Color.parseColor(
-                "#4B5563"
-            )
-        )
-
-        val tvDescripcion =
-            TextView(
-                requireContext()
-            )
-
-        tvDescripcion.text =
-            turno.descripcion
-
-        tvDescripcion.textSize =
-            13f
-
-        tvDescripcion.setTextColor(
-            Color.parseColor(
-                "#6B7280"
-            )
-        )
-
-        val tvEstado =
-            TextView(
-                requireContext()
-            )
-
-        tvEstado.text =
-            "Estado: ${asignacion.estado}"
-
-        tvEstado.textSize =
-            13f
-
-        tvEstado.setTextColor(
-            Color.parseColor(
-                "#3B5DBB"
-            )
-        )
-
-        tvEstado.setTypeface(
-            null,
-            android.graphics.Typeface.BOLD
-        )
-
-        contenedor.addView(
-            tvNombre
-        )
-
-        contenedor.addView(
-            tvFecha
-        )
-
-        contenedor.addView(
-            tvHorario
-        )
-
-        contenedor.addView(
-            tvDescripcion
-        )
-
-        contenedor.addView(
-            tvEstado
-        )
-
-        return contenedor
+        return tarjeta
     }
+
+
+
+    private fun crearTextoTurno(
+        texto: String,
+        tamano: Float,
+        color: String,
+        negrita: Boolean
+    ): TextView {
+
+        return TextView(requireContext()).apply {
+            text = texto
+            textSize = tamano
+            setTextColor(Color.parseColor(color))
+
+            if (negrita) {
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            }
+        }
+    }
+
+    private fun dp(valor: Int): Int {
+        return (valor * resources.displayMetrics.density).toInt()
+    }
+
 
     // =========================================================
     // SIN TURNOS
     // =========================================================
 
-
-    // se portege
-    // ounque se ejecute la vista esta destruida, es mejor o mas conveniente protegerla
-    // para asi evitar accesos accidentales al binding
     private fun mostrarSinTurnos() {
+
         val safeBinding = _binding ?: return
 
         safeBinding.containerTurnos.removeAllViews()
 
-        safeBinding.tvSinTurnos.visibility = View.VISIBLE
+        safeBinding.tvSinTurnos.visibility =
+            View.VISIBLE
 
         safeBinding.containerTurnos.addView(
             safeBinding.tvSinTurnos
@@ -707,17 +1081,13 @@ class VerificacionLlegadaFragment : Fragment() {
                 )
 
             val fechaConvertida =
-                formatoEntrada.parse(
-                    fecha
-                )
+                formatoEntrada.parse(fecha)
 
             formatoSalida.format(
                 fechaConvertida!!
             )
 
-        } catch (
-            e: Exception
-        ) {
+        } catch (e: Exception) {
 
             fecha
         }
@@ -750,61 +1120,96 @@ class VerificacionLlegadaFragment : Fragment() {
                 )
 
             val horaConvertida =
-                formatoEntrada.parse(
-                    hora
-                )
+                formatoEntrada.parse(hora)
 
             formatoSalida.format(
                 horaConvertida!!
             )
 
-        } catch (
-            e: Exception
-        ) {
+        } catch (e: Exception) {
 
-            hora
-                .take(5)
+            hora.take(5)
         }
     }
 
     // =========================================================
-    // BOTÓN CONTINUAR
-    // =========================================================
+// FORMATO DE HORA AM / PM
+// =========================================================
 
-    private fun configurarBotonContinuar() {
+    private fun formatearHoraAMPM(
+        hora: String?
+    ): String {
 
-        binding.btnContinuarTemporal.setOnClickListener {
+        if (hora.isNullOrBlank()) {
+            return "Sin turno programado"
+        }
 
-            /*
-             * Flujo del cuidador:
-             *
-             * Login
-             *    ↓
-             * Verificación de llegada
-             *    ↓
-             * PacientesListFragment
-             *    ↓
-             * HomeFragment
-             *
-             * En esta pantalla todavía NO mostramos
-             * el BottomNavigation.
-             */
+        return try {
 
-            parentFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.fragmentContainer,
-                    PacientesListFragment()
+            val formatoEntrada = SimpleDateFormat(
+                "HH:mm:ss",
+                Locale.getDefault()
+            )
+
+            val formatoSalida = SimpleDateFormat(
+                "h:mm a",
+                Locale.US
+            )
+
+            val horaConvertida =
+                formatoEntrada.parse(hora)
+
+            formatoSalida.format(
+                horaConvertida!!
+            )
+
+        } catch (e: Exception) {
+
+            try {
+
+                val formatoEntrada = SimpleDateFormat(
+                    "HH:mm",
+                    Locale.getDefault()
                 )
-                .commit()
+
+                val formatoSalida = SimpleDateFormat(
+                    "h:mm a",
+                    Locale.US
+                )
+
+                formatoSalida.format(
+                    formatoEntrada.parse(hora)!!
+                )
+
+            } catch (e: Exception) {
+
+                "Sin turno programado"
+            }
         }
     }
 
     // =========================================================
-    // PERMISOS DE UBICACIÓN
+    // VERIFICAR PERMISO
     // =========================================================
 
     private fun verificarPermisoUbicacion() {
+
+        if (tienePermisoUbicacion()) {
+
+            iniciarActualizacionesUbicacion()
+
+        } else {
+
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    private fun tienePermisoUbicacion(): Boolean {
 
         val permisoPreciso =
             ContextCompat.checkSelfPermission(
@@ -818,106 +1223,185 @@ class VerificacionLlegadaFragment : Fragment() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
 
-        if (
-            permisoPreciso ||
-            permisoAproximado
-        ) {
-
-            obtenerUbicacion()
-
-        } else {
-
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
+        return permisoPreciso || permisoAproximado
     }
 
     // =========================================================
-    // OBTENER UBICACIÓN
+    // ACTUALIZACIÓN AUTOMÁTICA GPS
     // =========================================================
 
     @SuppressLint("MissingPermission")
-    private fun obtenerUbicacion() {
+    private fun iniciarActualizacionesUbicacion() {
 
-        val currentBinding =
-            _binding ?: return
+        if (_binding == null) return
 
-        currentBinding.tvEsperandoUbicacion.text =
-            "Obteniendo ubicación..."
+        if (!tienePermisoUbicacion()) return
 
-        val cancellationTokenSource =
-            CancellationTokenSource()
+        if (actualizacionesUbicacionActivas) return
 
-        fusedLocationClient
-            .getCurrentLocation(
-                Priority.PRIORITY_HIGH_ACCURACY,
-                cancellationTokenSource.token
-            )
-            .addOnSuccessListener { location ->
+        if (!::locationCallback.isInitialized) {
 
-                val safeBinding =
-                    _binding
-                        ?: return@addOnSuccessListener
+            locationCallback = object : LocationCallback() {
 
-                if (location != null) {
+                override fun onLocationResult(
+                    resultado: LocationResult
+                ) {
 
-                    val latitud =
-                        location.latitude
+                    val ubicacion =
+                        resultado.lastLocation ?: return
 
-                    val longitud =
-                        location.longitude
-
-                    val puntoActual =
-                        GeoPoint(
-                            latitud,
-                            longitud
-                        )
-
-                    safeBinding.mapa.controller.setZoom(
-                        17.0
+                    actualizarVerificacionLlegada(
+                        ubicacion
                     )
-
-                    safeBinding.mapa.controller.setCenter(
-                        puntoActual
-                    )
-
-                    safeBinding.tvEsperandoUbicacion.visibility =
-                        View.GONE
-
-                    safeBinding.tvEstadoLlegada.text =
-                        "Ubicación obtenida correctamente"
-
-                    safeBinding.tvDistancia.text =
-                        "Lat: %.5f\nLon: %.5f".format(
-                            latitud,
-                            longitud
-                        )
-
-                } else {
-
-                    safeBinding.tvEsperandoUbicacion.text =
-                        "No se pudo obtener la ubicación"
-
-                    safeBinding.tvEstadoLlegada.text =
-                        "Intenta activar el GPS"
                 }
             }
-            .addOnFailureListener {
+        }
 
-                val safeBinding =
-                    _binding
-                        ?: return@addOnFailureListener
+        val solicitudUbicacion =
+            LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                2000L
+            )
+                .setMinUpdateIntervalMillis(1500L)
+                .build()
 
-                safeBinding.tvEsperandoUbicacion.text =
-                    "Error al obtener ubicación"
+        fusedLocationClient.requestLocationUpdates(
+            solicitudUbicacion,
+            locationCallback,
+            Looper.getMainLooper()
+        )
 
-                safeBinding.tvEstadoLlegada.text =
-                    "Verifica que el GPS esté activado"
-            }
+        actualizacionesUbicacionActivas = true
+
+        binding.tvEsperandoUbicacion.visibility =
+            View.VISIBLE
+
+        binding.tvEsperandoUbicacion.text =
+            "Obteniendo ubicación GPS..."
+    }
+
+    private fun detenerActualizacionesUbicacion() {
+
+        if (!actualizacionesUbicacionActivas) return
+
+        if (::locationCallback.isInitialized) {
+
+            fusedLocationClient.removeLocationUpdates(
+                locationCallback
+            )
+        }
+
+        actualizacionesUbicacionActivas = false
+    }
+
+    // =========================================================
+    // CALCULAR DISTANCIA Y VERIFICAR LLEGADA
+    // =========================================================
+
+    private fun actualizarVerificacionLlegada(
+        ubicacion: Location
+    ) {
+
+        val safeBinding = _binding ?: return
+
+        if (navegacionRealizada) return
+
+        val puntoActual = GeoPoint(
+            ubicacion.latitude,
+            ubicacion.longitude
+        )
+
+        // Coordenadas del destino
+        val puntoDestino = Location("destino").apply {
+
+            latitude = latitudDestino
+            longitude = longitudDestino
+        }
+
+        // Distancia real en metros
+        val distancia =
+            ubicacion.distanceTo(puntoDestino)
+
+        // Actualizar ubicación del usuario en el mapa
+        if (::locationOverlay.isInitialized) {
+
+            locationOverlay.onLocationChanged(
+                ubicacion,
+                null
+            )
+
+            binding.mapa.invalidate()
+        }
+
+        // Centrar mapa la primera vez
+        if (!ubicacionInicializada) {
+
+            safeBinding.mapa.controller.setZoom(
+                18.0
+            )
+
+            safeBinding.mapa.controller.setCenter(
+                puntoActual
+            )
+
+            ubicacionInicializada = true
+        }
+
+        // Mostrar distancia
+        safeBinding.tvDistancia.text =
+            String.format(
+                Locale.getDefault(),
+                "Distancia: %.1f metros",
+                distancia
+            )
+
+        // -----------------------------------------------------
+        // DENTRO DEL RADIO
+        // -----------------------------------------------------
+
+        if (distancia <= radioPermitido) {
+
+            safeBinding.tvEstadoLlegada.text =
+                "Llegada verificada"
+
+            safeBinding.tvEsperandoUbicacion.visibility =
+                View.GONE
+
+            navegacionRealizada = true
+
+            detenerActualizacionesUbicacion()
+
+            safeBinding.mapa.invalidate()
+
+
+            // Mostrar pantalla de bienvenida de la sede
+            parentFragmentManager
+                .beginTransaction()
+                .setCustomAnimations(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+                )
+                .replace(
+                    R.id.fragmentContainer,
+                    BienvenidaSedeCuidadorFragment()
+                )
+                .commit()
+
+
+        } else {
+
+            // -------------------------------------------------
+            // FUERA DEL RADIO
+            // -------------------------------------------------
+
+            safeBinding.tvEstadoLlegada.text =
+                "Fuera del área permitida"
+
+            safeBinding.tvEsperandoUbicacion.visibility =
+                View.GONE
+        }
+
+        safeBinding.mapa.invalidate()
     }
 
     // =========================================================
@@ -926,12 +1410,18 @@ class VerificacionLlegadaFragment : Fragment() {
 
     override fun onDestroyView() {
 
-        if (
-            ::locationOverlay.isInitialized
-        ) {
+        detenerActualizacionesUbicacion()
+
+        if (::locationOverlay.isInitialized) {
 
             locationOverlay.disableMyLocation()
         }
+
+        _binding?.mapa?.overlays?.clear()
+
+        marcadorDestino = null
+        circuloGeocerca = null
+
         _binding = null
 
         super.onDestroyView()

@@ -27,6 +27,11 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.etCorreo.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                binding.etCorreo.clearFocus()
+            }
+        }
 
         // Mostrar y ocultar contraseña
         binding.btnMostrarContrasena.setOnClickListener {
