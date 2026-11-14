@@ -103,7 +103,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="1dp"
-            android:text="Cuidadora Asignada"
+            android:text="Cuidador Asignado/a"
             android:textColor="#DDE5FF"
             android:textSize="13sp" />
 

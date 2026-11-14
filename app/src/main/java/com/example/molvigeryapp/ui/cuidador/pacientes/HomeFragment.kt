@@ -153,7 +153,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         configurarExpansionMedicamentos()
         configurarBotonExitTurno()
         iniciarRevisionAutomaticaTurno()
-
+        cargarNombreCuidador()
     }
 
     override fun onPause() {
@@ -195,6 +195,62 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 )
                 .addToBackStack("notificaciones_cuidador")
                 .commit()
+        }
+    }
+
+    // =====================================================
+    // SALUDO DINÁMICO DEL CUIDADOR
+    // =====================================================
+
+    private fun cargarNombreCuidador() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            try {
+                val preferencias = requireContext()
+                    .getSharedPreferences("SESION", Context.MODE_PRIVATE)
+
+                val idUsuario = preferencias.getInt("ID_USUARIO", -1)
+
+                if (idUsuario <= 0) {
+                    binding.tvUserWelcome.text = "Hola"
+                    return@launch
+                }
+
+                val repository = PacienteRepository()
+                val usuario = repository.obtenerUsuarioPorId(idUsuario)
+
+                if (usuario != null) {
+
+                    val nombre = usuario.nombres
+                        .trim()
+                        .split("\\s+".toRegex())
+                        .firstOrNull()
+                        .orEmpty()
+
+                    binding.tvUserWelcome.text =
+                        if (nombre.isNotEmpty()) "Hola, $nombre"
+                        else "Hola"
+
+                    Log.d(
+                        "HOME_SALUDO",
+                        "Saludo cargado para: ${usuario.nombres}"
+                    )
+
+                } else {
+                    binding.tvUserWelcome.text = "Hola"
+                }
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "HOME_SALUDO",
+                    "Error cargando nombre del cuidador",
+                    e
+                )
+
+                binding.tvUserWelcome.text = "Hola"
+            }
         }
     }
 

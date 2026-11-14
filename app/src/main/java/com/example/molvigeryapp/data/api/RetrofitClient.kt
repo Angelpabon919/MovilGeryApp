@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    private const val BASE_URL =
+    const val BASE_URL =
         "https://geriapp-backend.onrender.com/api/"
 
     private val authInterceptor = Interceptor { chain ->

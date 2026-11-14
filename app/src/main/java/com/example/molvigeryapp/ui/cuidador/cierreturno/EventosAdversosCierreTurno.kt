@@ -1,17 +1,15 @@
 package com.example.molvigeryapp.ui.cuidador.cierreturno
 
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.molvigeryapp.R
@@ -20,8 +18,17 @@ import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.EventoAdverso
 import com.example.molvigeryapp.data.model.ImagenEventoAdverso
 import com.example.molvigeryapp.data.model.TipoEmergencia
+import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.databinding.FragmentEventosAdversosCierreTurnoBinding
+import com.example.molvigeryapp.databinding.ItemEventoAdversoCierreBinding
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class EventosAdversosCierreTurnoFragment : Fragment(
     R.layout.fragment_eventos_adversos_cierre_turno
@@ -43,6 +50,7 @@ class EventosAdversosCierreTurnoFragment : Fragment(
             }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -63,8 +71,10 @@ class EventosAdversosCierreTurnoFragment : Fragment(
         cargarEventosAdversos()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun cargarEventosAdversos() {
         viewLifecycleOwner.lifecycleScope.launch {
+
             binding.progresoEventosCierre.visibility = View.VISIBLE
             binding.tvEstadoEventosCierre.visibility = View.GONE
             binding.contenedorEventosCierre.removeAllViews()
@@ -72,7 +82,7 @@ class EventosAdversosCierreTurnoFragment : Fragment(
             try {
                 val api = RetrofitClient.apiService
 
-                // Buscar la asignación del turno seleccionado.
+                // 1. Buscar la asignación del turno.
                 val asignaciones = api.getAsignacionesTurno()
 
                 val asignacion = asignaciones.firstOrNull {
@@ -84,8 +94,12 @@ class EventosAdversosCierreTurnoFragment : Fragment(
                     return@launch
                 }
 
+                // 2. Validar el cuidador de la sesión.
                 val preferencias = requireContext()
-                    .getSharedPreferences("SESION", android.content.Context.MODE_PRIVATE)
+                    .getSharedPreferences(
+                        "SESION",
+                        android.content.Context.MODE_PRIVATE
+                    )
 
                 val idUsuarioSesion =
                     preferencias.getInt("ID_USUARIO", -1)
@@ -99,9 +113,10 @@ class EventosAdversosCierreTurnoFragment : Fragment(
                     return@launch
                 }
 
+                // 3. Obtener la fecha del turno.
                 val fechaTurno = asignacion.fecha?.take(10)
 
-                // Consultar las bitácoras del cuidador para la fecha del turno.
+                // 4. Consultar las bitácoras del cuidador.
                 val bitacoras = api.getBitacoras().filter { bitacora ->
                     bitacora.idUsuario == idCuidador &&
                             fechaDe(bitacora.fechaHora) == fechaTurno
@@ -114,10 +129,12 @@ class EventosAdversosCierreTurnoFragment : Fragment(
                     return@launch
                 }
 
+                // 5. Obtener los identificadores de las bitácoras.
                 val idsBitacoras = bitacoras
                     .mapNotNull { it.idBitacora }
                     .toSet()
 
+                // 6. Consultar los eventos asociados a esas bitácoras.
                 val eventos = api.getEventosAdversos().filter { evento ->
                     evento.idBitacora != null &&
                             evento.idBitacora in idsBitacoras
@@ -130,17 +147,22 @@ class EventosAdversosCierreTurnoFragment : Fragment(
                     return@launch
                 }
 
+                // 7. Consultar información complementaria.
                 val tiposEmergencia = api.getTiposEmergencia()
                 val imagenes = api.getImagenesEventoAdverso()
+                val pacientes = api.getPacientes()
 
+                // 8. Mostrar los eventos en las tarjetas XML.
                 mostrarEventos(
                     eventos = eventos,
                     bitacoras = bitacoras,
                     tiposEmergencia = tiposEmergencia,
-                    imagenes = imagenes
+                    imagenes = imagenes,
+                    pacientes = pacientes
                 )
 
             } catch (e: Exception) {
+
                 mostrarEstado(
                     "No fue posible cargar los eventos. Verifica tu conexión e inténtalo nuevamente."
                 )
@@ -159,36 +181,63 @@ class EventosAdversosCierreTurnoFragment : Fragment(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun mostrarEventos(
         eventos: List<EventoAdverso>,
         bitacoras: List<Bitacora>,
         tiposEmergencia: List<TipoEmergencia>,
-        imagenes: List<ImagenEventoAdverso>
+        imagenes: List<ImagenEventoAdverso>,
+        pacientes: List<Paciente>
     ) {
+
         binding.contenedorEventosCierre.removeAllViews()
         binding.tvEstadoEventosCierre.visibility = View.GONE
 
+        // Relacionar bitácoras por identificador.
         val bitacorasPorId = bitacoras
             .mapNotNull { bitacora ->
                 bitacora.idBitacora?.let { it to bitacora }
             }
             .toMap()
 
+        // Relacionar tipos de emergencia por identificador.
         val tiposPorId = tiposEmergencia
             .mapNotNull { tipo ->
                 tipo.idTipoEmergencia?.let { it to tipo }
             }
             .toMap()
 
+        // Relacionar pacientes por identificador.
+        val pacientesPorId = pacientes
+            .mapNotNull { paciente ->
+                paciente.idPaciente?.let { it to paciente }
+            }
+            .toMap()
+
         eventos.forEach { evento ->
+
+            // Buscar la bitácora relacionada.
             val bitacora = evento.idBitacora?.let {
                 bitacorasPorId[it]
             }
 
+            // Buscar el tipo de emergencia.
             val tipo = evento.idTipoEmergencia?.let {
                 tiposPorId[it]
             }
 
+            // Buscar el paciente.
+            val paciente = bitacora?.idPaciente?.let {
+                pacientesPorId[it]
+            }
+
+            val nombrePaciente = paciente?.let {
+                "${it.nombre} ${it.apellido}".trim()
+            }?.takeIf {
+                it.isNotBlank()
+            } ?: "No identificado"
+
+            // Identificar el evento para buscar sus imágenes.
             val idEvento = evento.idEventoAdverso
                 ?: evento.idEvento?.toIntOrNull()
 
@@ -197,103 +246,75 @@ class EventosAdversosCierreTurnoFragment : Fragment(
                         imagen.idEventoAdverso == idEvento
             }
 
-            val tarjeta = crearTarjeta()
-            tarjeta.addView(
-                crearTexto(
-                    "Evento adverso",
-                    18f,
-                    "#2459C4",
-                    negrita = true
-                )
+            // Inflar la tarjeta XML.
+            val itemBinding = ItemEventoAdversoCierreBinding.inflate(
+                layoutInflater,
+                binding.contenedorEventosCierre,
+                false
             )
 
-            tarjeta.addView(
-                crearTexto(
-                    "Fecha: ${evento.fechaHora.ifBlank { "No disponible" }}",
-                    13f,
-                    "#64748B"
-                )
-            )
+            // Fecha del evento en horario colombiano.
+            itemBinding.tvFechaEvento.text =
+                "Fecha: ${formatearFechaColombia(evento.fechaHora)}"
 
-            tarjeta.addView(espacio(10))
+            // Descripción del evento.
+            itemBinding.tvDescripcionEvento.text =
+                evento.descripcion.ifBlank {
+                    "Sin descripción registrada."
+                }
 
-            tarjeta.addView(
-                crearTexto("Descripción", 14f, "#172B4D", true)
-            )
-            tarjeta.addView(
-                crearTexto(
-                    evento.descripcion.ifBlank { "Sin descripción registrada." },
-                    15f,
-                    "#334155"
-                )
-            )
+            // Tipo de emergencia.
+            itemBinding.tvTipoEmergencia.text =
+                tipo?.nombre ?: "Tipo no disponible"
 
-            tarjeta.addView(espacio(10))
-
-            tarjeta.addView(
-                crearTexto("Tipo de emergencia", 14f, "#172B4D", true)
-            )
-            tarjeta.addView(
-                crearTexto(
-                    tipo?.nombre ?: "Tipo no disponible",
-                    15f,
-                    "#334155",
-                    negrita = true
-                )
-            )
-
+            // Nivel de emergencia.
             if (tipo != null) {
-                tarjeta.addView(
-                    crearTexto(
-                        "Nivel: ${tipo.nivel.ifBlank { "No especificado" }}",
-                        14f,
-                        "#B45309",
-                        true
-                    )
-                )
+                itemBinding.tvNivelEmergencia.visibility = View.VISIBLE
+                itemBinding.tvNivelEmergencia.text =
+                    "Nivel: ${tipo.nivel.ifBlank { "No especificado" }}"
 
                 if (tipo.descripcion.isNotBlank()) {
-                    tarjeta.addView(
-                        crearTexto(tipo.descripcion, 14f, "#64748B")
-                    )
+                    itemBinding.tvDescripcionTipo.visibility = View.VISIBLE
+                    itemBinding.tvDescripcionTipo.text = tipo.descripcion
+                } else {
+                    itemBinding.tvDescripcionTipo.visibility = View.GONE
                 }
+            } else {
+                itemBinding.tvNivelEmergencia.visibility = View.GONE
+                itemBinding.tvDescripcionTipo.visibility = View.GONE
             }
 
+            // Acciones realizadas.
             if (evento.accionesRealizadas.isNotBlank()) {
-                tarjeta.addView(espacio(10))
-                tarjeta.addView(
-                    crearTexto("Acciones realizadas", 14f, "#172B4D", true)
-                )
-                tarjeta.addView(
-                    crearTexto(evento.accionesRealizadas, 15f, "#334155")
-                )
+                itemBinding.tvAccionesRealizadas.visibility = View.VISIBLE
+                itemBinding.tvAccionesRealizadas.text =
+                    "Acciones realizadas\n${evento.accionesRealizadas}"
+            } else {
+                itemBinding.tvAccionesRealizadas.visibility = View.GONE
             }
 
-            tarjeta.addView(espacio(10))
-            tarjeta.addView(
-                crearTexto(
-                    "Paciente: ${bitacora?.idPaciente?.let { "ID $it" } ?: "No identificado"}",
-                    14f,
-                    "#475569"
-                )
-            )
+            // Nombre del paciente.
+            itemBinding.tvPacienteEvento.text =
+                "Paciente: $nombrePaciente"
 
-            tarjeta.addView(
-                crearTexto(
-                    "Bitácora: ${bitacora?.idBitacora ?: "No disponible"}",
-                    13f,
-                    "#64748B"
-                )
-            )
+            // Identificador de la bitácora.
+            itemBinding.tvBitacoraEvento.text =
+                "Bitácora: ${bitacora?.idBitacora ?: "No disponible"}"
 
+            // Evidencias fotográficas.
             if (imagenesEvento.isNotEmpty()) {
-                tarjeta.addView(espacio(12))
-                tarjeta.addView(
-                    crearTexto("Evidencias fotográficas", 14f, "#172B4D", true)
-                )
+
+                itemBinding.tvTituloEvidencias.visibility = View.VISIBLE
+                itemBinding.tvTituloEvidencias.text =
+                    "Evidencias fotográficas"
+
+                itemBinding.contenedorEvidenciasEvento.visibility =
+                    View.VISIBLE
 
                 imagenesEvento.forEach { imagen ->
+
                     val boton = Button(requireContext()).apply {
+
                         text = if (imagen.descripcion.isNotBlank()) {
                             "Ver imagen: ${imagen.descripcion}"
                         } else {
@@ -305,38 +326,34 @@ class EventosAdversosCierreTurnoFragment : Fragment(
                         setOnClickListener {
                             abrirImagen(imagen.urlImagen)
                         }
+
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            topMargin = 6
+                        }
                     }
 
-                    tarjeta.addView(boton)
+                    itemBinding.contenedorEvidenciasEvento.addView(boton)
                 }
+
             } else {
-                tarjeta.addView(espacio(8))
-                tarjeta.addView(
-                    crearTexto(
-                        "Sin imágenes adjuntas.",
-                        13f,
-                        "#64748B"
-                    )
-                )
+                itemBinding.tvTituloEvidencias.visibility = View.VISIBLE
+                itemBinding.tvTituloEvidencias.text =
+                    "Sin imágenes adjuntas."
+
+                itemBinding.contenedorEvidenciasEvento.visibility =
+                    View.GONE
             }
 
-            val separador = View(requireContext()).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    1
-                ).apply {
-                    topMargin = 8
-                    bottomMargin = 8
-                }
-                setBackgroundColor(Color.parseColor("#E2E8F0"))
-            }
-
-            binding.contenedorEventosCierre.addView(tarjeta)
-            binding.contenedorEventosCierre.addView(separador)
+            // Agregar la tarjeta al contenedor principal.
+            binding.contenedorEventosCierre.addView(itemBinding.root)
         }
     }
 
     private fun abrirImagen(url: String) {
+
         if (url.isBlank()) {
             Toast.makeText(
                 requireContext(),
@@ -349,6 +366,7 @@ class EventosAdversosCierreTurnoFragment : Fragment(
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             startActivity(intent)
+
         } catch (e: Exception) {
             Toast.makeText(
                 requireContext(),
@@ -366,54 +384,44 @@ class EventosAdversosCierreTurnoFragment : Fragment(
         binding.tvEstadoEventosCierre.visibility = View.VISIBLE
     }
 
-    private fun crearTarjeta(): LinearLayout {
-        return LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(18, 18, 18, 18)
-
-            background = GradientDrawable().apply {
-                setColor(Color.WHITE)
-                cornerRadius = 20f
-                setStroke(1, Color.parseColor("#E2E8F0"))
-            }
-
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = 8
-            }
-        }
-    }
-
-    private fun crearTexto(
-        texto: String,
-        tamano: Float,
-        color: String,
-        negrita: Boolean = false
-    ): TextView {
-        return TextView(requireContext()).apply {
-            text = texto
-            textSize = tamano
-            setTextColor(Color.parseColor(color))
-            if (negrita) {
-                setTypeface(typeface, Typeface.BOLD)
-            }
-            setPadding(0, 3, 0, 3)
-        }
-    }
-
-    private fun espacio(alto: Int): View {
-        return View(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                1,
-                alto
-            )
-        }
-    }
-
+    // Obtener la fecha de la bitácora para compararla con la fecha del turno.
     private fun fechaDe(fechaHora: String): String {
         return fechaHora.take(10)
+    }
+
+    // Convertir la fecha UTC a la zona horaria de Colombia.
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun formatearFechaColombia(fechaHora: String): String {
+
+        if (fechaHora.isBlank()) return "No disponible"
+
+        return try {
+
+            val zonaColombia = ZoneId.of("America/Bogota")
+
+            val fechaInstant = try {
+                Instant.parse(fechaHora)
+            } catch (e: Exception) {
+                try {
+                    OffsetDateTime.parse(fechaHora).toInstant()
+                } catch (e: Exception) {
+                    LocalDateTime.parse(fechaHora)
+                        .toInstant(ZoneOffset.UTC)
+                }
+            }
+
+            val formato = DateTimeFormatter.ofPattern(
+                "dd/MM/yyyy · hh:mm a",
+                Locale("es", "CO")
+            )
+
+            fechaInstant
+                .atZone(zonaColombia)
+                .format(formato)
+
+        } catch (e: Exception) {
+            "Fecha no disponible"
+        }
     }
 
     override fun onDestroyView() {
