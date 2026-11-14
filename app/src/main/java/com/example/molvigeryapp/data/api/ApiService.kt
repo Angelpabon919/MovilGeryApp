@@ -34,12 +34,14 @@ import com.example.molvigeryapp.data.model.ResumenCuidadosTurno
 import okhttp3.ResponseBody
 import okhttp3.MultipartBody
 import retrofit2.http.Part
+import okhttp3.RequestBody
 import com.example.molvigeryapp.data.model.CambiarContrasenaRequest
 import com.example.molvigeryapp.data.model.CierreTurnoRequest
 import com.example.molvigeryapp.data.model.CierreTurnoResponse
 import com.example.molvigeryapp.data.model.RespuestaMensaje
 import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.CrearCitaRequest
+import com.example.molvigeryapp.data.model.DocumentoHistoriaClinica
 import com.example.molvigeryapp.data.model.EventoIa
 import com.example.molvigeryapp.data.model.EvidenciaIa
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
@@ -566,5 +568,36 @@ interface ApiService {
     suspend fun obtenerResumenCuidadosTurno(
         @Path("id_asignacion") idAsignacion: Int
     ): ResumenCuidadosTurno
+
+    // =========================================================
+// DOCUMENTOS DE HISTORIA CLÍNICA
+// =========================================================
+
+    // Consultar documentos de un paciente
+    @GET("documentos_historia_clinica/")
+    suspend fun obtenerDocumentosHistoriaClinica(
+        @Query("id_paciente") idPaciente: Int
+    ): Response<List<DocumentoHistoriaClinica>>
+
+    // Subir documento PDF
+    @Multipart
+    @POST("documentos_historia_clinica/")
+    suspend fun subirDocumentoHistoriaClinica(
+        @Part("id_paciente") idPaciente: RequestBody,
+        @Part archivo: MultipartBody.Part,
+        @Part("descripcion") descripcion: RequestBody
+    ): Response<DocumentoHistoriaClinica>
+
+    // Consultar documento individual
+    @GET("documentos_historia_clinica/{id}/")
+    suspend fun obtenerDocumentoHistoriaClinica(
+        @Path("id") idDocumento: Int
+    ): Response<DocumentoHistoriaClinica>
+
+    // Eliminar documento
+    @DELETE("documentos_historia_clinica/{id}/")
+    suspend fun eliminarDocumentoHistoriaClinica(
+        @Path("id") idDocumento: Int
+    ): Response<ResponseBody>
 
 }
