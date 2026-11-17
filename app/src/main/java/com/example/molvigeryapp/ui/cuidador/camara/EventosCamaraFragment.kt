@@ -201,11 +201,6 @@ class EventosCamaraFragment : Fragment() {
         viewModel.pacientes.observe(viewLifecycleOwner) { pacientes ->
             adapter.actualizarPacientes(pacientes)
         }
-
-        viewModel.camaras.observe(viewLifecycleOwner) { camaras ->
-            adapter.actualizarCamaras(camaras)
-        }
-
         viewModel.habitaciones.observe(viewLifecycleOwner) { habitaciones ->
             adapter.actualizarHabitaciones(habitaciones)
         }

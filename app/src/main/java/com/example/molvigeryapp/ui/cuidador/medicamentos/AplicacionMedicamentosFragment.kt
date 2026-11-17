@@ -11,11 +11,14 @@ import androidx.fragment.app.activityViewModels
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
+import com.example.molvigeryapp.data.model.Inventario
+import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import java.util.Calendar
 
 class AplicacionMedicamentosFragment :
     Fragment(R.layout.fragment_aplicacion_medicamentos) {
@@ -39,8 +42,21 @@ class AplicacionMedicamentosFragment :
     private var elementosPaciente:
             List<ElementoPaciente> = emptyList()
 
+    private var inventariosPaciente:
+            List<Inventario> = emptyList()
+
+    private var inventarioSeleccionado:
+            Inventario? = null
+    private var seguimientosPaciente:
+            List<SeguimientoAdministracionMedicamento> = emptyList()
+
+    private var seguimientoSeleccionado:
+            SeguimientoAdministracionMedicamento? = null
+
     private var mapaNombresMedicamentos:
             Map<Int, String> = emptyMap()
+
+    private var seleccionInicialAlarmaAplicada = false
 
 
     override fun onViewCreated(
@@ -83,6 +99,17 @@ class AplicacionMedicamentosFragment :
         viewModel.cargarElementosDelPaciente(idPaciente)
         viewModel.cargarFormulacionesMedicamentos()
         viewModel.cargarGruposMedicacion()
+        viewModel.cargarAplicacionesMedicamento()
+        viewModel.cargarInventariosPaciente(idPaciente)
+        viewModel.cargarSeguimientosAdministracionMedicamentos(idPaciente)
+        viewModel.seguimientosAdministracionMedicamentos.observe(
+            viewLifecycleOwner
+        ) { seguimientos ->
+
+            seguimientosPaciente = seguimientos ?: emptyList()
+
+            actualizarSeguimientoSeleccionado()
+        }
 
 
         // =====================================================
@@ -101,8 +128,17 @@ class AplicacionMedicamentosFragment :
 
             actualizarSelectorMedicamentos(idPaciente)
         }
+        viewModel.medicamentosManana.observe(viewLifecycleOwner) {
+            actualizarSelectorMedicamentos(idPaciente)
+        }
 
+        viewModel.medicamentosTarde.observe(viewLifecycleOwner) {
+            actualizarSelectorMedicamentos(idPaciente)
+        }
 
+        viewModel.medicamentosNoche.observe(viewLifecycleOwner) {
+            actualizarSelectorMedicamentos(idPaciente)
+        }
         // =====================================================
         // INVENTARIO / ELEMENTOS DEL PACIENTE
         // =====================================================
@@ -116,6 +152,18 @@ class AplicacionMedicamentosFragment :
                     it.idPaciente == idPaciente &&
                             it.idMedicamentos != null
                 } ?: emptyList()
+
+            actualizarElementoSeleccionado()
+        }
+        // =====================================================
+// INVENTARIOS DEL PACIENTE
+// =====================================================
+
+        viewModel.inventariosPaciente.observe(
+            viewLifecycleOwner
+        ) { inventarios ->
+
+            inventariosPaciente = inventarios ?: emptyList()
 
             actualizarElementoSeleccionado()
         }
@@ -156,7 +204,10 @@ class AplicacionMedicamentosFragment :
                 formulacionSeleccionada =
                     medicamentosPendientes[position]
 
+                actualizarSeguimientoSeleccionado()
+
                 actualizarElementoSeleccionado()
+
             }
         }
 
@@ -184,6 +235,9 @@ class AplicacionMedicamentosFragment :
                 etCantidadAplicada.text?.clear()
                 etObservaciones.text?.clear()
                 cbConfirmarAdministracion.isChecked = false
+                viewModel.cargarSeguimientosAdministracionMedicamentos(
+                    idPaciente
+                )
 
             }?.onFailure { error ->
 
@@ -286,6 +340,41 @@ class AplicacionMedicamentosFragment :
 
         spinnerMedicamento.setAdapter(adapter)
 
+        // Seleccionar automáticamente el medicamento de la alarma,
+        // solamente una vez.
+        val idFormulacionAlarma =
+            arguments?.getInt("ID_FORMULACION_ALARMA", -1) ?: -1
+        if (idFormulacionAlarma > 0)
+
+
+            if (!seleccionInicialAlarmaAplicada) {
+
+                val indiceAlarma = medicamentosPendientes.indexOfFirst {
+                    it.idFormulacion == idFormulacionAlarma
+                }
+
+                if (indiceAlarma >= 0) {
+
+                    formulacionSeleccionada = medicamentosPendientes[indiceAlarma]
+
+                    spinnerMedicamento.setText(
+                        nombres[indiceAlarma],
+                        false
+                    )
+
+                    seleccionInicialAlarmaAplicada = true
+
+                    actualizarSeguimientoSeleccionado()
+                    actualizarElementoSeleccionado()
+                    android.util.Log.d(
+                        "ALARMA_MEDICAMENTO",
+                        "Medicamento seleccionado: formulación=$idFormulacionAlarma"
+                    )
+
+                }
+            }
+        return
+
 
         // Si solo hay un medicamento,
         // lo seleccionamos automáticamente.
@@ -298,10 +387,142 @@ class AplicacionMedicamentosFragment :
                 nombres.first(),
                 false
             )
-
+            actualizarSeguimientoSeleccionado()
             actualizarElementoSeleccionado()
         }
     }
+
+    private fun actualizarSeguimientoSeleccionado() {
+
+        val formulacion = formulacionSeleccionada
+
+        val idFormulacion = formulacion?.idFormulacion
+
+        if (idFormulacion == null || idFormulacion <= 0) {
+            seguimientoSeleccionado = null
+            return
+        }
+
+        val horaProgramada = obtenerHoraYMinuto(
+            formulacion.horaAdministrada
+        )
+
+        if (horaProgramada == null) {
+            seguimientoSeleccionado = null
+            return
+        }
+
+        val (hora, minuto) = horaProgramada
+
+        val hoy = Calendar.getInstance()
+
+        val coincidencias = seguimientosPaciente.filter { seguimiento ->
+
+            if (seguimiento.idFormulacion != idFormulacion) {
+                return@filter false
+            }
+
+            val fechaSeguimiento =
+                seguimiento.fechaHoraProgramada
+                    ?.let { parsearFechaHoraProgramada(it) }
+                    ?: return@filter false
+
+            fechaSeguimiento.get(Calendar.YEAR) == hoy.get(Calendar.YEAR) &&
+                    fechaSeguimiento.get(Calendar.DAY_OF_YEAR) == hoy.get(Calendar.DAY_OF_YEAR) &&
+                    fechaSeguimiento.get(Calendar.HOUR_OF_DAY) == hora &&
+                    fechaSeguimiento.get(Calendar.MINUTE) == minuto
+        }
+
+        seguimientoSeleccionado =
+            coincidencias.firstOrNull {
+                it.estado.equals("PENDIENTE", ignoreCase = true)
+            } ?: coincidencias.firstOrNull()
+
+        android.util.Log.d(
+            "SEGUIMIENTO_SELECCION",
+            "FORMULACION=$idFormulacion | " +
+                    "SEGUIMIENTO=${seguimientoSeleccionado?.idSeguimiento} | " +
+                    "ESTADO=${seguimientoSeleccionado?.estado}"
+        )
+    }
+
+
+    private fun obtenerHoraYMinuto(
+        valor: String?
+    ): Pair<Int, Int>? {
+
+        val texto = valor
+            ?.trim()
+            ?.substringAfterLast("T")
+            ?.substringBefore("Z")
+            ?.substringBefore("+")
+            ?.substringBefore("-")
+            ?: return null
+
+        val partes = texto.split(":")
+
+        val hora = partes.getOrNull(0)?.toIntOrNull()
+            ?: return null
+
+        val minuto = partes.getOrNull(1)
+            ?.take(2)
+            ?.toIntOrNull()
+            ?: return null
+
+        if (hora !in 0..23 || minuto !in 0..59) {
+            return null
+        }
+
+        return hora to minuto
+    }
+
+
+    private fun parsearFechaHoraProgramada(
+        valor: String
+    ): Calendar? {
+
+        val normalizada = valor
+            .trim()
+            .replace(Regex("\\.\\d+"), "")
+
+        val patrones = listOf(
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss"
+        )
+
+        for (patron in patrones) {
+
+            try {
+
+                val formato = java.text.SimpleDateFormat(
+                    patron,
+                    java.util.Locale.US
+                ).apply {
+
+                    isLenient = false
+
+                    if (patron.endsWith("'Z'")) {
+                        timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    }
+                }
+
+                val fecha = formato.parse(normalizada)
+                    ?: continue
+
+                return Calendar.getInstance().apply {
+                    time = fecha
+                }
+
+            } catch (_: Exception) {
+                continue
+            }
+        }
+
+        return null
+    }
+
+
 
 
     // =========================================================
@@ -311,16 +532,74 @@ class AplicacionMedicamentosFragment :
     private fun actualizarElementoSeleccionado() {
 
         val formulacion =
-            formulacionSeleccionada ?: return
+            formulacionSeleccionada
+        if (formulacion == null){
+            inventarioSeleccionado = null
+            elementoSeleccionado = null
+            return
+        }
+        val idPaciente=
+            viewModel.pacienteSeleccionado.value?.idPaciente
+                ?:return
+        val formatoFecha = java.text.SimpleDateFormat(
+            "yyyy-MM-dd",
+            java.util.Locale.US
+        )
+        val hoy = formatoFecha.parse(
+            formatoFecha.format(java.util.Date())
+        )
+        // Buscar inventarios del medicamento seleccionado.
+        val inventariosDisponibles =
+            inventariosPaciente.filter { inventario ->
 
-        elementoSeleccionado =
-            elementosPaciente.find {
-                it.idMedicamentos ==
-                        formulacion.idMedicamentos
+                val vencimiento = try {
+                    inventario.fechaVencimiento
+                        ?.take(10)
+                        ?.let { formatoFecha.parse(it) }
+                } catch (e: Exception) {
+                    null
+                }
+
+                inventario.idPaciente == idPaciente &&
+                        inventario.idMedicamentos ==
+                        formulacion.idMedicamentos &&
+                        inventario.estado == true &&
+                        (inventario.cantidadActual ?: 0) > 0 &&
+                        vencimiento != null &&
+                        hoy != null &&
+                        !vencimiento.before(hoy)
             }
+
+        // Priorizar el lote que vence primero.
+        val inventario = inventariosDisponibles.minByOrNull {
+            formatoFecha.parse(
+                it.fechaVencimiento!!.take(10)
+            )?.time ?: Long.MAX_VALUE
+        }
+
+        inventarioSeleccionado = inventario
+
+        // Encontrar el elemento exacto asociado al inventario.
+        elementoSeleccionado =
+            inventario?.idElemento?.let { idElemento ->
+
+                elementosPaciente.find { elemento ->
+
+                    elemento.idElemento == idElemento &&
+                            elemento.idPaciente == idPaciente &&
+                            elemento.idMedicamentos ==
+                            formulacion.idMedicamentos
+                }
+            }
+
+        android.util.Log.d(
+            "INVENTARIO_SELECCION",
+            "FORMULACION=${formulacion.idFormulacion} | " +
+                    "INVENTARIO=${inventario?.idInventario} | " +
+                    "ELEMENTO=${inventario?.idElemento} | " +
+                    "STOCK=${inventario?.cantidadActual}"
+        )
     }
-
-
     // =========================================================
     // INFORMACIÓN DEL MEDICAMENTO
     // =========================================================
@@ -369,19 +648,19 @@ class AplicacionMedicamentosFragment :
 
 
         val mensaje = """
-Paciente: ${nombrePaciente.trim()}
+    Paciente: ${nombrePaciente.trim()}
 
-Medicamento: $nombreMedicamento
+    Medicamento: $nombreMedicamento
 
-Dosis: ${formulacion.dosis ?: "No registrada"}
+    Dosis: ${formulacion.dosis ?: "No registrada"}
 
-Vía: ${formulacion.via ?: "No registrada"}
+    Vía: ${formulacion.via ?: "No registrada"}
 
-Horario: $hora
+    Horario: $hora
 
-Presentación: ${formulacion.presentacion ?: "No registrada"}
+    Presentación: ${formulacion.presentacion ?: "No registrada"}
 
-Stock disponible: $stock unidades
+    Stock disponible: $stock unidades
         """.trimIndent()
 
 
@@ -400,68 +679,48 @@ Stock disponible: $stock unidades
     private fun obtenerHoraProgramada(
         formulacion: FormulacionMedicamento
     ): String {
+        val horaOriginal = formulacion.horaAdministrada
+            ?.trim()
+            ?.takeIf{it.isNotEmpty()}
+            ?:return "sin horario"
 
-        val grupo =
-            viewModel.gruposMedicacion.value
-                ?.find {
-                    it.idGrupo == formulacion.idGrupo
-                }
-                ?: return "Sin horario"
+        val horaTexto = horaOriginal
+            .substringAfterLast("T")
+            .substringBefore("Z")
+            .substringBefore("+")
+            .substringBefore("-")
 
+        val partes = horaTexto.split(":")
 
-        val horaBase =
-            grupo.horaAdministracion
-                ?.substringBefore(":")
-                ?.toIntOrNull()
-                ?: return "Sin horario"
+        val hora = partes.getOrNull(0)?.toIntOrNull()
+            ?: return "sin horario"
 
+        val minuto = partes.getOrNull(1)
+            ?.take(2)
+            ?.toIntOrNull() ?: 0
 
-        val horaActual =
-            java.util.Calendar.getInstance()
-                .get(java.util.Calendar.HOUR_OF_DAY)
-
-
-        val horaProgramada =
-
-            if (
-                formulacion.idGrupo == 2 &&
-                horaActual == ((horaBase + 12) % 24)
-            ) {
-
-                (horaBase + 12) % 24
-
-            } else {
-
-                horaBase
-            }
-
-
-        return convertirHora12Horas(horaProgramada)
-    }
-
-
-    // =========================================================
-    // CONVERTIR 20 -> 8:00 p. m.
-    // =========================================================
-
-    private fun convertirHora12Horas(
-        hora: Int
-    ): String {
-
-        return when {
-
-            hora == 0 ->
-                "12:00 a. m."
-
-            hora < 12 ->
-                "$hora:00 a. m."
-
-            hora == 12 ->
-                "12:00 p. m."
-
-            else ->
-                "${hora - 12}:00 p. m."
+        if (hora !in 0..23 || minuto !in 0..59) {
+            return "sin horario"
         }
+        return convertirHora12Horas(hora, minuto)
+    }
+    private fun convertirHora12Horas(
+            hora : Int,
+            minuto: Int
+        ):String{
+        val hora12 = when {
+            hora == 0 -> hora -12
+            else -> hora
+        }
+        val periodo = if (hora<12)"a. m." else "p. m."
+
+        return String.format(
+            java.util.Locale.getDefault(),
+            "%d:%02d %s",
+            hora12,
+            minuto,
+            periodo
+        )
     }
 
 
@@ -481,13 +740,29 @@ Stock disponible: $stock unidades
             ).show()
             return
         }
+        // =============================================
+        // VALIDAR INVENTARIO SELECCIONADO
+        // =============================================
+
+        val inventario = inventarioSeleccionado
+
+        if (inventario == null || inventario.estado != true) {
+            Toast.makeText(
+                requireContext(),
+                "No se encontró un inventario disponible",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
 
         val elemento = elementoSeleccionado
 
-        if (elemento == null) {
+        if (elemento == null ||
+                elemento.idElemento != inventario.idElemento
+        ){
             Toast.makeText(
                 requireContext(),
-                "El medicamento no está disponible en el inventario del paciente",
+                "No se encontró el elemento correspondiente al inventario",
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -508,11 +783,16 @@ Stock disponible: $stock unidades
             return
         }
 
-        val stockActual =
-            elemento.cantidadActual
-                ?: elemento.cantidad
-                ?: 0
+        val stockActual = inventarioSeleccionado?.cantidadActual?:0
 
+        android.util.Log.d(
+            "INVENTARIO_DIAGNOSTICO",
+            "ELEMENTO=${elemento.idElemento} | " +
+                    "INVENTARIO=${elemento.idInventario} | " +
+                    "CANTIDAD_ACTUAL=${elemento.cantidadActual} | " +
+                    "CANTIDAD=${elemento.cantidad} | " +
+                    "STOCK_MOSTRADO=$stockActual"
+        )
         if (cantidadAplicada > stockActual) {
             Toast.makeText(
                 requireContext(),
@@ -541,6 +821,26 @@ Stock disponible: $stock unidades
             ).show()
             return
         }
+        val idFormulacion = formulacion.idFormulacion
+        val horaAdministrada = formulacion.horaAdministrada
+
+        if (idFormulacion == null || idFormulacion <= 0) {
+            Toast.makeText(
+                requireContext(),
+                "No se identificó la formulación",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        if (horaAdministrada.isNullOrBlank()) {
+            Toast.makeText(
+                requireContext(),
+                "No se encontró el horario del medicamento",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
 
 
 
@@ -557,6 +857,15 @@ Stock disponible: $stock unidades
 
         val paciente = viewModel.pacienteSeleccionado.value
 
+        if (paciente == null || paciente.idPaciente == null) {
+            Toast.makeText(
+                requireContext(),
+                "No hay paciente seleccionado",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         val nombrePaciente =
             "${paciente?.nombre ?: ""} ${paciente?.apellido ?: ""}".trim()
 
@@ -569,17 +878,94 @@ Stock disponible: $stock unidades
                 ?.toString()
                 ?.trim()
                 ?: ""
+        android.util.Log.d(
+            "INVENTARIO_REGISTRO",
+            "PACIENTE=${paciente.idPaciente} | " +
+                    "MEDICAMENTO=$idMedicamento | " +
+                    "INVENTARIO=${inventario.idInventario} | " +
+                    "ELEMENTO=$idElemento | " +
+                    "STOCK=$stockActual | " +
+                    "CANTIDAD=$cantidadAplicada"
+        )
+        val preferenciasSesion = requireContext()
+            .getSharedPreferences(
+                "SESION",
+                android.content.Context.MODE_PRIVATE
+            )
+
+        val idCuidador = preferenciasSesion.getInt(
+            "ID_USUARIO",
+            -1
+        )
+
+        if (idCuidador <= 0) {
+            Toast.makeText(
+                requireContext(),
+                "No se pudo identificar al cuidador",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        // Obtener el usuario que inició sesión
+        val idUsuarioSesion = requireContext()
+            .getSharedPreferences(
+                "SESION",
+                android.content.Context.MODE_PRIVATE
+            )
+            .getInt("ID_USUARIO", -1)
+
+// Validar que exista una sesión válida
+        if (idUsuarioSesion <= 0) {
+            Toast.makeText(
+                requireContext(),
+                "No se pudo identificar al usuario que realiza la administración",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        val seguimientoActual = seguimientoSeleccionado
+
+        if (
+            seguimientoActual != null &&
+            !seguimientoActual.estado.equals(
+                "PENDIENTE",
+                ignoreCase = true
+            )
+        ) {
+
+            val mensaje = when {
+                seguimientoActual.estado.equals(
+                    "ADMINISTRADO",
+                    ignoreCase = true
+                ) -> "Esta dosis ya fue administrada."
+
+                seguimientoActual.estado.equals(
+                    "NO_ADMINISTRADO",
+                    ignoreCase = true
+                ) -> "Esta dosis ya fue registrada como no administrada."
+
+                else -> "Esta dosis ya tiene un seguimiento cerrado."
+            }
+
+            Toast.makeText(
+                requireContext(),
+                mensaje,
+                Toast.LENGTH_LONG
+            ).show()
+
+            return
+        }
 
         viewModel.registrarAplicacionMedicamento(
             idTratamientoMedicamento = idMedicamento,
-            idUsuario = 1,
+            idUsuario = idCuidador,
 
             dosis = formulacion.dosis ?: "",
             via = formulacion.via ?: "",
 
             observacion = observacion,
 
-            idInventario = elemento.idInventario,
+            idInventario = inventarioSeleccionado!!.idInventario,
             idElementoPaciente = idElemento,
 
             cantidadActual = stockActual,
@@ -589,7 +975,10 @@ Stock disponible: $stock unidades
             nombreMedicamento = nombreMedicamento,
             nombrePaciente = nombrePaciente,
 
-            context = requireContext()
+            context = requireContext(),
+            idFormulacion = idFormulacion,
+            horaAdministrada = horaAdministrada,
+            idSeguimiento = seguimientoActual?.idSeguimiento
         )
     }
 }

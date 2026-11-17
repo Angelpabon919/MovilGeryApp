@@ -13,7 +13,25 @@ data class Inventario(
     val idMedicamentos: Int?,
 
     @SerializedName("id_elemento")
-    val idElemento: Int?
+    val idElemento: Int?,
+
+    @SerializedName("cantidad_actual")
+    val cantidadActual: Int? = null,
+
+    @SerializedName("cantidad_minima")
+    val cantidadMinima: Int? = null,
+
+    @SerializedName("fecha_ultimo_ingreso")
+    val fechaUltimoIngreso: String? = null,
+
+    @SerializedName("fecha_vencimiento")
+    val fechaVencimiento: String? = null,
+
+    @SerializedName("estado")
+    val estado: Boolean? = null
 
 
-)
+
+
+
+    )

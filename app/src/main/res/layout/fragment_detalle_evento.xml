@@ -154,25 +154,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:stretchColumns="1">
-
-                        <!-- ID EVENTO -->
-                        <TableRow android:paddingVertical="12dp">
-                            <TextView
-                                android:text="ID del evento"
-                                android:textColor="#64748B"
-                                android:textSize="13sp"/>
-
-                            <TextView
-                                android:id="@+id/tvIdEventoDetalle"
-                                android:text="--"
-                                android:gravity="end"
-                                android:textStyle="bold"
-                                android:textColor="#334155"
-                                android:textSize="13sp"/>
-                        </TableRow>
-
                         <!-- PACIENTE -->
-                        <TableRow android:paddingVertical="12dp">
+                        <TableRow android:paddingVertical="10dp">
                             <TextView
                                 android:text="Paciente"
                                 android:textColor="#64748B"
@@ -180,6 +163,7 @@
 
                             <TextView
                                 android:id="@+id/tvPacienteDetalle"
+                                android:layout_width="wrap_content"
                                 android:text="--"
                                 android:gravity="end"
                                 android:textStyle="bold"
@@ -188,7 +172,7 @@
                         </TableRow>
 
                         <!-- HABITACIÓN -->
-                        <TableRow android:paddingVertical="12dp">
+                        <TableRow android:paddingVertical="10dp">
                             <TextView
                                 android:text="Habitación"
                                 android:textColor="#64748B"
@@ -203,24 +187,8 @@
                                 android:textSize="13sp"/>
                         </TableRow>
 
-                        <!-- CÁMARA -->
-                        <TableRow android:paddingVertical="12dp">
-                            <TextView
-                                android:text="Cámara"
-                                android:textColor="#64748B"
-                                android:textSize="13sp"/>
-
-                            <TextView
-                                android:id="@+id/tvCamaraDetalle"
-                                android:text="--"
-                                android:gravity="end"
-                                android:textStyle="bold"
-                                android:textColor="#334155"
-                                android:textSize="13sp"/>
-                        </TableRow>
-
                         <!-- FECHA Y HORA -->
-                        <TableRow android:paddingVertical="12dp">
+                        <TableRow android:paddingVertical="10dp">
                             <TextView
                                 android:text="Fecha y hora"
                                 android:textColor="#64748B"
@@ -228,6 +196,7 @@
 
                             <TextView
                                 android:id="@+id/tvFechaHoraDetalle"
+                                android:layout_width="wrap_content"
                                 android:text="--"
                                 android:gravity="end"
                                 android:textStyle="bold"
@@ -264,35 +233,7 @@
                         android:progress="0"
                         android:progressTint="#3B60D9"
                         android:progressBackgroundTint="#E8EDF5"/>
-
-                    <!-- ESTADO -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingVertical="12dp">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Estado"
-                            android:textColor="#64748B"
-                            android:textSize="13sp"/>
-
-                        <TextView
-                            android:id="@+id/tvEstadoDetalle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="--"
-                            android:textStyle="bold"
-                            android:textColor="#059669"
-                            android:textSize="13sp"/>
-                    </LinearLayout>
-
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
 
 

@@ -8,6 +8,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.molvigeryapp.data.model.AplicacionRequest
+import com.example.molvigeryapp.data.model.AplicacionMedicamento
+import com.example.molvigeryapp.data.model.CrearSeguimientoMedicamentoRequest
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
 import com.example.molvigeryapp.data.model.ElementoPaciente
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
@@ -19,8 +21,11 @@ import com.example.molvigeryapp.data.model.NotificacionRequest
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.TipoInsumo
+import com.example.molvigeryapp.data.model.Inventario
+import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class PacienteViewModel(
     private val repository: PacienteRepository
@@ -489,6 +494,7 @@ class PacienteViewModel(
             }
         }
     }
+
     /**
      * Fuerza una nueva consulta de pacientes y asignaciones.
      * No elimina asignaciones ni modifica el estado del turno.
@@ -635,6 +641,15 @@ class PacienteViewModel(
 
     val elementosPaciente: LiveData<List<ElementoPaciente>>
         get() = _elementos
+    // =========================================================
+// INVENTARIO DEL PACIENTE
+// =========================================================
+
+    private val _inventariosPaciente =
+        MutableLiveData<List<Inventario>>(emptyList())
+
+    val inventariosPaciente: LiveData<List<Inventario>>
+        get() = _inventariosPaciente
 
     fun cargarElementosPaciente(idPaciente: Int) {
         viewModelScope.launch {
@@ -654,6 +669,52 @@ class PacienteViewModel(
 
     fun cargarElementosDelPaciente(idPaciente: Int) {
         cargarElementosPaciente(idPaciente)
+    }
+
+    fun cargarInventariosPaciente(idPaciente: Int) {
+        viewModelScope.launch {
+            try {
+
+                val inventarios =
+                    repository.obtenerInventario()
+
+                val inventariosFiltrados =
+                    inventarios.filter {
+                        it.idPaciente == idPaciente
+                    }
+
+                _inventariosPaciente.value =
+                    inventariosFiltrados
+
+                Log.d(
+                    "INVENTARIO_PACIENTE",
+                    "Paciente=$idPaciente | " +
+                            "Inventarios=${inventariosFiltrados.size}"
+                )
+
+                inventariosFiltrados.forEach {
+                    Log.d(
+                        "INVENTARIO_PACIENTE",
+                        "ID=${it.idInventario} | " +
+                                "MEDICAMENTO=${it.idMedicamentos} | " +
+                                "ELEMENTO=${it.idElemento} | " +
+                                "STOCK=${it.cantidadActual} | " +
+                                "VENCIMIENTO=${it.fechaVencimiento}"
+                    )
+                }
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "INVENTARIO_PACIENTE",
+                    "Error al cargar inventarios",
+                    e
+                )
+
+                _inventariosPaciente.value =
+                    emptyList()
+            }
+        }
     }
 
     fun guardarElementoPaciente(elemento: ElementoPaciente) {
@@ -744,6 +805,19 @@ class PacienteViewModel(
     private val _formulacionesMedicamentos =
         MutableLiveData<List<FormulacionMedicamento>>()
 
+    // =========================================================
+// SEGUIMIENTOS DE ADMINISTRACIÓN DE MEDICAMENTOS
+// =========================================================
+
+    private val _seguimientosAdministracionMedicamentos =
+        MutableLiveData<List<SeguimientoAdministracionMedicamento>>(
+            emptyList()
+        )
+
+    val seguimientosAdministracionMedicamentos:
+            LiveData<List<SeguimientoAdministracionMedicamento>>
+        get() = _seguimientosAdministracionMedicamentos
+
     val formulacionesMedicamentos: LiveData<List<FormulacionMedicamento>>
         get() = _formulacionesMedicamentos
 
@@ -755,6 +829,113 @@ class PacienteViewModel(
 
     val medicamentosNoche =
         MutableLiveData<List<FormulacionMedicamento>>()
+
+
+    // =========================================================
+    // APLICACIONES DE MEDICAMENTOS REGISTRADAS
+    // =========================================================
+
+    private val _aplicacionesMedicamentos =
+        MutableLiveData<List<AplicacionMedicamento>>(emptyList())
+
+    val aplicacionesMedicamentos: LiveData<List<AplicacionMedicamento>>
+        get() = _aplicacionesMedicamentos
+
+    fun cargarAplicacionesMedicamento() {
+        viewModelScope.launch {
+            try {
+                val resultado =
+                    repository.obtenerAplicacionesMedicamento()
+
+                resultado.onSuccess { aplicaciones ->
+
+                    _aplicacionesMedicamentos.value = aplicaciones
+
+                    Log.d(
+                        "APLICACIONES_MEDICAMENTO",
+                        "Total de aplicaciones recibidas: ${aplicaciones.size}"
+                    )
+
+                    aplicaciones.forEach { aplicacion ->
+                        Log.d(
+                            "APLICACIONES_MEDICAMENTO",
+                            "ID=${aplicacion.idAplicacion} | " +
+                                    "MEDICAMENTO=${aplicacion.idMedicamentoMedicamento} | " +
+                                    "INVENTARIO=${aplicacion.idInventario} | " +
+                                    "FECHA=${aplicacion.fechaHora} | " +
+                                    "ESTADO=${aplicacion.estado}"
+                        )
+                    }
+                }
+
+                resultado.onFailure { error ->
+                    Log.e(
+                        "APLICACIONES_MEDICAMENTO",
+                        "No se pudieron cargar las aplicaciones",
+                        error
+                    )
+                }
+
+            } catch (e: Exception) {
+                Log.e(
+                    "APLICACIONES_MEDICAMENTO",
+                    "Error inesperado al consultar aplicaciones",
+                    e
+                )
+            }
+        }
+    }
+
+    fun cargarSeguimientosAdministracionMedicamentos(
+        idPaciente: Int
+    ) {
+        if (idPaciente <= 0) return
+
+        viewModelScope.launch {
+            try {
+                val resultado =
+                    repository.obtenerSeguimientosMedicamento(idPaciente)
+
+                resultado.onSuccess { seguimientos ->
+
+                    _seguimientosAdministracionMedicamentos.value =
+                        seguimientos
+
+                    Log.d(
+                        "SEGUIMIENTO_MEDICAMENTO",
+                        "Paciente=$idPaciente | " +
+                                "Total=${seguimientos.size}"
+                    )
+
+                    seguimientos.forEach { seguimiento ->
+                        Log.d(
+                            "SEGUIMIENTO_MEDICAMENTO",
+                            "ID=${seguimiento.idSeguimiento} | " +
+                                    "FORMULACION=${seguimiento.idFormulacion} | " +
+                                    "FECHA=${seguimiento.fechaHoraProgramada} | " +
+                                    "ESTADO=${seguimiento.estado}"
+                        )
+                    }
+                }
+
+                resultado.onFailure { error ->
+                    Log.e(
+                        "SEGUIMIENTO_MEDICAMENTO",
+                        "Error al cargar seguimientos del paciente",
+                        error
+                    )
+                }
+
+            } catch (e: Exception) {
+                Log.e(
+                    "SEGUIMIENTO_MEDICAMENTO",
+                    "Error inesperado al consultar seguimientos",
+                    e
+                )
+            }
+        }
+    }
+
 
     fun obtenerMedicamentosPaciente(
         idPaciente: Int
@@ -797,6 +978,17 @@ class PacienteViewModel(
                 val lista =
                     repository.getFormulacionesMedicamentos()
                         ?: emptyList()
+                Log.d(
+                    "FORMULACIONES_MEDICAMENTOS",
+                    lista.joinToString(" | ") {
+                        "ID=${it.idFormulacion}, " +
+                                "GRUPO=${it.idGrupo}, " +
+                                "HORA=${it.horaAdministrada}, " +
+                                "FECHA=${it.fecha}, " +
+                                "ADMINISTRADO=${it.actualAdministrado}"
+                    }
+                )
+
 
                 val grupos =
                     _gruposMedicacion.value ?: emptyList()
@@ -823,6 +1015,19 @@ class PacienteViewModel(
             try {
                 _gruposMedicacion.value =
                     repository.getGrupoMedicacion() ?: emptyList()
+                val grupos = repository.getGrupoMedicacion() ?: emptyList()
+
+                _gruposMedicacion.value = grupos
+
+                Log.d(
+                    "GRUPOS_MEDICACION",
+                    grupos.joinToString(" | ") {
+                        "ID=${it.idGrupo}, " +
+                                "NOMBRE=${it.nombre}, " +
+                                "HORA=${it.horaAdministracion}, " +
+                                "ESTADO=${it.estado}"
+                    }
+                )
             } catch (e: Exception) {
                 Log.e(
                     "GRUPO_MEDICACION_ERROR",
@@ -906,7 +1111,10 @@ class PacienteViewModel(
         idEncargado: Int = 1,
         nombreMedicamento: String = "Medicamento",
         nombrePaciente: String = "Paciente",
-        context: Context
+        context: Context,
+        idSeguimiento: Int? = null,
+        idFormulacion: Int? = null,
+        horaAdministrada: String? = null
     ) {
         viewModelScope.launch {
             try {
@@ -921,32 +1129,77 @@ class PacienteViewModel(
                     _pacienteSeleccionado.value?.idPaciente
                         ?: return@launch
 
-                val listaInventario =
-                    repository.obtenerInventario()
+// ================================================
+// VALIDAR EL INVENTARIO SELECCIONADO EN EL FRAGMENT
+// ================================================
 
-                val inventarioEncontrado =
-                    listaInventario.find { inventario ->
-                        inventario.idPaciente == idPaciente &&
-                                (
-                                        inventario.idMedicamentos ==
-                                                idTratamientoMedicamento ||
-                                                inventario.idElemento ==
-                                                idElementoPaciente
-                                        )
-                    }
+                val idInventarioSeleccionado = idInventario
 
-                val idInventarioValido =
-                    inventarioEncontrado?.idInventario
-
-                if (idInventarioValido == null) {
+                if (idInventarioSeleccionado == null) {
                     _registroAplicacionState.value =
                         Result.failure(
                             Exception(
-                                "No se encontró el inventario correcto para este medicamento"
+                                "No se recibió el inventario seleccionado"
                             )
                         )
                     return@launch
                 }
+
+// Consultar los inventarios disponibles.
+                val listaInventario =
+                    repository.obtenerInventario()
+
+// buscar por el ID seleccionado.
+                val inventarioEncontrado =
+                    listaInventario.firstOrNull {
+                        it.idInventario == idInventarioSeleccionado
+                    }
+
+                if (inventarioEncontrado == null) {
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception(
+                                "El inventario seleccionado ya no existe"
+                            )
+                        )
+                    return@launch
+                }
+
+                // Comprobar que corresponda al paciente,
+                // medicamento y elemento seleccionados.
+                val inventarioValido =
+                    inventarioEncontrado.idPaciente == idPaciente &&
+                            inventarioEncontrado.idMedicamentos == idTratamientoMedicamento &&
+                            inventarioEncontrado.idElemento == idElementoPaciente &&
+                            inventarioEncontrado.estado == true
+
+                if (!inventarioValido) {
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception(
+                                "El inventario seleccionado no corresponde al medicamento del paciente"
+                            )
+                        )
+                    return@launch
+                }
+
+// Verificar las existencias actuales.
+                val stockDisponible =
+                    inventarioEncontrado.cantidadActual ?: 0
+
+                if (stockDisponible < cantidadADescontar) {
+                    _registroAplicacionState.value =
+                        Result.failure(
+                            Exception(
+                                "Stock insuficiente. Disponible: $stockDisponible"
+                            )
+                        )
+                    return@launch
+                }
+
+                // Conservar el ID exacto seleccionado.
+                val idInventarioValido =
+                    inventarioEncontrado.idInventario
 
                 val fechaActual = java.text.SimpleDateFormat(
                     "yyyy-MM-dd'T'HH:mm:ss'Z'",
@@ -963,6 +1216,76 @@ class PacienteViewModel(
                             "cantidadActual=$cantidadActual | " +
                             "cantidadAplicada=$cantidadADescontar"
                 )
+                // ================================================
+                // OBTENER O CREAR SEGUIMIENTO PENDIENTE
+                // ================================================
+
+                val idSeguimientoParaAplicacion =
+                    idSeguimiento?.takeIf { it > 0 } ?: run {
+
+                        val formulacionValida = idFormulacion
+                            ?.takeIf { it > 0 }
+                            ?: throw Exception(
+                                "No se identificó la formulación del medicamento"
+                            )
+
+                        val horaTexto = horaAdministrada
+                            ?.trim()
+                            ?.substringAfterLast("T")
+                            ?.substringBefore("Z")
+                            ?.substringBefore("+")
+                            ?.substringBefore("-")
+                            ?: throw Exception(
+                                "No se encontró la hora programada"
+                            )
+
+                        val partesHora = horaTexto.split(":")
+                        val horaNum = partesHora.getOrNull(0)?.toIntOrNull() ?: 0
+                        val minutoNum = partesHora.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
+
+                        val calProg = java.util.Calendar.getInstance().apply {
+                            set(java.util.Calendar.HOUR_OF_DAY, horaNum)
+                            set(java.util.Calendar.MINUTE, minutoNum)
+                            set(java.util.Calendar.SECOND, 0)
+                            set(java.util.Calendar.MILLISECOND, 0)
+                        }
+
+                        val sdfProg = java.text.SimpleDateFormat(
+                            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                            java.util.Locale.getDefault()
+                        ).apply {
+                            timeZone = java.util.TimeZone.getTimeZone("UTC")
+                        }
+
+                        val fechaHoraProgramada = sdfProg.format(calProg.time)
+
+                        val resultadoSeguimiento =
+                            repository.crearSeguimientoMedicamento(
+                                CrearSeguimientoMedicamentoRequest(
+                                    idFormulacion = formulacionValida,
+                                    fechaHoraProgramada = fechaHoraProgramada
+                                )
+                            )
+
+                        val seguimiento = resultadoSeguimiento.getOrElse {
+                            throw it
+                        }
+
+                        val idRecuperado = seguimiento.idSeguimiento
+                            ?.takeIf { it > 0 }
+                            ?: throw Exception(
+                                "No se recibió el ID del seguimiento"
+                            )
+
+                        Log.d(
+                            "SEGUIMIENTO_MEDICAMENTO",
+                            "Seguimiento asociado: $idRecuperado | " +
+                                    "Formulación: $formulacionValida | " +
+                                    "Fecha: $fechaHoraProgramada"
+                        )
+
+                        idRecuperado
+                    }
 
                 val request = AplicacionRequest(
                     idPaciente = idPaciente,
@@ -974,94 +1297,226 @@ class PacienteViewModel(
                     viaAdministracion = via,
                     estado = true,
                     observacion = observacion,
-                    cantidadAplicada = cantidadADescontar
+                    cantidadAplicada = cantidadADescontar,
+                    idSeguimiento = idSeguimientoParaAplicacion
                 )
 
                 val result =
                     repository.registrarAplicacionMedicamento(request)
 
                 if (result.isSuccess) {
-                    val stockRestante =
-                        if (cantidadActual >= cantidadADescontar) {
-                            cantidadActual - cantidadADescontar
-                        } else {
-                            0
-                        }
 
-                    try {
-                        repository.actualizarStockInventario(
-                            idInventarioValido,
-                            stockRestante
-                        )
-
-                        if (idElementoPaciente > 0) {
-                            repository.actualizarCantidadElemento(
-                                idElementoPaciente,
-                                stockRestante
-                            )
-                        }
+                    // Leer el stock que devuelve Django después del registro.
+                    val datosRespuesta = try {
+                        JSONObject(result.getOrNull()?.string().orEmpty())
                     } catch (e: Exception) {
                         Log.e(
                             "INVENTARIO_UPDATE",
-                            "Error al actualizar stock",
+                            "No se pudo leer el stock devuelto por Django",
                             e
                         )
+                        null
                     }
 
-                    if (stockRestante <= 3) {
-                        val notificationHelper =
-                            NotificationHelper(context)
+                    val stockRestante =
+                        datosRespuesta?.optInt("cantidad_actual", -1) ?: -1
 
-                        notificationHelper.enviarNotificacionStockBajo(
-                            nombreMedicamento = nombreMedicamento,
-                            nombrePaciente = nombrePaciente,
-                            cantidadRestante = stockRestante
+                    val cantidadMinima =
+                        datosRespuesta?.optInt("cantidad_minima", -1) ?: -1
+
+                    if (stockRestante < 0 || cantidadMinima < 0) {
+
+                        Log.w(
+                            "INVENTARIO_UPDATE",
+                            "No se pudo confirmar el stock o su cantidad mínima."
                         )
 
-                        try {
-                            val notificacionReq =
-                                NotificacionRequest(
-                                    titulo =
-                                        "⚠️ Stock Bajo: $nombreMedicamento",
-                                    mensaje =
-                                        "El medicamento $nombreMedicamento para el paciente $nombrePaciente se está agotando. Quedan $stockRestante unidades.",
-                                    fecha_creacion = fechaActual,
-                                    enviar_correo = false
-                                )
+                    } else {
 
-                            val respNotif =
-                                repository.crearNotificacion(
-                                    notificacionReq
-                                )
+                        // Preferencias locales para evitar alertas repetidas.
+                        val preferencias = context.getSharedPreferences(
+                            "ALERTAS_STOCK",
+                            Context.MODE_PRIVATE
+                        )
 
-                            respNotif.getOrNull()?.let { notifCreada ->
-                                val destinatarioReq =
-                                    NotificacionDestinatarioRequest(
-                                        id_notificacion =
-                                            notifCreada.id_notificacion,
-                                        id_usuario = idEncargado,
-                                        leido = false
+                        val claveLocal = "LOCAL_STOCK_BAJO_$idInventarioValido"
+                        val claveDestinatarios = "PUSH_STOCK_BAJO_$idInventarioValido"
+
+                        // Si se repone el medicamento, permitir futuras alertas.
+                        if (stockRestante > cantidadMinima) {
+
+                            preferencias.edit()
+                                .remove(claveLocal)
+                                .remove(claveDestinatarios)
+                                .apply()
+
+                        } else {
+
+                            // =========================================
+                            // NOTIFICACIÓN LOCAL AL CUIDADOR
+                            // =========================================
+
+                            if (!preferencias.getBoolean(claveLocal, false)) {
+
+                                NotificationHelper(context)
+                                    .enviarNotificacionStockBajo(
+                                        nombreMedicamento = nombreMedicamento,
+                                        nombrePaciente = nombrePaciente,
+                                        cantidadRestante = stockRestante
                                     )
 
-                                repository.asociarNotificacionDestinatario(
-                                    destinatarioReq
+                                preferencias.edit()
+                                    .putBoolean(claveLocal, true)
+                                    .apply()
+                            }
+
+                            // =========================================
+                            // NOTIFICACIONES PUSH A LOS ENCARGADOS
+                            // =========================================
+
+                            try {
+
+                                // Obtener encargados activos.
+                                val encargados = repository.obtenerUsuarios()
+                                    .filter { usuario ->
+                                        usuario.idRol == 2 && usuario.estado
+                                    }
+
+                                // Recuperar los encargados que ya recibieron
+                                // la alerta desde este dispositivo.
+                                val notificados = preferencias.getStringSet(
+                                    claveDestinatarios,
+                                    mutableSetOf()
+                                )?.toMutableSet() ?: mutableSetOf()
+
+                                // Evitar notificar dos veces al mismo encargado.
+                                val encargadosPendientes = encargados.filter { usuario ->
+
+                                    val id = usuario.idUsuario
+
+                                    id != null && !notificados.contains(id.toString())
+                                }
+
+                                if (encargadosPendientes.isEmpty()) {
+
+                                    Log.d(
+                                        "NOTIF_STOCK",
+                                        "No hay encargados pendientes de notificación."
+                                    )
+
+                                } else {
+
+                                    // Crear una sola notificación para los destinatarios
+                                    // que todavía no han recibido la alerta.
+                                    val datosNotificacion: Map<String, Any> = mapOf(
+
+                                        "titulo" to
+                                                "Stock bajo: $nombreMedicamento",
+
+                                        "tipo" to "STOCK_BAJO",
+
+                                        "mensaje" to
+                                                "El medicamento $nombreMedicamento del paciente " +
+                                                "$nombrePaciente tiene $stockRestante unidades " +
+                                                "disponibles. Cantidad mínima: $cantidadMinima.",
+
+                                        "enviar_correo" to false,
+
+                                        "fecha_hora" to fechaActual,
+
+                                        "estado" to true,
+
+                                        "id_paciente" to idPaciente
+                                    )
+
+                                    val respuestaNotif =
+                                        repository.crearNotificacionStock(
+                                            datosNotificacion
+                                        )
+
+                                    val notifCreada = respuestaNotif.getOrNull()
+
+                                    if (notifCreada != null) {
+
+                                        // Asociar la notificación a cada encargado.
+                                        for (encargado in encargadosPendientes) {
+
+                                            val idDestinatario =
+                                                encargado.idUsuario ?: continue
+
+                                            val datosDestinatario: Map<String, Any> =
+                                                mapOf(
+
+                                                    "id_notificacion" to
+                                                            notifCreada.id_notificacion,
+
+                                                    "id_usuario" to idDestinatario,
+
+                                                    // IMPORTANTE: el backend utiliza
+                                                    // el campo "leida".
+                                                    "leida" to false
+                                                )
+
+                                            val resultado =
+                                                repository.asociarNotificacionDestinatarioStock(
+                                                    datosDestinatario
+                                                )
+
+                                            if (resultado.isSuccess) {
+
+                                                // Guardar únicamente los destinatarios
+                                                // cuya asociación se realizó correctamente.
+                                                notificados.add(idDestinatario.toString())
+
+                                                preferencias.edit()
+                                                    .putStringSet(
+                                                        claveDestinatarios,
+                                                        notificados
+                                                    )
+                                                    .apply()
+
+                                                Log.d(
+                                                    "NOTIF_STOCK",
+                                                    "Alerta enviada al encargado: $idDestinatario"
+                                                )
+
+                                            } else {
+
+                                                Log.e(
+                                                    "NOTIF_STOCK",
+                                                    "Error notificando al encargado $idDestinatario",
+                                                    resultado.exceptionOrNull()
+                                                )
+                                            }
+                                        }
+
+                                    } else {
+
+                                        Log.e(
+                                            "NOTIF_STOCK",
+                                            "No se pudo crear la notificación: " +
+                                                    "${respuestaNotif.exceptionOrNull()?.message}"
+                                        )
+                                    }
+                                }
+
+                            } catch (e: Exception) {
+
+                                Log.e(
+                                    "NOTIF_STOCK",
+                                    "Error procesando alertas de stock",
+                                    e
                                 )
                             }
-                        } catch (e: Exception) {
-                            Log.e(
-                                "NOTIF_ERROR",
-                                "Error al registrar notificación",
-                                e
-                            )
                         }
                     }
-
                     _registroAplicacionState.value =
                         Result.success(
                             "Aplicación registrada con éxito"
                         )
 
                     cargarElementosPaciente(idPaciente)
+                    cargarInventariosPaciente(idPaciente)
                 } else {
                     _registroAplicacionState.value =
                         Result.failure(

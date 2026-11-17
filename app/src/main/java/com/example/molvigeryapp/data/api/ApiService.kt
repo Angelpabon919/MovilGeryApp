@@ -2,6 +2,7 @@ package com.example.molvigeryapp.data.api
 
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Actividad
+import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.AplicacionRequest
 import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.CuidadoEnfermeria
@@ -42,6 +43,7 @@ import com.example.molvigeryapp.data.model.RespuestaMensaje
 import com.example.molvigeryapp.data.model.CitaApiResponse
 import com.example.molvigeryapp.data.model.CrearCitaRequest
 import com.example.molvigeryapp.data.model.DocumentoHistoriaClinica
+import com.example.molvigeryapp.data.model.CrearSeguimientoMedicamentoRequest
 import com.example.molvigeryapp.data.model.EventoIa
 import com.example.molvigeryapp.data.model.EvidenciaIa
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
@@ -51,7 +53,9 @@ import com.example.molvigeryapp.data.model.ImagenEventoAdverso
 import com.example.molvigeryapp.data.model.NotificacionDestinatario
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
+import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.NotificacionTurnoRequest
+import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.model.TipoEventoIa
 import retrofit2.http.Multipart
 
@@ -84,10 +88,15 @@ interface ApiService {
     // =========================================================
     // APLICACIÓN DE MEDICAMENTOS
     // =========================================================
+
     @POST("aplicacion_medicamento/")
     suspend fun registrarAplicacion(
         @Body request: AplicacionRequest
     ): Response<ResponseBody>
+
+    @GET("aplicacion_medicamento/")
+    suspend fun obtenerAplicacionesMedicamento():
+            Response<List<AplicacionMedicamento>>
 
     @GET("inventario/")
     suspend fun obtenerInventario(): Response<List<Inventario>>
@@ -568,7 +577,6 @@ interface ApiService {
     suspend fun obtenerResumenCuidadosTurno(
         @Path("id_asignacion") idAsignacion: Int
     ): ResumenCuidadosTurno
-
     // =========================================================
 // DOCUMENTOS DE HISTORIA CLÍNICA
 // =========================================================
@@ -599,5 +607,26 @@ interface ApiService {
     suspend fun eliminarDocumentoHistoriaClinica(
         @Path("id") idDocumento: Int
     ): Response<ResponseBody>
+
+    // =========================================================
+    // SEGUIMIENTO DE ADMINISTRACIÓN DE MEDICAMENTOS
+    // =========================================================
+
+    @GET("seguimiento_administracion_medicamento/")
+    suspend fun obtenerSeguimientosMedicamento(
+        @Query("id_paciente") idPaciente: Int
+    ): retrofit2.Response<List<SeguimientoAdministracionMedicamento>>
+
+    @POST("seguimiento_administracion_medicamento/")
+    suspend fun crearSeguimientoMedicamento(
+        @Body request: CrearSeguimientoMedicamentoRequest
+    ): retrofit2.Response<SeguimientoAdministracionMedicamento>
+
+    @POST("seguimiento_administracion_medicamento/{id}/no-administrado/")
+    suspend fun registrarNoAdministrado(
+        @Path("id") idSeguimiento: Int,
+        @Body request: MotivoNoAdministracionRequest
+    ): retrofit2.Response<SeguimientoAdministracionMedicamento>
+//holaaa
 
 }

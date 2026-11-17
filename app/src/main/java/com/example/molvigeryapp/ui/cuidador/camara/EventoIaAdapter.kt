@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.molvigeryapp.R
-import com.example.molvigeryapp.data.model.Camara
 import com.example.molvigeryapp.data.model.EventoIa
 import com.example.molvigeryapp.data.model.Habitacion
 import com.example.molvigeryapp.data.model.Paciente
@@ -28,8 +27,6 @@ class EventoIaAdapter(
     private var tiposEventos = mapOf<Int, TipoEventoIa>()
 
     private var pacientes = mapOf<Int, Paciente>()
-
-    private var camaras = mapOf<Int, Camara>()
 
     private var habitaciones = mapOf<Int, Habitacion>()
 
@@ -61,19 +58,6 @@ class EventoIaAdapter(
             .associateBy { it.idPaciente!! }
 
         // Refrescar las tarjetas cuando lleguen los nombres
-        notifyDataSetChanged()
-    }
-    // =====================================================
-// ACTUALIZAR CÁMARAS
-// =====================================================
-
-    fun actualizarCamaras(nuevasCamaras: List<Camara>) {
-
-        camaras = nuevasCamaras.associateBy {
-            it.idCamara
-        }
-
-        // Actualizar las tarjetas con los nombres reales
         notifyDataSetChanged()
     }
     // =====================================================
@@ -140,8 +124,6 @@ class EventoIaAdapter(
         private val tvHabitacionEvento: TextView =
             itemView.findViewById(R.id.tvHabitacionEvento)
 
-        private val tvCamaraEvento: TextView =
-            itemView.findViewById(R.id.tvCamaraEvento)
 
         private val tvConfianzaEvento: TextView =
             itemView.findViewById(R.id.tvConfianzaEvento)
@@ -208,27 +190,6 @@ class EventoIaAdapter(
                 } else {
                     "Hab. ${evento.id_habitacion}"
                 }
-
-
-
-            // =====================================================
-            // NOMBRE REAL DE LA CÁMARA
-            // =====================================================
-
-            val camara = camaras[evento.id_camara]
-
-            val nombreCamara = camara?.nombre
-                ?.trim()
-                .orEmpty()
-
-            tvCamaraEvento.text =
-                if (nombreCamara.isNotEmpty()) {
-                    nombreCamara
-                } else {
-                    "Cam. ${evento.id_camara}"
-                }
-
-
             // Porcentaje de confianza
             tvConfianzaEvento.text =
                 "IA: ${evento.confianza} %"

@@ -68,6 +68,7 @@
             android:textColor="#18794E"
             android:textSize="11sp"
             android:textStyle="bold"
+            android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/tvSubtituloMonitoreo"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -101,10 +102,10 @@
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
-                    android:layout_height="88dp"
+                    android:layout_height="76dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="5dp"
-                    app:cardCornerRadius="14dp"
+                    app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="#FFFFFF">
 
@@ -113,7 +114,7 @@
                         android:layout_height="match_parent"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="6dp">
+                        android:padding="5dp">
 
                         <TextView
                             android:id="@+id/tvTotalCamaras"
@@ -129,16 +130,16 @@
                             android:layout_height="wrap_content"
                             android:text="Todas"
                             android:textColor="#64748B"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
-                    android:layout_height="88dp"
+                    android:layout_height="76dp"
                     android:layout_weight="1"
                     android:layout_marginHorizontal="3dp"
-                    app:cardCornerRadius="14dp"
+                    app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="#FFFFFF">
 
@@ -147,7 +148,7 @@
                         android:layout_height="match_parent"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="6dp">
+                        android:padding="5dp">
 
                         <TextView
                             android:id="@+id/tvCamarasActivas"
@@ -155,7 +156,7 @@
                             android:layout_height="wrap_content"
                             android:text="—"
                             android:textColor="#21865C"
-                            android:textSize="23sp"
+                            android:textSize="21sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -163,16 +164,16 @@
                             android:layout_height="wrap_content"
                             android:text="Activas"
                             android:textColor="#64748B"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="0dp"
-                    android:layout_height="88dp"
+                    android:layout_height="76dp"
                     android:layout_weight="1"
                     android:layout_marginStart="5dp"
-                    app:cardCornerRadius="14dp"
+                    app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
                     app:cardBackgroundColor="#FFFFFF">
 
@@ -181,7 +182,7 @@
                         android:layout_height="match_parent"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="6dp">
+                        android:padding="5dp">
 
                         <TextView
                             android:id="@+id/tvCamarasDesconectadas"
@@ -189,7 +190,7 @@
                             android:layout_height="wrap_content"
                             android:text="—"
                             android:textColor="#C66A35"
-                            android:textSize="23sp"
+                            android:textSize="21sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -197,7 +198,7 @@
                             android:layout_height="wrap_content"
                             android:text="Sin conexión"
                             android:textColor="#64748B"
-                            android:textSize="11sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 

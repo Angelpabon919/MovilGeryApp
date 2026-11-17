@@ -50,12 +50,12 @@ class MonitoreoCamaraAdapter(
             } ?: "Habitación: sin asignar"
 
             if (camara.estado) {
-                tvEstado.text = "● Activa según el backend"
+                tvEstado.text = "● Habilitada"
                 tvEstado.setTextColor(
                     android.graphics.Color.parseColor("#21865C")
                 )
             } else {
-                tvEstado.text = "● Inactiva según el backend"
+                tvEstado.text = "● Deshabilitada"
                 tvEstado.setTextColor(
                     android.graphics.Color.parseColor("#C24141")
                 )
@@ -66,6 +66,8 @@ class MonitoreoCamaraAdapter(
             }
         }
     }
+
+
 
     override fun onCreateViewHolder(
         parent: ViewGroup,

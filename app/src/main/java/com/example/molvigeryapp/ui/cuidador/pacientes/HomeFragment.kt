@@ -147,7 +147,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         horarioMedicamentoActual = obtenerHorarioActual()
 
         observarMedicamentos()
-
+        observarYProgramarAlarmas()
         configurarNavegacion()
         configurarBotonNotificaciones()
         configurarExpansionMedicamentos()
@@ -973,6 +973,62 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             }
 
             homeAdapter.actualizarLista(listaFiltrada)
+        }
+    }
+    private fun observarYProgramarAlarmas() {
+
+        fun intentarProgramar() {
+
+            val formulaciones =
+                viewModel.formulacionesMedicamentos.value ?: return
+
+            val listaPacientes =
+                viewModel.pacientes.value ?: return
+
+            val catalogo =
+                viewModel.medicamentosCatalogo.value ?: return
+
+            // Esperar a que estén cargados los datos necesarios.
+            if (
+                formulaciones.isEmpty() ||
+                listaPacientes.isEmpty() ||
+                catalogo.isEmpty()
+            ) {
+                return
+            }
+
+            val nombresPacientes = listaPacientes.mapNotNull { paciente ->
+                paciente.idPaciente?.let { id ->
+                    id to "${paciente.nombre} ${paciente.apellido}"
+                        .trim()
+                        .ifBlank { "Paciente $id" }
+                }
+            }.toMap()
+
+            val nombresMedicamentos = catalogo.mapNotNull { medicamento ->
+                medicamento.idMedicamento?.let { id ->
+                    id to (medicamento.nombreMedicamento ?: "Medicamento")
+                }
+            }.toMap()
+
+            ProgramadorAlarmasMedicamentos.programarTodas(
+                context = requireContext().applicationContext,
+                formulaciones = formulaciones,
+                pacientes = nombresPacientes,
+                medicamentos = nombresMedicamentos
+            )
+        }
+
+        viewModel.formulacionesMedicamentos.observe(viewLifecycleOwner) {
+            intentarProgramar()
+        }
+
+        viewModel.pacientes.observe(viewLifecycleOwner) {
+            intentarProgramar()
+        }
+
+        viewModel.medicamentosCatalogo.observe(viewLifecycleOwner) {
+            intentarProgramar()
         }
     }
 

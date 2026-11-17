@@ -132,8 +132,7 @@ class DetalleEventoFragment : Fragment() {
                 return@launch
             }
             cargarNombrePaciente(view, evento.id_paciente)
-            // CONSULTAR NOMBRE REAL DE LA CÁMARA
-            cargarNombreCamara(view, evento.id_camara)
+
             // CONSULTAR NÚMERO REAL DE LA HABITACIÓN
             cargarNumeroHabitacion(view, evento.id_habitacion)
 
@@ -209,50 +208,6 @@ class DetalleEventoFragment : Fragment() {
             ).text = "ID $idPaciente"
         }
     }
-
-    // =====================================================
-    // OBTENER NOMBRE REAL DE LA CÁMARA
-    // =====================================================
-
-    private suspend fun cargarNombreCamara(
-        view: View,
-        idCamara: Int
-    ) {
-
-        try {
-
-            // Consultar las cámaras desde el backend
-            val camaras = repository.obtenerCamaras()
-
-            // Buscar la cámara relacionada con el evento
-            val camara = camaras.find {
-                it.idCamara == idCamara
-            }
-
-            val nombreCamara = camara?.nombre
-                ?.trim()
-                .orEmpty()
-
-            view.findViewById<TextView>(
-                R.id.tvCamaraDetalle
-            ).text = if (nombreCamara.isNotEmpty()) {
-                nombreCamara
-            } else {
-                "Cámara $idCamara"
-            }
-
-        } catch (e: CancellationException) {
-            throw e
-
-        } catch (e: Exception) {
-
-            // Si falla la consulta, conservar el ID
-            view.findViewById<TextView>(
-                R.id.tvCamaraDetalle
-            ).text = "Cámara $idCamara"
-        }
-    }
-
     // =====================================================
     // OBTENER NÚMERO REAL DE LA HABITACIÓN
     // =====================================================
@@ -295,10 +250,6 @@ class DetalleEventoFragment : Fragment() {
             ).text = "Habitación ID $idHabitacion"
         }
     }
-
-
-
-
     // =====================================================
     // MOSTRAR INFORMACIÓN DEL EVENTO
     // =====================================================
@@ -308,11 +259,6 @@ class DetalleEventoFragment : Fragment() {
         view: View,
         evento: EventoIa
     ) {
-
-        view.findViewById<TextView>(
-            R.id.tvIdEventoDetalle
-        ).text = "#${evento.id_evento}"
-
         view.findViewById<TextView>(
             R.id.tvPacienteDetalle
         ).text = "ID ${evento.id_paciente}"
@@ -322,22 +268,12 @@ class DetalleEventoFragment : Fragment() {
         ).text = "Habitación ${evento.id_habitacion}"
 
         view.findViewById<TextView>(
-            R.id.tvCamaraDetalle
-        ).text = "Cámara ${evento.id_camara}"
-
-        view.findViewById<TextView>(
             R.id.tvFechaHoraDetalle
         ).text = convertirFechaColombia(evento.fecha_hora)
 
         view.findViewById<TextView>(
             R.id.tvConfianzaDetalle
         ).text = "${evento.confianza} %"
-
-        view.findViewById<TextView>(
-            R.id.tvEstadoDetalle
-        ).text = evento.estado.replaceFirstChar {
-            it.uppercase()
-        }
 
         val confianza = evento.confianza
             .toString()
@@ -510,7 +446,7 @@ class DetalleEventoFragment : Fragment() {
             )
 
             if (fecha != null) {
-                "${formatoSalida.format(fecha)} (Colombia)"
+                formatoSalida.format(fecha)
             } else {
                 fechaUtc
             }
