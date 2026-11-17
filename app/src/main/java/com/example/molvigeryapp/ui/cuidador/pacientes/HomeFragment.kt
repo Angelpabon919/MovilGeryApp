@@ -4,8 +4,6 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -20,22 +18,21 @@ import com.example.molvigeryapp.data.model.FormulacionMedicamento
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentHomeCuidadorBinding
-import com.example.molvigeryapp.ui.cuidador.cierreturno.CierreTurnoFragment
 import com.example.molvigeryapp.ui.cuidador.NavegacionCuidador
 import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
+import com.example.molvigeryapp.ui.cuidador.cierreturno.CierreTurnoFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import android.widget.TextView
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 
 class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
@@ -46,49 +43,12 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         PacienteViewModelFactory(PacienteRepository())
     }
 
-
     private var medicamentosExpandido = true
-
-
-    private fun configurarExpansionMedicamentos() {
-
-        // Sincronizar inicialmente el estado visual
-        actualizarFlechaMedicamentos()
-
-        binding.btnToggleMedicamentos.setOnClickListener {
-
-            medicamentosExpandido = !medicamentosExpandido
-
-            binding.rvMedicamentosHorario.visibility =
-                if (medicamentosExpandido) View.VISIBLE
-                else View.GONE
-
-            actualizarFlechaMedicamentos()
-        }
-    }
-
-    private fun actualizarFlechaMedicamentos() {
-
-        binding.btnToggleMedicamentos.animate()
-            .rotation(if (medicamentosExpandido) 180f else 0f)
-            .setDuration(200)
-            .start()
-
-        binding.btnToggleMedicamentos.contentDescription =
-            if (medicamentosExpandido)
-                "Ocultar medicamentos"
-            else
-                "Mostrar medicamentos"
-    }
-
-
 
     private var trabajoRevisionTurno: Job? = null
 
-    // MODO DE PRUEBA: permite mostrar el botón sin esperar
-    // los últimos 10 minutos del turno.
-    // Cambiar a false cuando terminen las pruebas.
-    private val MODO_PRUEBA_CIERRE = true
+    // El botón solo aparece durante los últimos 10 minutos del turno.
+    private val MODO_PRUEBA_CIERRE = false
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val formatoHoraTurno =
@@ -98,8 +58,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private lateinit var homeAdapter: HomeAdapter
 
     // =====================================================
-// MEDICAMENTOS HOME
-// =====================================================
+    // MEDICAMENTOS HOME
+    // =====================================================
 
     private lateinit var medicamentoAdapter: MedicamentoCuidadorAdapter
 
@@ -109,24 +69,14 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         NOCHE
     }
 
-    private var horarioMedicamentoActual =
-        obtenerHorarioActual()
+    private var horarioMedicamentoActual = obtenerHorarioActual()
 
-    private var mapaMedicamentosHome: Map<Int, String> =
-        emptyMap()
+    private var mapaMedicamentosHome: Map<Int, String> = emptyMap()
+    private var mapaPacientesHome: Map<Int, String> = emptyMap()
 
-    private var mapaPacientesHome: Map<Int, String> =
-        emptyMap()
-
-    private var listaMedicamentosManana:
-            List<FormulacionMedicamento> = emptyList()
-
-    private var listaMedicamentosTarde:
-            List<FormulacionMedicamento> = emptyList()
-
-    private var listaMedicamentosNoche:
-            List<FormulacionMedicamento> = emptyList()
-
+    private var listaMedicamentosManana: List<FormulacionMedicamento> = emptyList()
+    private var listaMedicamentosTarde: List<FormulacionMedicamento> = emptyList()
+    private var listaMedicamentosNoche: List<FormulacionMedicamento> = emptyList()
 
     private var listaOriginalPacientes: List<Paciente> = emptyList()
 
@@ -143,6 +93,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
         observarDatos()
         restaurarPacientesSeleccionadosHome()
+
         horarioSeleccionadoManualmente = false
         horarioMedicamentoActual = obtenerHorarioActual()
 
@@ -151,8 +102,10 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         configurarNavegacion()
         configurarBotonNotificaciones()
         configurarExpansionMedicamentos()
+
         configurarBotonExitTurno()
         iniciarRevisionAutomaticaTurno()
+
         cargarNombreCuidador()
     }
 
@@ -180,13 +133,14 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         }
     }
 
-
     // =====================================================
     // NOTIFICACIONES
     // =====================================================
 
     private fun configurarBotonNotificaciones() {
+
         binding.btnNotification.setOnClickListener {
+
             parentFragmentManager
                 .beginTransaction()
                 .replace(
@@ -207,6 +161,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         viewLifecycleOwner.lifecycleScope.launch {
 
             try {
+
                 val preferencias = requireContext()
                     .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
@@ -264,18 +219,22 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         binding.contenedorExitTurno.setOnClickListener {
 
             viewLifecycleOwner.lifecycleScope.launch {
+
                 try {
+
                     val preferencias = requireContext()
                         .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
                     val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
                     if (idUsuario <= 0) {
+
                         Toast.makeText(
                             requireContext(),
                             "No se encontró la sesión del cuidador",
                             Toast.LENGTH_SHORT
                         ).show()
+
                         return@launch
                     }
 
@@ -284,12 +243,10 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     val turnos = api.getTurnos()
 
                     val ahora = LocalDateTime.now()
-                    val hoy = ahora.toLocalDate()
 
                     Log.d(
                         "CIERRE_TURNO",
-                        "Cuidador=$idUsuario, fecha=$hoy, " +
-                                "modoPrueba=$MODO_PRUEBA_CIERRE"
+                        "Cuidador=$idUsuario, fecha=${ahora.toLocalDate()}"
                     )
 
                     val candidata = asignaciones.firstOrNull { asignacion ->
@@ -321,20 +278,11 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                                 ?.let { parsearHora(it) }
 
                             if (
-                                fecha != hoy ||
+                                fecha == null ||
                                 turno == null ||
                                 horaInicio == null ||
                                 horaFin == null
                             ) {
-                                Log.d(
-                                    "CIERRE_TURNO",
-                                    "Asignación descartada: " +
-                                            "id=${asignacion.id_asignacion_turno_usuario}, " +
-                                            "fecha=$fecha, hoy=$hoy, " +
-                                            "inicio=${turno?.hora_inicio}, " +
-                                            "fin=${turno?.hora_fin}, " +
-                                            "estado=${asignacion.estado}"
-                                )
                                 false
                             } else {
 
@@ -344,9 +292,19 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                                     horaFin
                                 )
 
+                                val fechaValida =
+                                    fecha == ahora.toLocalDate() ||
+                                            (
+                                                    horaFin.isBefore(horaInicio) &&
+                                                            fecha.plusDays(1) == ahora.toLocalDate()
+                                                    )
+
                                 val horarioPermitido =
                                     MODO_PRUEBA_CIERRE ||
-                                            !ahora.isBefore(fin.minusMinutes(10))
+                                            (
+                                                    fechaValida &&
+                                                            !ahora.isBefore(fin.minusMinutes(10))
+                                                    )
 
                                 Log.d(
                                     "CIERRE_TURNO",
@@ -384,6 +342,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         .commit()
 
                 } catch (e: Exception) {
+
                     Log.e(
                         "CIERRE_TURNO",
                         "Error abriendo cierre",
@@ -468,7 +427,9 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // =====================================================
 
     private fun setupBotonEditar() {
+
         binding.btnEditPacientes.setOnClickListener {
+
             parentFragmentManager
                 .beginTransaction()
                 .replace(
@@ -483,6 +444,36 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // =====================================================
     // DESPLEGAR MEDICAMENTOS
     // =====================================================
+
+    private fun configurarExpansionMedicamentos() {
+
+        actualizarFlechaMedicamentos()
+
+        binding.btnToggleMedicamentos.setOnClickListener {
+
+            medicamentosExpandido = !medicamentosExpandido
+
+            binding.rvMedicamentosHorario.visibility =
+                if (medicamentosExpandido) View.VISIBLE
+                else View.GONE
+
+            actualizarFlechaMedicamentos()
+        }
+    }
+
+    private fun actualizarFlechaMedicamentos() {
+
+        binding.btnToggleMedicamentos.animate()
+            .rotation(if (medicamentosExpandido) 180f else 0f)
+            .setDuration(200)
+            .start()
+
+        binding.btnToggleMedicamentos.contentDescription =
+            if (medicamentosExpandido)
+                "Ocultar medicamentos"
+            else
+                "Mostrar medicamentos"
+    }
 
     private fun setupDespliegueMedicamentos() {
 
@@ -507,6 +498,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private fun setupRecyclerViewPacientes() {
 
         homeAdapter = HomeAdapter { paciente ->
+
             viewModel.seleccionarPaciente(paciente)
 
             parentFragmentManager
@@ -529,23 +521,14 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // OBSERVAR MEDICAMENTOS
     // =====================================================
 
-
     private fun observarMedicamentos() {
 
-        // Configurar RecyclerView
         configurarRecyclerMedicamentos()
-
-        // Configurar selección de horarios
         configurarBotonesHorarioMedicamentos()
 
-        // Cargar información desde la API
         viewModel.cargarPacientes()
         viewModel.cargarCatalogoMedicamentos()
         viewModel.cargarGruposMedicacion()
-
-        // -------------------------------------------------
-        // PACIENTES
-        // -------------------------------------------------
 
         viewModel.pacientes.observe(viewLifecycleOwner) { pacientes ->
 
@@ -556,10 +539,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
             actualizarListaMedicamentosHorario()
         }
-
-        // -------------------------------------------------
-        // CATÁLOGO DE MEDICAMENTOS
-        // -------------------------------------------------
 
         viewModel.medicamentosCatalogo.observe(viewLifecycleOwner) { catalogo ->
 
@@ -573,16 +552,10 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             actualizarListaMedicamentosHorario()
         }
 
-        // -------------------------------------------------
-        // GRUPOS DE MEDICACIÓN
-        // -------------------------------------------------
-
         viewModel.gruposMedicacion.observe(viewLifecycleOwner) { grupos ->
 
             if (!grupos.isNullOrEmpty()) {
 
-                // Los grupos deben estar cargados antes
-                // de separar las formulaciones por horario.
                 viewModel.cargarFormulacionesMedicamentos()
 
             } else {
@@ -596,10 +569,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             }
         }
 
-        // -------------------------------------------------
-        // MEDICAMENTOS DE LA MAÑANA
-        // -------------------------------------------------
-
         viewModel.medicamentosManana.observe(viewLifecycleOwner) { lista ->
 
             listaMedicamentosManana = lista ?: emptyList()
@@ -607,10 +576,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             actualizarContadoresMedicamentos()
             actualizarListaMedicamentosHorario()
         }
-
-        // -------------------------------------------------
-        // MEDICAMENTOS DE LA TARDE
-        // -------------------------------------------------
 
         viewModel.medicamentosTarde.observe(viewLifecycleOwner) { lista ->
 
@@ -620,10 +585,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             actualizarListaMedicamentosHorario()
         }
 
-        // -------------------------------------------------
-        // MEDICAMENTOS DE LA NOCHE
-        // -------------------------------------------------
-
         viewModel.medicamentosNoche.observe(viewLifecycleOwner) { lista ->
 
             listaMedicamentosNoche = lista ?: emptyList()
@@ -631,10 +592,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             actualizarContadoresMedicamentos()
             actualizarListaMedicamentosHorario()
         }
-
-        // -------------------------------------------------
-        // FORMULACIONES COMPLETAS
-        // -------------------------------------------------
 
         viewModel.formulacionesMedicamentos.observe(viewLifecycleOwner) { lista ->
 
@@ -644,7 +601,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             )
         }
     }
-
 
     private fun configurarRecyclerMedicamentos() {
 
@@ -696,12 +652,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         }
     }
 
-
     private fun actualizarListaMedicamentosHorario() {
-
-        // -------------------------------------------------
-        // COLOR SEGÚN HORARIO
-        // -------------------------------------------------
 
         val color = when (horarioMedicamentoActual) {
 
@@ -729,14 +680,9 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
         val listaHorario = when (horarioMedicamentoActual) {
 
-            HorarioMedicamento.MANANA ->
-                listaMedicamentosManana
-
-            HorarioMedicamento.TARDE ->
-                listaMedicamentosTarde
-
-            HorarioMedicamento.NOCHE ->
-                listaMedicamentosNoche
+            HorarioMedicamento.MANANA -> listaMedicamentosManana
+            HorarioMedicamento.TARDE -> listaMedicamentosTarde
+            HorarioMedicamento.NOCHE -> listaMedicamentosNoche
         }
 
         val listaFiltrada = listaHorario.filter { medicamento ->
@@ -752,43 +698,25 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         when (horarioMedicamentoActual) {
 
             HorarioMedicamento.MANANA -> {
-
-                binding.tvTituloHorarioActivo.text =
-                    "Medicamentos - Mañana"
-
-                binding.tvRangoHorario.text =
-                    "06:00am – 12:00pm"
+                binding.tvTituloHorarioActivo.text = "Medicamentos - Mañana"
+                binding.tvRangoHorario.text = "06:00am – 12:00pm"
             }
 
             HorarioMedicamento.TARDE -> {
-
-                binding.tvTituloHorarioActivo.text =
-                    "Medicamentos - Tarde"
-
-                binding.tvRangoHorario.text =
-                    "12:00pm – 07:00pm"
+                binding.tvTituloHorarioActivo.text = "Medicamentos - Tarde"
+                binding.tvRangoHorario.text = "12:00pm – 07:00pm"
             }
 
             HorarioMedicamento.NOCHE -> {
-
-                binding.tvTituloHorarioActivo.text =
-                    "Medicamentos - Noche"
-
-                binding.tvRangoHorario.text =
-                    "07:00pm – 06:00am"
+                binding.tvTituloHorarioActivo.text = "Medicamentos - Noche"
+                binding.tvRangoHorario.text = "07:00pm – 06:00am"
             }
         }
 
-        // -------------------------------------------------
-        // MOSTRAR LISTA
-        // -------------------------------------------------
-
-        binding.rvMedicamentosHorario.visibility =
-            View.VISIBLE
+        binding.rvMedicamentosHorario.visibility = View.VISIBLE
 
         actualizarFlechaMedicamentos()
     }
-
 
     private fun actualizarContadoresMedicamentos() {
 
@@ -811,14 +739,9 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             it.idPaciente in idsPacientesSeleccionados
         }
 
-        binding.tvCantidadManana.text =
-            cantidadManana.toString()
-
-        binding.tvCantidadTarde.text =
-            cantidadTarde.toString()
-
-        binding.tvCantidadNoche.text =
-            cantidadNoche.toString()
+        binding.tvCantidadManana.text = cantidadManana.toString()
+        binding.tvCantidadTarde.text = cantidadTarde.toString()
+        binding.tvCantidadNoche.text = cantidadNoche.toString()
     }
 
     // =====================================================
@@ -846,13 +769,12 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             }
         }
 
-    /* Actualiza automáticamente el horario de medicamentos segun la hora real del dispositivo
-     * No utiliza barras ni indicadores de progreso */
     private fun actualizarHorarioAutomatico() {
 
         val horarioReal = obtenerHorarioActual()
 
-        if (!horarioSeleccionadoManualmente &&
+        if (
+            !horarioSeleccionadoManualmente &&
             horarioMedicamentoActual != horarioReal
         ) {
 
@@ -861,7 +783,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             actualizarListaMedicamentosHorario()
         }
     }
-
 
     // =====================================================
     // OBSERVAR PACIENTES SELECCIONADOS
@@ -873,6 +794,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 listaSeleccionados ->
 
             val lista = listaSeleccionados ?: emptyList()
+
             listaOriginalPacientes = lista
 
             actualizarListaMedicamentosHorario()
@@ -890,17 +812,23 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     }
 
     // =====================================================
-// RESTAURAR PACIENTES AL VOLVER A ABRIR HOME
-// =====================================================
+    // RESTAURAR PACIENTES
+    // =====================================================
 
     private fun restaurarPacientesSeleccionadosHome() {
+
         val preferencias = requireContext()
             .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
         val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
         if (idUsuario <= 0) {
-            Log.e("HOME_PACIENTES", "No se encontró el ID del cuidador")
+
+            Log.e(
+                "HOME_PACIENTES",
+                "No se encontró el ID del cuidador"
+            )
+
             return
         }
 
@@ -922,7 +850,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private fun setupBuscador() {
 
         binding.etSearchPaciente.addTextChangedListener(
-            object : TextWatcher {
+            object : android.text.TextWatcher {
 
                 override fun beforeTextChanged(
                     s: CharSequence?,
@@ -931,7 +859,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     after: Int
                 ) {}
 
-                @RequiresApi(Build.VERSION_CODES.GINGERBREAD)
                 override fun onTextChanged(
                     s: CharSequence?,
                     start: Int,
@@ -941,18 +868,19 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     filtrarLista(s?.toString() ?: "")
                 }
 
-                override fun afterTextChanged(s: Editable?) {}
+                override fun afterTextChanged(s: android.text.Editable?) {}
             }
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.GINGERBREAD)
     private fun filtrarLista(texto: String) {
 
         val consulta = texto.trim().lowercase(Locale.ROOT)
 
         if (consulta.isEmpty()) {
+
             homeAdapter.actualizarLista(listaOriginalPacientes)
+
         } else {
 
             val listaFiltrada = listaOriginalPacientes.filter { paciente ->
@@ -1043,8 +971,12 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
         trabajoRevisionTurno = viewLifecycleOwner.lifecycleScope.launch {
 
+            // Primera revisión inmediata
             while (isActive) {
+
                 revisarTurnoParaMostrarBoton()
+
+                // Volver a revisar cada 10 segundos
                 delay(10_000L)
             }
         }
@@ -1054,78 +986,107 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     private suspend fun revisarTurnoParaMostrarBoton() {
 
         try {
+
             val preferencias = requireContext()
                 .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
             val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
             if (idUsuario <= 0) {
+
                 binding.contenedorExitTurno.visibility = View.GONE
                 return
             }
 
             val api = RetrofitClient.apiService
+
             val asignaciones = api.getAsignacionesTurno()
             val turnos = api.getTurnos()
 
             val ahora = LocalDateTime.now()
             val hoy = ahora.toLocalDate()
 
-            val asignacionesActivas = asignaciones.filter { asignacion ->
+            val debeMostrar = asignaciones.any { asignacion ->
 
-                asignacion.id_usuario == idUsuario &&
-                        !asignacion.estado.equals("Finalizado", true) &&
-                        !asignacion.estado.equals("Inactivo", true)
+                // Comprobar que pertenece al cuidador autenticado
+                if (asignacion.id_usuario != idUsuario) {
+                    return@any false
+                }
+
+                // Ignorar asignaciones finalizadas o inactivas
+                if (
+                    asignacion.estado.equals("Finalizado", true) ||
+                    asignacion.estado.equals("Inactivo", true)
+                ) {
+                    return@any false
+                }
+
+                val fechaAsignacion = asignacion.fecha
+                    ?.take(10)
+                    ?.let { texto ->
+                        runCatching {
+                            LocalDate.parse(texto)
+                        }.getOrNull()
+                    } ?: return@any false
+
+                val turno = turnos.firstOrNull {
+                    it.id_turno == asignacion.id_turno
+                } ?: return@any false
+
+                val horaInicio = turno.hora_inicio
+                    ?.let { parsearHora(it) }
+                    ?: return@any false
+
+                val horaFin = turno.hora_fin
+                    ?.let { parsearHora(it) }
+                    ?: return@any false
+
+                // Calcular fecha y hora real de finalización
+                val finTurno = fechaFinTurno(
+                    fechaAsignacion,
+                    horaInicio,
+                    horaFin
+                )
+
+                // Aceptar el turno del día actual.
+                // También aceptar el turno de ayer si termina hoy
+                // porque cruza la medianoche.
+                val fechaValida =
+                    fechaAsignacion == hoy ||
+                            (
+                                    horaFin.isBefore(horaInicio) &&
+                                            fechaAsignacion.plusDays(1) == hoy
+                                    )
+
+                if (!fechaValida) {
+                    return@any false
+                }
+
+                // Esta es la condición principal:
+                // el botón aparece exactamente 10 minutos antes
+                // y permanece visible después de la hora de fin.
+                val horarioPermitido =
+                    !ahora.isBefore(finTurno.minusMinutes(10))
+
+                Log.d(
+                    "CIERRE_TURNO",
+                    "Asignación=${asignacion.id_asignacion_turno_usuario}, " +
+                            "inicio=$horaInicio, fin=$finTurno, " +
+                            "ahora=$ahora, mostrar=$horarioPermitido"
+                )
+
+                horarioPermitido
             }
-
-            val debeMostrar = MODO_PRUEBA_CIERRE ||
-                    asignacionesActivas.any { asignacion ->
-
-                        val fechaAsignacion = asignacion.fecha
-                            ?.take(10)
-                            ?.let { texto ->
-                                runCatching {
-                                    LocalDate.parse(texto)
-                                }.getOrNull()
-                            }
-
-                        val turno = turnos.firstOrNull {
-                            it.id_turno == asignacion.id_turno
-                        }
-
-                        val horaInicio = turno?.hora_inicio
-                            ?.let { parsearHora(it) }
-
-                        val horaFin = turno?.hora_fin
-                            ?.let { parsearHora(it) }
-
-                        if (
-                            fechaAsignacion == null ||
-                            turno == null ||
-                            horaInicio == null ||
-                            horaFin == null
-                        ) {
-                            false
-                        } else {
-
-                            val finTurno = fechaFinTurno(
-                                fechaAsignacion,
-                                horaInicio,
-                                horaFin
-                            )
-
-                            !ahora.isBefore(finTurno.minusMinutes(10))
-                        }
-                    }
 
             binding.contenedorExitTurno.visibility =
                 if (debeMostrar) View.VISIBLE else View.GONE
 
             Log.d(
                 "CIERRE_TURNO",
-                "Cuidador=$idUsuario, mostrarBoton=$debeMostrar, " +
+                "Cuidador=$idUsuario, " +
+                        "mostrarBoton=$debeMostrar, " +
                         "modoPrueba=$MODO_PRUEBA_CIERRE, " +
-                        "asignaciones=${asignaciones.size}, fecha=$hoy"
+                        "fecha=$hoy"
             )
 
         } catch (e: Exception) {
@@ -1135,6 +1096,9 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 "Error revisando el turno para mostrar el botón",
                 e
             )
+
+            // Si falla la consulta, no mostrar el botón
+            binding.contenedorExitTurno.visibility = View.GONE
         }
     }
 
@@ -1151,6 +1115,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         )
 
         return formatos.firstNotNullOfOrNull { formato ->
+
             runCatching {
                 LocalTime.parse(texto.trim(), formato)
             }.getOrNull()
@@ -1182,10 +1147,16 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
     // =====================================================
 
     override fun onDestroyView() {
+
         trabajoRevisionTurno?.cancel()
         trabajoRevisionTurno = null
 
+        handlerHorarioMedicamentos.removeCallbacks(
+            actualizarHorarioMedicamentosRunnable
+        )
+
         super.onDestroyView()
+
         _binding = null
     }
 }
