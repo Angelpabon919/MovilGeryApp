@@ -189,6 +189,19 @@
                     android:textStyle="bold"
                     app:cornerRadius="12dp" />
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNoAdministrado"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="10dp"
+                    android:backgroundTint="#2563EB"
+                    android:text="Registrar como no administrado"
+                    android:textColor="@android:color/white"
+                    android:textAllCaps="false"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp" />
+
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>

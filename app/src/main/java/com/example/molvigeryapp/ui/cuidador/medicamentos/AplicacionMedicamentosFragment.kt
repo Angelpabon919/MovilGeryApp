@@ -1,6 +1,7 @@
 package com.example.molvigeryapp.ui.cuidador.medicamentos
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -32,6 +33,8 @@ class AplicacionMedicamentosFragment :
     private lateinit var cbConfirmarAdministracion: MaterialCheckBox
     private lateinit var btnVerInformacion: MaterialButton
     private lateinit var btnRegistrar: MaterialButton
+
+    private var btnNoAdministrado: MaterialButton? = null
 
     private var formulacionSeleccionada: FormulacionMedicamento? = null
     private var elementoSeleccionado: ElementoPaciente? = null
@@ -190,14 +193,11 @@ class AplicacionMedicamentosFragment :
         ) {
             actualizarSelectorMedicamentos(idPaciente)
         }
-
-
         // =====================================================
         // SELECCIONAR MEDICAMENTO
         // =====================================================
 
-        spinnerMedicamento.setOnItemClickListener {
-                _, _, position, _ ->
+        spinnerMedicamento.setOnItemClickListener { _, _, position, _ ->
 
             if (position < medicamentosPendientes.size) {
 
@@ -248,8 +248,37 @@ class AplicacionMedicamentosFragment :
                 ).show()
             }
         }
+        viewModel.noAdministradoState.observe(
+            viewLifecycleOwner
+        ) { result ->
 
+            result?.onSuccess { mensaje ->
 
+                Log.i(
+                    "NO_ADMIN_MED",
+                    "REGISTRO EXITOSO: $mensaje"
+                )
+
+                Toast.makeText(
+                    requireContext(),
+                    mensaje,
+                    Toast.LENGTH_LONG
+                ).show()
+
+            }?.onFailure { error ->
+                Log.e(
+                    "NO_ADMIN_MED",
+                    "ERROR AL REGISTRAR",
+                    error
+                )
+
+                Toast.makeText(
+                    requireContext(),
+                    "Error: ${error.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
         // =====================================================
         // REGISTRAR
         // =====================================================
@@ -258,7 +287,78 @@ class AplicacionMedicamentosFragment :
 
             validarRegistro()
         }
+        // =====================================================
+// REGISTRAR MEDICAMENTO NO ADMINISTRADO
+// =====================================================
+
+        btnNoAdministrado?.setOnClickListener {
+
+            val seguimiento = seguimientoSeleccionado
+            val idSeguimiento = seguimiento?.idSeguimiento ?: 0
+
+            if (seguimiento == null || idSeguimiento <= 0) {
+                Toast.makeText(
+                    requireContext(),
+                    "No existe un seguimiento pendiente para este medicamento",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                return@setOnClickListener
+            }
+
+            if (seguimiento.estado.orEmpty()
+                    .trim()
+                    .uppercase() != "PENDIENTE"
+            ) {
+                Toast.makeText(
+                    requireContext(),
+                    "Solo puedes registrar como no administrada una dosis pendiente",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                return@setOnClickListener
+            }
+
+            val campoMotivo = TextInputEditText(requireContext()).apply {
+                hint = "Escribe el motivo de la no administración"
+                minLines = 2
+                maxLines = 4
+            }
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Medicamento no administrado")
+                .setMessage("Indica por qué no se administró esta dosis.")
+                .setView(campoMotivo)
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Guardar") { _, _ ->
+
+                    val motivo = campoMotivo.text
+                        ?.toString()
+                        ?.trim()
+                        .orEmpty()
+
+                    if (motivo.isBlank()) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Debes indicar el motivo",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Log.d(
+                            "NO_ADMIN_MED",
+                            "Enviando solicitud. ID seguimiento=${seguimiento.idSeguimiento}"
+                        )
+                        viewModel.registrarMedicamentoNoAdministrado(
+                            idSeguimiento,
+                            motivo
+                        )
+                    }
+                }
+                .show()
+        }
     }
+
+
 
 
     // =========================================================
@@ -287,6 +387,9 @@ class AplicacionMedicamentosFragment :
 
         btnRegistrar =
             view.findViewById(R.id.btnRegistrarAplicacion)
+
+        val resIdNoAdmin = resources.getIdentifier("btnNoAdministrado", "id", requireContext().packageName)
+        btnNoAdministrado = if (resIdNoAdmin != 0) view.findViewById(resIdNoAdmin) else null
     }
 
 
@@ -344,44 +447,43 @@ class AplicacionMedicamentosFragment :
         // solamente una vez.
         val idFormulacionAlarma =
             arguments?.getInt("ID_FORMULACION_ALARMA", -1) ?: -1
-        if (idFormulacionAlarma > 0)
 
+        if (idFormulacionAlarma > 0 && !seleccionInicialAlarmaAplicada) {
 
-            if (!seleccionInicialAlarmaAplicada) {
-
-                val indiceAlarma = medicamentosPendientes.indexOfFirst {
-                    it.idFormulacion == idFormulacionAlarma
-                }
-
-                if (indiceAlarma >= 0) {
-
-                    formulacionSeleccionada = medicamentosPendientes[indiceAlarma]
-
-                    spinnerMedicamento.setText(
-                        nombres[indiceAlarma],
-                        false
-                    )
-
-                    seleccionInicialAlarmaAplicada = true
-
-                    actualizarSeguimientoSeleccionado()
-                    actualizarElementoSeleccionado()
-                    android.util.Log.d(
-                        "ALARMA_MEDICAMENTO",
-                        "Medicamento seleccionado: formulación=$idFormulacionAlarma"
-                    )
-
-                }
+            val indiceAlarma = medicamentosPendientes.indexOfFirst {
+                it.idFormulacion == idFormulacionAlarma
             }
-        return
 
+            if (indiceAlarma >= 0) {
 
+                formulacionSeleccionada = medicamentosPendientes[indiceAlarma]
+
+                spinnerMedicamento.setText(
+                    nombres[indiceAlarma],
+                    false
+                )
+
+                seleccionInicialAlarmaAplicada = true
+
+                actualizarSeguimientoSeleccionado()
+                actualizarElementoSeleccionado()
+
+                android.util.Log.d(
+                    "ALARMA_MEDICAMENTO",
+                    "Medicamento seleccionado: formulación=$idFormulacionAlarma"
+                )
+                return
+
+            }
+        }
         // Si solo hay un medicamento,
         // lo seleccionamos automáticamente.
-        if (medicamentosPendientes.size == 1) {
-
-            formulacionSeleccionada =
-                medicamentosPendientes.first()
+        if (
+            idFormulacionAlarma <= 0 &&
+            formulacionSeleccionada == null &&
+            medicamentosPendientes.size == 1
+        ) {
+            formulacionSeleccionada = medicamentosPendientes.first()
 
             spinnerMedicamento.setText(
                 nombres.first(),
@@ -391,7 +493,6 @@ class AplicacionMedicamentosFragment :
             actualizarElementoSeleccionado()
         }
     }
-
     private fun actualizarSeguimientoSeleccionado() {
 
         val formulacion = formulacionSeleccionada
@@ -708,9 +809,10 @@ class AplicacionMedicamentosFragment :
             hora : Int,
             minuto: Int
         ):String{
-        val hora12 = when {
-            hora == 0 -> hora -12
-            else -> hora
+
+        val hora12 = when (hora % 12){
+            0 -> 12
+            else -> hora % 12
         }
         val periodo = if (hora<12)"a. m." else "p. m."
 

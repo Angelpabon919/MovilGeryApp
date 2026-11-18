@@ -627,6 +627,4 @@ interface ApiService {
         @Path("id") idSeguimiento: Int,
         @Body request: MotivoNoAdministracionRequest
     ): retrofit2.Response<SeguimientoAdministracionMedicamento>
-//holaaa
-
 }

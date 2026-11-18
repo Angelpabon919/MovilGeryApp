@@ -22,6 +22,7 @@ import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Inventario
+import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import kotlinx.coroutines.launch
@@ -1087,6 +1088,59 @@ class PacienteViewModel(
                     "NOCHE: ${medicamentosNoche.value}"
         )
     }
+    // =========================================================
+// REGISTRO DE MEDICAMENTO NO ADMINISTRADO
+// =========================================================
+
+    private val _noAdministradoState =
+        MutableLiveData<Result<String>>()
+
+    val noAdministradoState: LiveData<Result<String>>
+        get() = _noAdministradoState
+
+    fun registrarMedicamentoNoAdministrado(
+        idSeguimiento: Int,
+        motivo: String
+    ) {
+        if (idSeguimiento <= 0 || motivo.isBlank()) {
+            _noAdministradoState.value =
+                Result.failure(
+                    Exception("Debes seleccionar un seguimiento e indicar el motivo")
+                )
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val resultado =
+                    repository.registrarNoAdministrado(
+                        idSeguimiento,
+                        MotivoNoAdministracionRequest(
+                            motivoNoAdministracion = motivo.trim()
+                        )
+                    )
+
+                resultado.onSuccess {
+                    _noAdministradoState.value =
+                        Result.success(
+                            "Medicamento registrado como no administrado"
+                        )
+
+                    _pacienteSeleccionado.value?.idPaciente?.let { id ->
+                        cargarSeguimientosAdministracionMedicamentos(id)
+                    }
+                }.onFailure { error ->
+                    _noAdministradoState.value =
+                        Result.failure(error)
+                }
+
+            } catch (e: Exception) {
+                _noAdministradoState.value =
+                    Result.failure(e)
+            }
+        }
+    }
+
 
     // =========================================================
     // REGISTRO DE APLICACIÓN DE MEDICAMENTO
