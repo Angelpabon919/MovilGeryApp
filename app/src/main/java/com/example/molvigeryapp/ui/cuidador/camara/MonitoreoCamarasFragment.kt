@@ -552,15 +552,8 @@ class MonitoreoCamarasFragment : Fragment() {
     }
 
     private fun actualizarEstadoGeneral() {
-        tvEstadoGeneral.text = when {
-            listaCamaras.isEmpty() -> "● No hay cámaras registradas"
-            else -> "● Cámaras consultadas · Video pendiente de conexión"
-
-
+        tvEstadoGeneral.visibility= View.GONE
         }
-
-    }
-
     private fun configurarOtrasCamaras() {
         adaptadorOtrasCamaras = MonitoreoCamaraAdapter { camara ->
             seleccionarCamaraDesdeLista(camara)

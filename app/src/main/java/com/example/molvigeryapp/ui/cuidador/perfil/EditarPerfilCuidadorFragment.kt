@@ -22,12 +22,40 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import android.graphics.Bitmap
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 
 class EditarPerfilCuidadorFragment : Fragment() {
 
     private var globalLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
     private var fotoSeleccionadaUri: Uri?=null
+    private val cropImageLauncher =
+        registerForActivityResult(CropImageContract()) { result ->
+
+            if (result.isSuccessful) {
+                val uriRecortado = result.uriContent
+
+                if (uriRecortado != null) {
+                    fotoSeleccionadaUri = uriRecortado
+
+                    view?.findViewById<ImageView>(
+                        R.id.imgEditarPerfil
+                    )?.setImageURI(uriRecortado)
+                }
+            } else {
+                result.error?.let {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error al recortar la fotografía",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
 
     private val selectorImagen =
         registerForActivityResult(
@@ -35,14 +63,25 @@ class EditarPerfilCuidadorFragment : Fragment() {
         ) { uri ->
 
             if (uri != null) {
-                fotoSeleccionadaUri = uri
 
-                view?.findViewById<ImageView>(
-                    R.id.imgEditarPerfil
-                )?.setImageURI(uri)
+                cropImageLauncher.launch(
+                    CropImageContractOptions(
+                        uri = uri,
+                        cropImageOptions = CropImageOptions(
+                            cropShape = CropImageView.CropShape.OVAL,
+                            fixAspectRatio = true,
+                            aspectRatioX = 1,
+                            aspectRatioY = 1,
+                            guidelines = CropImageView.Guidelines.ON,
+                            activityTitle = "Ajustar foto de perfil",
+                            cropMenuCropButtonTitle = "Usar foto",
+                            outputCompressFormat = Bitmap.CompressFormat.JPEG,
+                            outputCompressQuality = 90
+                        )
+                    )
+                )
             }
         }
-
 
 
     private val preferencias by lazy {
@@ -67,6 +106,7 @@ class EditarPerfilCuidadorFragment : Fragment() {
         configurarBotonVolver(view)
         configurarGuardar(view)
         configurarCambiarFoto(view)
+        configurarEliminarFoto(view)
         configurarScrollConTeclado(view)
     }
 
@@ -343,4 +383,75 @@ class EditarPerfilCuidadorFragment : Fragment() {
                 globalLayoutListener = null
                 super.onDestroyView()
             }
+
+    private fun configurarEliminarFoto(view: View) {
+
+        val btnEliminarFoto =
+            view.findViewById<View>(R.id.btnEliminarFoto)
+
+        btnEliminarFoto?.setOnClickListener {
+
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Eliminar foto de perfil")
+                .setMessage(
+                    "¿Estás segura de que deseas eliminar tu fotografía de perfil?"
+                )
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Sí, eliminar") { _, _ ->
+
+                    val idUsuario = requireContext()
+                        .getSharedPreferences(
+                            "SESION",
+                            Context.MODE_PRIVATE
+                        )
+                        .getInt("ID_USUARIO", -1)
+
+                    if (idUsuario == -1) {
+                        Toast.makeText(
+                            requireContext(),
+                            "No se encontró el usuario",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setPositiveButton
+                    }
+
+                    btnEliminarFoto.isEnabled = false
+
+                    viewLifecycleOwner.lifecycleScope.launch {
+
+                        val eliminado =
+                            PacienteRepository().eliminarFotoUsuario(idUsuario)
+
+                        if (!isAdded) return@launch
+
+                        btnEliminarFoto.isEnabled = true
+
+                        if (eliminado) {
+
+                            fotoSeleccionadaUri = null
+
+                            view.findViewById<ImageView>(
+                                R.id.imgEditarPerfil
+                            )?.setImageResource(R.drawable.person_icon)
+
+                            Toast.makeText(
+                                requireContext(),
+                                "Fotografía eliminada correctamente",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                        } else {
+
+                            Toast.makeText(
+                                requireContext(),
+                                "No se pudo eliminar la fotografía",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+                .show()
         }
+    }
+
+}

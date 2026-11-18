@@ -13,11 +13,15 @@ import com.google.android.material.tabs.TabLayoutMediator
 import android.content.res.ColorStateList
 import android.graphics.Color
 import com.bumptech.glide.Glide
+import com.example.molvigeryapp.data.model.FormulacionMedicamento
 
 class DetallePacienteFragment : Fragment() {
 
     private var _binding: FragmentPacienteDetailBinding? = null
+
     private val binding get() = _binding!!
+
+    private var pagerConfigurado = false
 
     // Usamos activityViewModels con la fábrica del repositorio para evitar fallos de inicialización
     private val viewModel: PacienteViewModel by activityViewModels {
@@ -36,16 +40,51 @@ class DetallePacienteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        pagerConfigurado = false
+
         // Si se pasa un ID por argumentos al navegar, lo cargamos en el ViewModel
         val idPaciente = arguments?.getInt("ID_PACIENTE", -1) ?: -1
-        if (idPaciente != -1) {
-            viewModel.cargarPacientePorId(idPaciente)
-        }
 
+        val idFormulacionAlarma =
+            arguments?.getInt("ID_FORMULACION_ALARMA",-1)
+                ?.takeIf { it > 0 }
         setupHeader()
-        setupViewPagerAndTabs()
         observarPaciente()
         observarMedicamentosPaciente()
+
+        if (idPaciente > 0){
+            viewModel.pacienteSeleccionado.observe(viewLifecycleOwner) { paciente ->
+
+                if (
+                    paciente?.idPaciente == idPaciente &&
+                    !pagerConfigurado
+                ) {
+                    setupViewPagerAndTabs(idFormulacionAlarma)
+                    pagerConfigurado = true
+                }
+            }
+            if (
+                !pagerConfigurado &&
+                viewModel.pacienteSeleccionado.value?.idPaciente == idPaciente
+            ) {
+
+                setupViewPagerAndTabs(idFormulacionAlarma)
+                pagerConfigurado = true
+
+            } else if (
+                viewModel.pacienteSeleccionado.value?.idPaciente != idPaciente
+            ) {
+
+                viewModel.cargarPacientePorId(idPaciente)
+            }
+
+
+        } else {
+            setupViewPagerAndTabs()
+            pagerConfigurado = true
+        }
+
+
     }
     private fun observarMedicamentosPaciente() {
 
@@ -125,9 +164,14 @@ class DetallePacienteFragment : Fragment() {
 
     }
 
-    private fun setupViewPagerAndTabs() {
-        val pagerAdapter = PacientePagerAdapter(this)
-        binding.viewPagerPaciente.adapter = pagerAdapter
+    private fun setupViewPagerAndTabs(
+        idFormulacionAlarma: Int? = null
+    ) {
+        val pagerAdapter = PacientePagerAdapter(
+            this,
+            idFormulacionAlarma
+        )
+        binding.viewPagerPaciente.adapter=pagerAdapter
 
         // Nombres de los 3 Tabs
         TabLayoutMediator(binding.tabLayoutPaciente, binding.viewPagerPaciente) { tab, position ->
@@ -139,6 +183,7 @@ class DetallePacienteFragment : Fragment() {
                 else -> ""
             }
         }.attach()
+        binding.viewPagerPaciente.setCurrentItem(0,false)
     }
 
     override fun onDestroyView() {

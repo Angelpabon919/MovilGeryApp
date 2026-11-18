@@ -31,5 +31,10 @@ data class AplicacionRequest(
     val observacion: String,
 
     @SerializedName("cantidad_aplicada")
-    val cantidadAplicada: Int = 1
+    val cantidadAplicada: Int = 1,
+
+    @SerializedName("id_seguimiento")
+    val idSeguimiento: Int? = null
+
+
 )

@@ -20,6 +20,10 @@ import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.model.Recomendacion
 import com.example.molvigeryapp.data.model.TipoInsumo
 import com.example.molvigeryapp.data.model.Usuario
+import com.example.molvigeryapp.data.model.AplicacionMedicamento
+import com.example.molvigeryapp.data.model.CrearSeguimientoMedicamentoRequest
+import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
+import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
@@ -56,6 +60,10 @@ class PacienteRepository {
                 null
             }
         }
+    suspend fun obtenerUsuarios(): List<Usuario> =
+        withContext(Dispatchers.IO) {
+            api.getUsuarios()
+        }
     suspend fun subirFotoUsuario(
         idUsuario: Int,
         foto: MultipartBody.Part
@@ -90,6 +98,34 @@ class PacienteRepository {
                 )
 
                 null
+            }
+        }
+    suspend fun eliminarFotoUsuario(
+        idUsuario: Int
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val respuesta = api.eliminarFotoUsuario(idUsuario)
+
+                if (respuesta.isSuccessful) {
+                    true
+                } else {
+                    Log.e(
+                        "FOTO_USUARIO",
+                        "Error HTTP ${respuesta.code()}: ${
+                            respuesta.errorBody()?.string()
+                        }"
+                    )
+                    false
+                }
+
+            } catch (e: Exception) {
+                Log.e(
+                    "FOTO_USUARIO",
+                    "Error al eliminar foto de perfil",
+                    e
+                )
+                false
             }
         }
 
@@ -703,12 +739,65 @@ class PacienteRepository {
     // APLICACIÓN DE MEDICAMENTOS
     // =========================================================
 
+
+    suspend fun obtenerAplicacionesMedicamento():
+            Result<List<AplicacionMedicamento>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = api.obtenerAplicacionesMedicamento()
+
+                if (response.isSuccessful) {
+
+                    val aplicaciones =
+                        response.body() ?: emptyList()
+
+                    Log.d(
+                        "APLICACIONES_MEDICAMENTO",
+                        "Aplicaciones recibidas: ${aplicaciones.size}"
+                    )
+
+                    Result.success(aplicaciones)
+
+                } else {
+
+                    val codigo = response.code()
+                    val errorBody =
+                        response.errorBody()?.string()
+                            ?: "Sin detalle de error"
+
+                    Log.e(
+                        "API_ERROR_APLICACIONES",
+                        "Error HTTP $codigo: $errorBody"
+                    )
+
+                    Result.failure(
+                        Exception("HTTP $codigo: $errorBody")
+                    )
+                }
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "API_ERROR_APLICACIONES",
+                    "Error consultando aplicaciones",
+                    e
+                )
+
+                Result.failure(e)
+            }
+        }
+
     suspend fun registrarAplicacionMedicamento(
         request: AplicacionRequest
     ): Result<ResponseBody> =
         withContext(Dispatchers.IO) {
             try {
+                Log.d(
+                    "APLICACION_JSON",
+                    com.google.gson.Gson().toJson(request)
+                )
                 val response = api.registrarAplicacion(request)
+
 
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
@@ -735,6 +824,120 @@ class PacienteRepository {
                 Result.failure(e)
             }
         }
+
+    // =========================================================
+    // SEGUIMIENTO DE ADMINISTRACIÓN DE MEDICAMENTOS
+    // =========================================================
+
+    // CONSULTAR SEGUIMIENTOS DE UN PACIENTE
+
+    suspend fun obtenerSeguimientosMedicamento(
+        idPaciente: Int
+    ): Result<List<SeguimientoAdministracionMedicamento>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response =
+                    api.obtenerSeguimientosMedicamento(idPaciente)
+
+                if (response.isSuccessful) {
+                    Result.success(response.body() ?: emptyList())
+                } else {
+                    val codigo = response.code()
+                    val errorBody = response.errorBody()?.string()
+                        ?: "Sin detalle de error"
+
+                    Log.e(
+                        "SEGUIMIENTO_MEDICAMENTO",
+                        "Error HTTP $codigo: $errorBody"
+                    )
+
+                    Result.failure(
+                        Exception("HTTP $codigo: $errorBody")
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(
+                    "SEGUIMIENTO_MEDICAMENTO",
+                    "Error consultando seguimientos",
+                    e
+                )
+                Result.failure(e)
+            }
+        }
+
+    // CREAR SEGUIMIENTO PENDIENTE
+
+    suspend fun crearSeguimientoMedicamento(
+        request: CrearSeguimientoMedicamentoRequest
+    ): Result<SeguimientoAdministracionMedicamento> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response =
+                    api.crearSeguimientoMedicamento(request)
+
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val codigo = response.code()
+                    val errorBody = response.errorBody()?.string()
+                        ?: "Sin detalle de error"
+
+                    Log.e(
+                        "SEGUIMIENTO_MEDICAMENTO",
+                        "Error creando seguimiento HTTP $codigo: $errorBody"
+                    )
+
+                    Result.failure(
+                        Exception("HTTP $codigo: $errorBody")
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(
+                    "SEGUIMIENTO_MEDICAMENTO",
+                    "Excepción creando seguimiento",
+                    e
+                )
+                Result.failure(e)
+            }
+        }
+
+    // REGISTRAR DOSIS NO ADMINISTRADA
+
+    suspend fun registrarNoAdministrado(
+        idSeguimiento: Int,
+        request: MotivoNoAdministracionRequest
+    ): Result<SeguimientoAdministracionMedicamento> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response =
+                    api.registrarNoAdministrado(idSeguimiento, request)
+
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val codigo = response.code()
+                    val errorBody = response.errorBody()?.string()
+                        ?: "Sin detalle de error"
+
+                    Log.e(
+                        "SEGUIMIENTO_MEDICAMENTO",
+                        "Error registrando motivo HTTP $codigo: $errorBody"
+                    )
+
+                    Result.failure(
+                        Exception("HTTP $codigo: $errorBody")
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(
+                    "SEGUIMIENTO_MEDICAMENTO",
+                    "Excepción registrando dosis no administrada",
+                    e
+                )
+                Result.failure(e)
+            }
+        }
+
 
     // =========================================================
     // NOTIFICACIONES
@@ -795,6 +998,81 @@ class PacienteRepository {
                 Result.failure(e)
             }
         }
+
+// =========================================================
+// NOTIFICACIONES PARA STOCK BAJO
+// =========================================================
+
+    suspend fun crearNotificacionStock(
+        datos: Map<String, Any>
+    ): Result<NotificacionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response =
+                    api.crearNotificacionStock(datos)
+
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errorBody =
+                        response.errorBody()?.string() ?: "Sin detalle"
+
+                    Log.e(
+                        "NOTIF_STOCK",
+                        "Error HTTP ${response.code()}: $errorBody"
+                    )
+
+                    Result.failure(
+                        Exception(
+                            "Error al crear notificación de stock: ${response.code()}"
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(
+                    "NOTIF_STOCK",
+                    "Error creando notificación de stock",
+                    e
+                )
+                Result.failure(e)
+            }
+        }
+
+    suspend fun asociarNotificacionDestinatarioStock(
+        datos: Map<String, Any>
+    ): Result<Boolean> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response =
+                    api.asociarNotificacionDestinatarioStock(datos)
+
+                if (response.isSuccessful) {
+                    Result.success(true)
+                } else {
+                    val errorBody =
+                        response.errorBody()?.string() ?: "Sin detalle"
+
+                    Log.e(
+                        "NOTIF_STOCK",
+                        "Error asociando destinatario: ${response.code()} | $errorBody"
+                    )
+
+                    Result.failure(
+                        Exception(
+                            "Error al asociar destinatario: ${response.code()}"
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(
+                    "NOTIF_STOCK",
+                    "Error asociando destinatario",
+                    e
+                )
+                Result.failure(e)
+            }
+        }
+
 
     // =========================================================
     // CITAS - AGENDA

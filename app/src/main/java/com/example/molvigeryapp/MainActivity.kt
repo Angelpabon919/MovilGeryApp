@@ -36,6 +36,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import android.view.View
+import com.example.molvigeryapp.ui.cuidador.pacientes.DetallePacienteFragment
+import com.example.molvigeryapp.ui.cuidador.pacientes.ProgramadorAlarmasMedicamentos
 
 class MainActivity : AppCompatActivity() {
 
@@ -188,7 +190,9 @@ class MainActivity : AppCompatActivity() {
 
             procesarIntentNotificacion(intent)
         }
+        procesarIntentAlarmaMedicamento(intent)
     }
+
 
     // =========================================================
     // CONTROL DEL BOTÓN FLOTANTE DE LLAMADA
@@ -246,6 +250,7 @@ class MainActivity : AppCompatActivity() {
         setIntent(intent)
 
         procesarIntentNotificacion(intent)
+        procesarIntentAlarmaMedicamento(intent)
     }
 
     // =========================================================
@@ -489,7 +494,81 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private fun procesarIntentAlarmaMedicamento(intent: Intent?) {
 
+        val recibido = intent ?: return
+
+        if (
+            !recibido.getBooleanExtra(
+                ProgramadorAlarmasMedicamentos.EXTRA_ABRIR_ALARMA_MEDICAMENTO,
+                false
+            )
+        ) return
+
+        val idPaciente = recibido.getIntExtra(
+            ProgramadorAlarmasMedicamentos.EXTRA_ID_PACIENTE,
+            -1
+        )
+
+        val idFormulacion = recibido.getIntExtra(
+            ProgramadorAlarmasMedicamentos.EXTRA_ID_FORMULACION,
+            -1
+        )
+
+        if (
+            idRolActual != ROL_CUIDADOR ||
+            idPaciente <= 0 ||
+            idFormulacion <= 0
+        ) {
+            Log.e(TAG, "Datos inválidos para abrir medicamento")
+            limpiarExtrasAlarma(recibido)
+            return
+        }
+
+        val fm = supportFragmentManager
+
+        if (fm.isStateSaved || isFinishing || isDestroyed) {
+            Log.w(TAG, "No se puede abrir medicamento en este momento")
+            return
+        }
+
+        val argumentos = Bundle().apply {
+            putInt("ID_PACIENTE", idPaciente)
+            putInt("ID_FORMULACION_ALARMA", idFormulacion)
+        }
+
+        val detalle = DetallePacienteFragment().apply {
+            arguments = argumentos
+        }
+
+        fm.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(
+                R.id.fragmentContainer,
+                detalle
+            )
+            .addToBackStack("alarma_medicamento")
+            .commit()
+
+        Log.d(
+            TAG,
+            "Abriendo medicamento: paciente=$idPaciente, formulación=$idFormulacion"
+        )
+
+        limpiarExtrasAlarma(recibido)
+    }
+
+    private fun limpiarExtrasAlarma(intent: Intent) {
+        intent.removeExtra(
+            ProgramadorAlarmasMedicamentos.EXTRA_ABRIR_ALARMA_MEDICAMENTO
+        )
+        intent.removeExtra(
+            ProgramadorAlarmasMedicamentos.EXTRA_ID_PACIENTE
+        )
+        intent.removeExtra(
+            ProgramadorAlarmasMedicamentos.EXTRA_ID_FORMULACION
+        )
+    }
     private fun limpiarExtrasNotificacion(intent: Intent) {
         intent.removeExtra(EXTRA_ABRIR_NOTIFICACION)
         intent.removeExtra(EXTRA_ID_NOTIFICACION)
