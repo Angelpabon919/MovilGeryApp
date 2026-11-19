@@ -711,6 +711,8 @@ class BitacoraFragment : Fragment() {
 
                 // 2. GUARDAR SIGNOS VITALES
 
+                var respuestaSignos: SignosVitales? = null
+
                 if (binding.switchSignosVitales.isChecked) {
 
                     val signos = SignosVitales(
@@ -744,7 +746,7 @@ class BitacoraFragment : Fragment() {
                             binding.etObservacionesVitales.text.toString().trim()
                     )
 
-                    RetrofitClient.apiService.crearSignosVitales(signos)
+                    respuestaSignos = RetrofitClient.apiService.crearSignosVitales(signos)
                 }
 
                 // 3. GUARDAR CONTROLES EN SU TABLA CORRECTA
@@ -767,15 +769,23 @@ class BitacoraFragment : Fragment() {
                 }
 
                 if (isAdded) {
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Bitácora guardada correctamente",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    if (respuestaSignos?.alerta == true) {
+                        mostrarAlertaClinicaSignos(respuestaSignos.mensajeAlerta) {
+                            if (_binding != null) {
+                                limpiarFormulario()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Bitácora guardada correctamente",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        limpiarFormulario()
+                    }
+                } else {
+                    limpiarFormulario()
                 }
-
-                limpiarFormulario()
 
             } catch (e: Exception) {
 

@@ -3,7 +3,6 @@ package com.example.molvigeryapp.ui.cuidador.pacientes
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.setPadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -21,13 +19,7 @@ import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.DocumentoHistoriaClinica
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentHistoriaClinicaBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,22 +33,6 @@ class HistoriaClinicaFragment : Fragment() {
     }
 
     private var idPaciente: Int? = null
-    private var archivoPdfSeleccionado: Uri? = null
-    private var nombreArchivoPDF: String? = null
-    private var subiendoPDF = false
-
-    companion object {
-        private const val MAX_TAMANO_PDF = 10L * 1024L * 1024L
-    }
-
-    private val seleccionarPDF =
-        registerForActivityResult(
-            ActivityResultContracts.OpenDocument()
-        ) { uri ->
-            if (uri != null) {
-                validarYSeleccionarPDF(uri)
-            }
-        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -78,7 +54,6 @@ class HistoriaClinicaFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         configurarBotonVolver()
-        configurarSelectorPDF()
         observarPaciente()
     }
 
@@ -106,7 +81,6 @@ class HistoriaClinicaFragment : Fragment() {
             paciente?.let {
 
                 if (idPaciente != it.idPaciente) {
-                    limpiarSeleccionPDF()
                     binding.contenedorDocumentosPDF.removeAllViews()
                 }
 
@@ -199,232 +173,6 @@ class HistoriaClinicaFragment : Fragment() {
     }
 
     // ==========================================
-    // SELECTOR PDF
-    // ==========================================
-
-    private fun configurarSelectorPDF() {
-
-        binding.btnSeleccionarPDF.setOnClickListener {
-            seleccionarPDF.launch(arrayOf("application/pdf"))
-        }
-
-        binding.btnSubirPDF.setOnClickListener {
-            subirDocumentoPDF()
-        }
-
-        binding.btnSubirPDF.isEnabled = false
-    }
-
-    // ==========================================
-    // VALIDAR PDF
-    // ==========================================
-
-    private fun validarYSeleccionarPDF(uri: Uri) {
-
-        try {
-            val resolver = requireContext().contentResolver
-            val nombre = obtenerNombreArchivo(uri)
-
-            if (!nombre.lowercase(Locale.ROOT).endsWith(".pdf")) {
-                mostrarMensaje("Selecciona un archivo con formato PDF")
-                return
-            }
-
-            val tipoMime = resolver.getType(uri)
-
-            if (tipoMime != null && tipoMime != "application/pdf") {
-                mostrarMensaje("El archivo seleccionado no es un PDF válido")
-                return
-            }
-
-            val tamano = obtenerTamanoArchivo(uri)
-
-            if (tamano <= 0L) {
-                mostrarMensaje("No se pudo verificar el tamaño del archivo")
-                return
-            }
-
-            if (tamano > MAX_TAMANO_PDF) {
-                mostrarMensaje("El PDF no puede superar los 10 MB")
-                return
-            }
-
-            archivoPdfSeleccionado = uri
-            nombreArchivoPDF = nombre
-
-            binding.tvNombreArchivoPDF.text =
-                "📄 $nombre\nTamaño: ${formatearTamano(tamano)}"
-
-            binding.btnSubirPDF.isEnabled = true
-            binding.btnSubirPDF.text = "Subir documento"
-
-            mostrarMensaje("PDF seleccionado correctamente")
-
-        } catch (e: Exception) {
-            android.util.Log.e(
-                "HISTORIA_CLINICA",
-                "Error al seleccionar PDF",
-                e
-            )
-            mostrarMensaje("No se pudo leer el documento seleccionado")
-        }
-    }
-
-    // ==========================================
-    // SUBIR DOCUMENTO PDF
-    // ==========================================
-
-    private fun subirDocumentoPDF() {
-
-        val pacienteId = idPaciente
-        val uri = archivoPdfSeleccionado
-        val nombre = nombreArchivoPDF
-
-        if (pacienteId == null || uri == null || nombre == null) {
-            mostrarMensaje("Selecciona un paciente y un PDF")
-            return
-        }
-
-        if (subiendoPDF) return
-
-        subiendoPDF = true
-        binding.btnSubirPDF.isEnabled = false
-        binding.btnSubirPDF.text = "Subiendo documento..."
-
-        viewLifecycleOwner.lifecycleScope.launch {
-
-            try {
-
-                val archivoBytes = withContext(Dispatchers.IO) {
-                    leerPDFValidado(uri)
-                }
-
-                val nombreBody = nombre
-                val requestFile = archivoBytes.toRequestBody(
-                    "application/pdf".toMediaTypeOrNull()
-                )
-
-                val archivoPart = MultipartBody.Part.createFormData(
-                    "archivo",
-                    nombreBody,
-                    requestFile
-                )
-
-                val pacienteBody = pacienteId.toString().toRequestBody(
-                    "text/plain".toMediaTypeOrNull()
-                )
-
-                val descripcionBody = "Documento de historia clínica".toRequestBody(
-                    "text/plain".toMediaTypeOrNull()
-                )
-
-                val respuesta =
-                    RetrofitClient.apiService.subirDocumentoHistoriaClinica(
-                        idPaciente = pacienteBody,
-                        archivo = archivoPart,
-                        descripcion = descripcionBody
-                    )
-
-                if (!isAdded) return@launch
-
-                if (respuesta.isSuccessful && respuesta.body() != null) {
-
-                    archivoPdfSeleccionado = null
-                    nombreArchivoPDF = null
-
-                    binding.tvNombreArchivoPDF.text =
-                        "Ningún archivo seleccionado"
-
-                    binding.btnSubirPDF.isEnabled = false
-                    binding.btnSubirPDF.text = "Subir documento"
-
-                    mostrarMensaje("Documento PDF subido correctamente")
-
-                    cargarDocumentosPDF()
-
-                } else {
-
-                    val error = respuesta.errorBody()?.string()
-
-                    android.util.Log.e(
-                        "HISTORIA_CLINICA",
-                        "Error HTTP ${respuesta.code()}: $error"
-                    )
-
-                    mostrarMensaje(
-                        "No se pudo subir el documento. Código: ${respuesta.code()}"
-                    )
-                }
-
-            } catch (e: Exception) {
-
-                android.util.Log.e(
-                    "HISTORIA_CLINICA",
-                    "Error al subir PDF",
-                    e
-                )
-
-                if (isAdded) {
-                    mostrarMensaje("Error al subir el documento PDF")
-                }
-
-            } finally {
-
-                subiendoPDF = false
-
-                if (isAdded && archivoPdfSeleccionado != null) {
-                    binding.btnSubirPDF.isEnabled = true
-                    binding.btnSubirPDF.text = "Subir documento"
-                }
-            }
-        }
-    }
-
-    // ==========================================
-    // LEER PDF Y COMPROBAR TAMAÑO
-    // ==========================================
-
-    private suspend fun leerPDFValidado(uri: Uri): ByteArray =
-        withContext(Dispatchers.IO) {
-
-            val input = requireContext()
-                .contentResolver
-                .openInputStream(uri)
-                ?: throw Exception("No se pudo abrir el PDF")
-
-            input.use { stream ->
-
-                val output = ByteArrayOutputStream()
-                val buffer = ByteArray(8192)
-                var total = 0L
-
-                while (true) {
-                    val leidos = stream.read(buffer)
-
-                    if (leidos == -1) break
-
-                    total += leidos
-
-                    if (total > MAX_TAMANO_PDF) {
-                        throw Exception("El PDF supera los 10 MB")
-                    }
-
-                    output.write(buffer, 0, leidos)
-                }
-
-                val bytes = output.toByteArray()
-
-                if (bytes.size < 5 ||
-                    !String(bytes, 0, 5, Charsets.US_ASCII).startsWith("%PDF-")
-                ) {
-                    throw Exception("El archivo no contiene una cabecera PDF válida")
-                }
-
-                bytes
-            }
-        }
-
-    // ==========================================
     // CONSULTAR DOCUMENTOS DEL PACIENTE
     // ==========================================
 
@@ -449,7 +197,10 @@ class HistoriaClinicaFragment : Fragment() {
                 if (respuesta.isSuccessful) {
 
                     val documentos = respuesta.body().orEmpty()
-                        .filter { it.estado }
+                        .filter {
+                            it.estado &&
+                                (it.idPaciente == null || it.idPaciente == pacienteId)
+                        }
 
                     mostrarDocumentosPDF(documentos)
 
@@ -605,116 +356,6 @@ class HistoriaClinicaFragment : Fragment() {
 
             mostrarMensaje("No se pudo abrir el documento")
         }
-    }
-
-    // ==========================================
-    // OBTENER NOMBRE DEL ARCHIVO
-    // ==========================================
-
-    private fun obtenerNombreArchivo(uri: Uri): String {
-
-        var nombre = "documento.pdf"
-
-        requireContext().contentResolver.query(
-            uri,
-            arrayOf(OpenableColumns.DISPLAY_NAME),
-            null,
-            null,
-            null
-        )?.use { cursor ->
-
-            if (cursor.moveToFirst()) {
-                val columna = cursor.getColumnIndex(
-                    OpenableColumns.DISPLAY_NAME
-                )
-
-                if (columna >= 0) {
-                    nombre = cursor.getString(columna)
-                        ?: "documento.pdf"
-                }
-            }
-        }
-
-        return nombre
-    }
-
-    // ==========================================
-    // OBTENER TAMAÑO
-    // ==========================================
-
-    private fun obtenerTamanoArchivo(uri: Uri): Long {
-
-        requireContext().contentResolver.query(
-            uri,
-            arrayOf(OpenableColumns.SIZE),
-            null,
-            null,
-            null
-        )?.use { cursor ->
-
-            if (cursor.moveToFirst()) {
-
-                val columna = cursor.getColumnIndex(
-                    OpenableColumns.SIZE
-                )
-
-                if (columna >= 0 && !cursor.isNull(columna)) {
-                    val tamano = cursor.getLong(columna)
-
-                    if (tamano >= 0L) return tamano
-                }
-            }
-        }
-
-        return requireContext()
-            .contentResolver
-            .openInputStream(uri)
-            ?.use { input ->
-
-                val buffer = ByteArray(8192)
-                var total = 0L
-
-                while (true) {
-                    val leidos = input.read(buffer)
-
-                    if (leidos == -1) break
-
-                    total += leidos
-
-                    if (total > MAX_TAMANO_PDF) return total
-                }
-
-                total
-            } ?: -1L
-    }
-
-    // ==========================================
-    // LIMPIAR SELECCIÓN
-    // ==========================================
-
-    private fun limpiarSeleccionPDF() {
-
-        archivoPdfSeleccionado = null
-        nombreArchivoPDF = null
-
-        binding.tvNombreArchivoPDF.text =
-            "Ningún archivo seleccionado"
-
-        binding.btnSubirPDF.isEnabled = false
-        binding.btnSubirPDF.text = "Subir documento"
-    }
-
-    // ==========================================
-    // FORMATEAR TAMAÑO
-    // ==========================================
-
-    private fun formatearTamano(tamano: Long): String {
-
-        return String.format(
-            Locale.US,
-            "%.2f MB",
-            tamano / (1024.0 * 1024.0)
-        )
     }
 
     // ==========================================

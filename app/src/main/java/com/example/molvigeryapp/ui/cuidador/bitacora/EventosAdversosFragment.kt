@@ -277,7 +277,8 @@ class EventosAdversosFragment : Fragment() {
                     observaciones = observaciones
                 )
 
-                RetrofitClient.apiService.crearSignosVitales(signos)
+                val respuestaSignos =
+                    RetrofitClient.apiService.crearSignosVitales(signos)
 
                 // La foto todavía no se envía al backend.
                 val mensaje = if (fotoBitmap != null || fotoUri != null) {
@@ -287,13 +288,24 @@ class EventosAdversosFragment : Fragment() {
                     "Evento adverso y signos vitales guardados correctamente"
                 }
 
-                Toast.makeText(
-                    requireContext(),
-                    mensaje,
-                    Toast.LENGTH_LONG
-                ).show()
-
-                limpiarFormulario()
+                if (isAdded) {
+                    if (respuestaSignos.alerta == true) {
+                        mostrarAlertaClinicaSignos(respuestaSignos.mensajeAlerta) {
+                            if (_binding != null) {
+                                limpiarFormulario()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            mensaje,
+                            Toast.LENGTH_LONG
+                        ).show()
+                        limpiarFormulario()
+                    }
+                } else {
+                    limpiarFormulario()
+                }
 
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string()

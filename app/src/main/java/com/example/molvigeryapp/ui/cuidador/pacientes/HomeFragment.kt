@@ -24,6 +24,7 @@ import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.cierreturno.CierreTurnoFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -162,18 +163,21 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
             try {
 
-                val preferencias = requireContext()
+                val ctx = context ?: return@launch
+                val preferencias = ctx
                     .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
                 val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
                 if (idUsuario <= 0) {
-                    binding.tvUserWelcome.text = "Hola"
+                    _binding?.tvUserWelcome?.text = "Hola"
                     return@launch
                 }
 
                 val repository = PacienteRepository()
                 val usuario = repository.obtenerUsuarioPorId(idUsuario)
+
+                val b = _binding ?: return@launch
 
                 if (usuario != null) {
 
@@ -183,7 +187,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         .firstOrNull()
                         .orEmpty()
 
-                    binding.tvUserWelcome.text =
+                    b.tvUserWelcome.text =
                         if (nombre.isNotEmpty()) "Hola, $nombre"
                         else "Hola"
 
@@ -193,9 +197,11 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     )
 
                 } else {
-                    binding.tvUserWelcome.text = "Hola"
+                    b.tvUserWelcome.text = "Hola"
                 }
 
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
 
                 Log.e(
@@ -204,7 +210,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     e
                 )
 
-                binding.tvUserWelcome.text = "Hola"
+                _binding?.tvUserWelcome?.text = "Hola"
             }
         }
     }
@@ -341,6 +347,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         .addToBackStack("cierre_turno")
                         .commit()
 
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
 
                     Log.e(
@@ -349,11 +357,13 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         e
                     )
 
-                    Toast.makeText(
-                        requireContext(),
-                        "No se pudo consultar el turno",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    context?.let {
+                        Toast.makeText(
+                            it,
+                            "No se pudo consultar el turno",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }
@@ -987,14 +997,15 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
         try {
 
-            val preferencias = requireContext()
+            val ctx = context ?: return
+            val preferencias = ctx
                 .getSharedPreferences("SESION", Context.MODE_PRIVATE)
 
             val idUsuario = preferencias.getInt("ID_USUARIO", -1)
 
             if (idUsuario <= 0) {
 
-                binding.contenedorExitTurno.visibility = View.GONE
+                _binding?.contenedorExitTurno?.visibility = View.GONE
                 return
             }
 
@@ -1078,7 +1089,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 horarioPermitido
             }
 
-            binding.contenedorExitTurno.visibility =
+            _binding?.contenedorExitTurno?.visibility =
                 if (debeMostrar) View.VISIBLE else View.GONE
 
             Log.d(
@@ -1089,6 +1100,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                         "fecha=$hoy"
             )
 
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
 
             Log.e(
@@ -1098,7 +1111,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             )
 
             // Si falla la consulta, no mostrar el botón
-            binding.contenedorExitTurno.visibility = View.GONE
+            _binding?.contenedorExitTurno?.visibility = View.GONE
         }
     }
 
