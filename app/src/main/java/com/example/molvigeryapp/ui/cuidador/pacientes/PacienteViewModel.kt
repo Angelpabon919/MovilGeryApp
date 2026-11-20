@@ -66,6 +66,8 @@ class PacienteViewModel(
     private val _mensajeErrorSeleccion = MutableLiveData<String?>()
     val mensajeErrorSeleccion: LiveData<String?> get() = _mensajeErrorSeleccion
 
+    private var guardandoSeleccion = false
+
     // =========================================================
     // SELECCIÓN DE PACIENTES
     // =========================================================
@@ -109,12 +111,64 @@ class PacienteViewModel(
         )
     }
 
+    /**
+     * Resuelve los IDs de pacientes seleccionados que siguen vigentes
+     * específicamente dentro del bloque de turno activo del cuidador.
+     * Si el bloque ya finalizó y no existe un bloque activo, devuelve vacío.
+     */
+    private suspend fun obtenerIdsVigentesBloqueActual(
+        idUsuario: Int,
+        ahora: Date = Date()
+    ): Set<Int> {
+        val rangoBloque = AsignacionVigenciaHelper.resolverRangoBloqueTurnoActual(
+            idUsuario = idUsuario,
+            turnoRepository = turnoRepository,
+            ahora = ahora,
+            forceRefresh = true
+        )
+
+        if (rangoBloque == null) {
+            Log.d(
+                "SELECCION_PACIENTES",
+                "Usuario=$idUsuario sin bloque de turno vigente; no se restauran pacientes seleccionados."
+            )
+            return emptySet()
+        }
+
+        val asignaciones = repository
+            .obtenerAsignacionesPacienteCuidadorResult()
+            .getOrThrow()
+
+        val idsVigentes = asignaciones
+            .filter { asignacion ->
+                asignacion.idUsuario == idUsuario &&
+                    AsignacionVigenciaHelper.perteneceABloqueVigente(
+                        asignacion = asignacion,
+                        bloque = rangoBloque,
+                        ahora = ahora
+                    )
+            }
+            .map { it.idPaciente }
+            .toSet()
+
+        Log.d(
+            "SELECCION_PACIENTES",
+            "Usuario=$idUsuario | grupo=${rangoBloque.asignacionTurno.id_grupo_asignacion.orEmpty()} | " +
+                "bloque=[${rangoBloque.fechaInicioIso} .. ${rangoBloque.fechaFinIso}] | " +
+                "idsVigentes=$idsVigentes"
+        )
+
+        return idsVigentes
+    }
+
     fun cargarPacientes() {
         viewModelScope.launch {
             try {
                 if (listaPacientesCompleta.isEmpty()) {
-                    listaPacientesCompleta =
-                        repository.obtenerPacientes()
+                    val obtenidos = repository.obtenerPacientes()
+                    if (listaPacientesCompleta.isEmpty()) {
+                        listaPacientesCompleta = obtenidos
+                    }
                 }
 
                 _pacientes.value = listaPacientesCompleta.toList()
@@ -137,15 +191,16 @@ class PacienteViewModel(
     }
 
     /**
-     * Carga los pacientes y recupera las asignaciones activas
-     * del cuidador desde el backend.
+     * Carga los pacientes y recupera las asignaciones vigentes del cuidador
+     * correspondientes únicamente al bloque de turno activo.
      */
     fun cargarPacientes(idUsuarioLogueado: Int) {
         viewModelScope.launch {
             try {
-                if (listaPacientesCompleta.isEmpty()) {
-                    listaPacientesCompleta =
-                        repository.obtenerPacientes()
+                val pacientesActuales = if (listaPacientesCompleta.isEmpty()) {
+                    repository.obtenerPacientes()
+                } else {
+                    listaPacientesCompleta
                 }
 
                 if (idUsuarioLogueado <= 0) {
@@ -153,31 +208,21 @@ class PacienteViewModel(
                         "ASIGNACION_DEBUG",
                         "ID de usuario inválido: $idUsuarioLogueado"
                     )
+                    listaPacientesCompleta = pacientesActuales
                     _pacientes.value =
                         listaPacientesCompleta.toList()
                     return@launch
                 }
 
-                val asignaciones =
-                    repository.obtenerAsignacionesPacienteCuidador()
-                val ahora = Date()
+                val idsSeleccionados =
+                    obtenerIdsVigentesBloqueActual(idUsuarioLogueado)
 
-                val idsSeleccionados = asignaciones
-                    .filter { asignacion ->
-                        asignacion.idUsuario == idUsuarioLogueado &&
-                                AsignacionVigenciaHelper.estaVigente(
-                                    asignacion,
-                                    ahora
-                                )
-                    }
-                    .map { it.idPaciente }
-                    .toSet()
-
-                listaPacientesCompleta.forEach { paciente ->
+                pacientesActuales.forEach { paciente ->
                     paciente.isSelected =
                         paciente.idPaciente in idsSeleccionados
                 }
 
+                listaPacientesCompleta = pacientesActuales
                 tienePacientesSeleccionados =
                     idsSeleccionados.isNotEmpty()
 
@@ -190,11 +235,7 @@ class PacienteViewModel(
 
                 Log.d(
                     "ASIGNACION_DEBUG",
-                    "Usuario: $idUsuarioLogueado"
-                )
-                Log.d(
-                    "ASIGNACION_DEBUG",
-                    "IDs seleccionados: $idsSeleccionados"
+                    "Usuario: $idUsuarioLogueado | IDs seleccionados del bloque vigente: $idsSeleccionados"
                 )
             } catch (e: Exception) {
                 Log.e(
@@ -220,6 +261,8 @@ class PacienteViewModel(
         idUsuarioLogueado: Int,
         preferences: SharedPreferences
     ) {
+        if (guardandoSeleccion) return
+
         _seleccionGuardada.value = null
         _mensajeErrorSeleccion.value = null
 
@@ -252,6 +295,7 @@ class PacienteViewModel(
             return
         }
 
+        guardandoSeleccion = true
         viewModelScope.launch {
             try {
                 val rangoTurno =
@@ -298,7 +342,9 @@ class PacienteViewModel(
 
                     Log.d(
                         "ASIGNACION_DEBUG",
-                        "Selección sincronizada: $idsSeleccionados (${rangoTurno.fechaInicioIso} - ${rangoTurno.fechaFinIso})"
+                        "Selección sincronizada: $idsSeleccionados | " +
+                            "grupo=${rangoTurno.asignacionTurno.id_grupo_asignacion.orEmpty()} | " +
+                            "rango=(${rangoTurno.fechaInicioIso} - ${rangoTurno.fechaFinIso})"
                     )
 
                     _mensajeErrorSeleccion.value = null
@@ -321,6 +367,8 @@ class PacienteViewModel(
                 _mensajeErrorSeleccion.value =
                     "No se pudo guardar la selección. Inténtalo de nuevo."
                 _seleccionGuardada.value = false
+            } finally {
+                guardandoSeleccion = false
             }
         }
     }
@@ -370,29 +418,11 @@ class PacienteViewModel(
                 val claveEstado = claveSeleccion(idUsuario)
                 val claveIds = claveIdsSeleccionados(idUsuario)
 
-                // Consultar las asignaciones vigentes del cuidador.
-                val resultadoAsignaciones =
-                    repository.obtenerAsignacionesPacienteCuidadorResult()
-
-                val asignaciones = resultadoAsignaciones.getOrElse { error ->
-                    throw error
-                }
-
-                val ahora = Date()
-
-                val idsBackend = asignaciones
-                    .filter { asignacion ->
-                        asignacion.idUsuario == idUsuario &&
-                                AsignacionVigenciaHelper.estaVigente(
-                                    asignacion,
-                                    ahora
-                                )
-                    }
-                    .map { it.idPaciente }
-                    .toSet()
+                // Consultar las asignaciones vigentes correspondientes al bloque activo.
+                val idsBackend = obtenerIdsVigentesBloqueActual(idUsuario)
 
                 // Cuando el backend responde sin error, usar únicamente las
-                // asignaciones vigentes sin restaurar caché de SharedPreferences.
+                // asignaciones vigentes del bloque activo sin restaurar caché de SharedPreferences.
                 pacientesNuevos.forEach { paciente ->
                     paciente.isSelected =
                         paciente.idPaciente in idsBackend
@@ -420,8 +450,10 @@ class PacienteViewModel(
                         .apply()
                 }
 
-                Log.d("SELECCION_PACIENTES", "Usuario=$idUsuario")
-                Log.d("SELECCION_PACIENTES", "IDs backend vigentes=$idsBackend")
+                Log.d(
+                    "SELECCION_PACIENTES",
+                    "Usuario=$idUsuario | IDs backend vigentes en bloque=$idsBackend"
+                )
 
             } catch (e: Exception) {
                 Log.e(

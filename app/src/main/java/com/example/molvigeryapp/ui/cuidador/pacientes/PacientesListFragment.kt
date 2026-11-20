@@ -187,6 +187,7 @@ class PacientesListFragment : Fragment() {
                 return@setOnClickListener
             }
 
+            binding.btnGuardarSeleccion.isEnabled = false
             viewModel.confirmarSeleccionDelDia(
                 idUsuarioLogueado,
                 preferences
@@ -351,6 +352,8 @@ class PacientesListFragment : Fragment() {
         viewModel.seleccionGuardada.observe(viewLifecycleOwner) { resultado ->
             when (resultado) {
                 true -> {
+                    binding.btnGuardarSeleccion.isEnabled = true
+
                     val preferences = requireContext().getSharedPreferences(
                         "SESION",
                         Context.MODE_PRIVATE
@@ -361,6 +364,7 @@ class PacientesListFragment : Fragment() {
                         .commit()
 
                     if (!guardado) {
+                        viewModel.reiniciarResultadoSeleccion()
                         Toast.makeText(
                             requireContext(),
                             "No se pudo guardar el estado del turno.",
@@ -368,6 +372,8 @@ class PacientesListFragment : Fragment() {
                         ).show()
                         return@observe
                     }
+
+                    viewModel.reiniciarResultadoSeleccion()
 
                     Toast.makeText(
                         requireContext(),
@@ -384,9 +390,13 @@ class PacientesListFragment : Fragment() {
                 }
 
                 false -> {
+                    binding.btnGuardarSeleccion.isEnabled = true
+
                     val mensaje = viewModel.mensajeErrorSeleccion.value
                         ?.takeIf { it.isNotBlank() }
                         ?: "No se pudo guardar la selección. Inténtalo de nuevo."
+
+                    viewModel.reiniciarResultadoSeleccion()
 
                     Toast.makeText(
                         requireContext(),
