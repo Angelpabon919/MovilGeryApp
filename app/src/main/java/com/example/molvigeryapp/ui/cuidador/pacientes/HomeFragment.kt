@@ -917,6 +917,16 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
         fun intentarProgramar() {
 
+            val pacientesAsignados =
+                viewModel.pacientesSeleccionadosHome.value ?: return
+
+            if (pacientesAsignados.isEmpty()) {
+                ProgramadorAlarmasMedicamentos.cancelarTodas(
+                    requireContext().applicationContext
+                )
+                return
+            }
+
             val formulaciones =
                 viewModel.formulacionesMedicamentos.value ?: return
 
@@ -928,11 +938,21 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
             // Esperar a que estén cargados los datos necesarios.
             if (
-                formulaciones.isEmpty() ||
                 listaPacientes.isEmpty() ||
                 catalogo.isEmpty()
             ) {
                 return
+            }
+
+            val idsPacientesAsignados = pacientesAsignados
+                .mapNotNull { it.idPaciente }
+                .toSet()
+
+            val formulacionesFiltradas = formulaciones.filter { formulacion ->
+                formulacion.actualAdministrado == true &&
+                        formulacion.suspendidoFecha.isNullOrBlank() &&
+                        formulacion.idPaciente != null &&
+                        formulacion.idPaciente in idsPacientesAsignados
             }
 
             val nombresPacientes = listaPacientes.mapNotNull { paciente ->
@@ -951,10 +971,14 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
             ProgramadorAlarmasMedicamentos.programarTodas(
                 context = requireContext().applicationContext,
-                formulaciones = formulaciones,
+                formulaciones = formulacionesFiltradas,
                 pacientes = nombresPacientes,
                 medicamentos = nombresMedicamentos
             )
+        }
+
+        viewModel.pacientesSeleccionadosHome.observe(viewLifecycleOwner) {
+            intentarProgramar()
         }
 
         viewModel.formulacionesMedicamentos.observe(viewLifecycleOwner) {

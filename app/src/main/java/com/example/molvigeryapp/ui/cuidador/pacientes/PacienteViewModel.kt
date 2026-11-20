@@ -1014,11 +1014,14 @@ class PacienteViewModel(
     fun cargarGruposMedicacion() {
         viewModelScope.launch {
             try {
-                _gruposMedicacion.value =
-                    repository.getGrupoMedicacion() ?: emptyList()
                 val grupos = repository.getGrupoMedicacion() ?: emptyList()
 
                 _gruposMedicacion.value = grupos
+
+                val formulaciones = _formulacionesMedicamentos.value
+                if (!formulaciones.isNullOrEmpty()) {
+                    separarMedicamentosPorHorario(formulaciones, grupos)
+                }
 
                 Log.d(
                     "GRUPOS_MEDICACION",
@@ -1098,23 +1101,119 @@ class PacienteViewModel(
     val noAdministradoState: LiveData<Result<String>>
         get() = _noAdministradoState
 
+    private suspend fun obtenerOCrearSeguimientoPendiente(
+        idSeguimiento: Int?,
+        idFormulacion: Int?,
+        horaAdministrada: String?
+    ): Int {
+        idSeguimiento?.takeIf { it > 0 }?.let { return it }
+
+        val formulacionValida = idFormulacion
+            ?.takeIf { it > 0 }
+            ?: throw Exception(
+                "No se identificó la formulación del medicamento"
+            )
+
+        val horaTexto = horaAdministrada
+            ?.trim()
+            ?.substringAfterLast("T")
+            ?.substringBefore("Z")
+            ?.substringBefore("+")
+            ?.substringBefore("-")
+            ?: throw Exception(
+                "No se encontró la hora programada"
+            )
+
+        val partesHora = horaTexto.split(":")
+        val horaNum = partesHora.getOrNull(0)?.toIntOrNull() ?: 0
+        val minutoNum = partesHora.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
+
+        val calProg = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, horaNum)
+            set(java.util.Calendar.MINUTE, minutoNum)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+
+        val sdfProg = java.text.SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            java.util.Locale.US
+        ).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+
+        val fechaHoraProgramada = sdfProg.format(calProg.time)
+
+        val resultadoSeguimiento =
+            repository.crearSeguimientoMedicamento(
+                CrearSeguimientoMedicamentoRequest(
+                    idFormulacion = formulacionValida,
+                    fechaHoraProgramada = fechaHoraProgramada
+                )
+            )
+
+        val seguimiento = resultadoSeguimiento.getOrElse {
+            throw it
+        }
+
+        val estadoSeguimiento = seguimiento.estado?.trim().orEmpty()
+        if (
+            estadoSeguimiento.isNotEmpty() &&
+            !estadoSeguimiento.equals("PENDIENTE", ignoreCase = true)
+        ) {
+            val mensaje = when {
+                estadoSeguimiento.equals("ADMINISTRADO", ignoreCase = true) ->
+                    "Esta dosis ya fue administrada."
+                estadoSeguimiento.equals("NO_ADMINISTRADO", ignoreCase = true) ->
+                    "Esta dosis ya fue registrada como no administrada."
+                else ->
+                    "Esta dosis ya tiene un seguimiento cerrado."
+            }
+            throw Exception(mensaje)
+        }
+
+        val idRecuperado = seguimiento.idSeguimiento
+            ?.takeIf { it > 0 }
+            ?: throw Exception(
+                "No se recibió el ID del seguimiento"
+            )
+
+        Log.d(
+            "SEGUIMIENTO_MEDICAMENTO",
+            "Seguimiento asociado: $idRecuperado | " +
+                    "Formulación: $formulacionValida | " +
+                    "Fecha: $fechaHoraProgramada"
+        )
+
+        return idRecuperado
+    }
+
     fun registrarMedicamentoNoAdministrado(
-        idSeguimiento: Int,
-        motivo: String
+        idSeguimiento: Int? = null,
+        motivo: String,
+        idFormulacion: Int? = null,
+        horaAdministrada: String? = null
     ) {
-        if (idSeguimiento <= 0 || motivo.isBlank()) {
+        if (motivo.isBlank()) {
             _noAdministradoState.value =
                 Result.failure(
-                    Exception("Debes seleccionar un seguimiento e indicar el motivo")
+                    Exception("Debes indicar el motivo")
                 )
             return
         }
 
         viewModelScope.launch {
             try {
+                val idSeguimientoValido =
+                    obtenerOCrearSeguimientoPendiente(
+                        idSeguimiento = idSeguimiento,
+                        idFormulacion = idFormulacion,
+                        horaAdministrada = horaAdministrada
+                    )
+
                 val resultado =
                     repository.registrarNoAdministrado(
-                        idSeguimiento,
+                        idSeguimientoValido,
                         MotivoNoAdministracionRequest(
                             motivoNoAdministracion = motivo.trim()
                         )
@@ -1257,8 +1356,10 @@ class PacienteViewModel(
 
                 val fechaActual = java.text.SimpleDateFormat(
                     "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                    java.util.Locale.getDefault()
-                ).format(java.util.Date())
+                    java.util.Locale.US
+                ).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }.format(java.util.Date())
 
                 Log.d(
                     "APLICACION_DEBUG",
@@ -1275,71 +1376,11 @@ class PacienteViewModel(
                 // ================================================
 
                 val idSeguimientoParaAplicacion =
-                    idSeguimiento?.takeIf { it > 0 } ?: run {
-
-                        val formulacionValida = idFormulacion
-                            ?.takeIf { it > 0 }
-                            ?: throw Exception(
-                                "No se identificó la formulación del medicamento"
-                            )
-
-                        val horaTexto = horaAdministrada
-                            ?.trim()
-                            ?.substringAfterLast("T")
-                            ?.substringBefore("Z")
-                            ?.substringBefore("+")
-                            ?.substringBefore("-")
-                            ?: throw Exception(
-                                "No se encontró la hora programada"
-                            )
-
-                        val partesHora = horaTexto.split(":")
-                        val horaNum = partesHora.getOrNull(0)?.toIntOrNull() ?: 0
-                        val minutoNum = partesHora.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
-
-                        val calProg = java.util.Calendar.getInstance().apply {
-                            set(java.util.Calendar.HOUR_OF_DAY, horaNum)
-                            set(java.util.Calendar.MINUTE, minutoNum)
-                            set(java.util.Calendar.SECOND, 0)
-                            set(java.util.Calendar.MILLISECOND, 0)
-                        }
-
-                        val sdfProg = java.text.SimpleDateFormat(
-                            "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                            java.util.Locale.getDefault()
-                        ).apply {
-                            timeZone = java.util.TimeZone.getTimeZone("UTC")
-                        }
-
-                        val fechaHoraProgramada = sdfProg.format(calProg.time)
-
-                        val resultadoSeguimiento =
-                            repository.crearSeguimientoMedicamento(
-                                CrearSeguimientoMedicamentoRequest(
-                                    idFormulacion = formulacionValida,
-                                    fechaHoraProgramada = fechaHoraProgramada
-                                )
-                            )
-
-                        val seguimiento = resultadoSeguimiento.getOrElse {
-                            throw it
-                        }
-
-                        val idRecuperado = seguimiento.idSeguimiento
-                            ?.takeIf { it > 0 }
-                            ?: throw Exception(
-                                "No se recibió el ID del seguimiento"
-                            )
-
-                        Log.d(
-                            "SEGUIMIENTO_MEDICAMENTO",
-                            "Seguimiento asociado: $idRecuperado | " +
-                                    "Formulación: $formulacionValida | " +
-                                    "Fecha: $fechaHoraProgramada"
-                        )
-
-                        idRecuperado
-                    }
+                    obtenerOCrearSeguimientoPendiente(
+                        idSeguimiento = idSeguimiento,
+                        idFormulacion = idFormulacion,
+                        horaAdministrada = horaAdministrada
+                    )
 
                 val request = AplicacionRequest(
                     idPaciente = idPaciente,

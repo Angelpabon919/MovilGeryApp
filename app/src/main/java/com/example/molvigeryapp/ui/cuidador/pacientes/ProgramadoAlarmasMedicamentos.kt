@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.example.molvigeryapp.MainActivity
 import com.example.molvigeryapp.data.model.FormulacionMedicamento
 import org.json.JSONArray
 import org.json.JSONObject
@@ -102,17 +103,17 @@ object ProgramadorAlarmasMedicamentos {
             )
         }.distinctBy { it.id }
 
-        // No borrar alarmas anteriores por una respuesta vacía
-        // o por horarios que no se pudieron interpretar.
+        val anteriores = leerAlarmas(context)
+
         if (nuevas.isEmpty()) {
+            cancelarTodas(context)
             Log.w(
                 "ALARMAS_MEDICAMENTOS",
-                "No hay formulaciones válidas para programar"
+                "No hay formulaciones válidas para programar; alarmas anteriores canceladas"
             )
             return
         }
 
-        val anteriores = leerAlarmas(context)
         val anterioresPorId = anteriores.associateBy { it.id }
         val nuevasPorId = nuevas.associateBy { it.id }
 
@@ -120,23 +121,75 @@ object ProgramadorAlarmasMedicamentos {
             val nueva = nuevasPorId[anterior.id]
 
             if (nueva == null || nueva != anterior) {
-                cancelar(context,anterior.id)
+                cancelar(context, anterior.id)
             }
         }
-        val nuevasOModificadas = nuevas.filter { nueva->
-            anterioresPorId[nueva.id]!=nueva
+
+        val programadasExitosamente = mutableListOf<DatosAlarmaMedicamento>()
+        var conservadas = 0
+        var reprogramadas = 0
+
+        nuevas.forEach { nueva ->
+            val sinCambios = anterioresPorId[nueva.id] == nueva
+            val sigueActiva = sinCambios && existeAlarmaProgramada(context, nueva.id)
+
+            if (sigueActiva) {
+                programadasExitosamente.add(nueva)
+                conservadas++
+            } else {
+                if (programarProxima(context, nueva)) {
+                    programadasExitosamente.add(nueva)
+                    reprogramadas++
+                }
+            }
         }
 
-        guardarAlarmas(context, nuevas)
-        nuevasOModificadas.forEach {
-            programarProxima(context,it)
-        }
+        guardarAlarmas(context, programadasExitosamente)
         Log.d(
             "ALARMAS_MEDICAMENTOS",
             "Total=${nuevas.size} | " +
-                    "Conservadas=${nuevas.size - nuevasOModificadas.size} | " +
-                    "Nuevas o modificadas=${nuevasOModificadas.size}"
+                    "Conservadas=$conservadas | " +
+                    "Nuevas o reprogramadas=$reprogramadas | " +
+                    "Guardadas=${programadasExitosamente.size}"
         )
+    }
+
+    fun cancelarTodas(context: Context) {
+        val anteriores = leerAlarmas(context)
+
+        anteriores.forEach { anterior ->
+            cancelar(context, anterior.id)
+        }
+
+        context.getSharedPreferences(
+            PREFS,
+            Context.MODE_PRIVATE
+        ).edit()
+            .remove(KEY_ALARMAS)
+            .apply()
+
+        Log.d(
+            "ALARMAS_MEDICAMENTOS",
+            "Alarmas canceladas=${anteriores.size} y estado limpiado"
+        )
+    }
+
+    private fun existeAlarmaProgramada(
+        context: Context,
+        id: Int
+    ): Boolean {
+        val intent = Intent(
+            context,
+            MedicamentoAlarmReceiver::class.java
+        )
+
+        return PendingIntent.getBroadcast(
+            context,
+            id,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or
+                    PendingIntent.FLAG_IMMUTABLE
+        ) != null
     }
 
     fun reprogramarGuardadas(context: Context) {
@@ -155,7 +208,7 @@ object ProgramadorAlarmasMedicamentos {
     private fun programarProxima(
         context: Context,
         alarma: DatosAlarmaMedicamento
-    ) {
+    ): Boolean {
         val calendario = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarma.hora)
             set(Calendar.MINUTE, alarma.minuto)
@@ -226,7 +279,7 @@ object ProgramadorAlarmasMedicamentos {
                         ).format(java.util.Date(calendario.timeInMillis))
                     }"
         )
-        try {
+        return try {
             val permisoExactas =
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
                         alarmManager.canScheduleExactAlarms()
@@ -234,7 +287,7 @@ object ProgramadorAlarmasMedicamentos {
             Log.d(
                 "ALARMAS_DEBUG",
                 "PERMISO_ALARMAS_EXACTAS=$permisoExactas | " +
-                        "MODO=${if (permisoExactas) "EXACTA" else "INEXACTA"}"
+                        "MODO=${if (permisoExactas) "EXACTA_ALARM_CLOCK" else "INEXACTA"}"
             )
 
             if (
@@ -247,19 +300,44 @@ object ProgramadorAlarmasMedicamentos {
                     pendingIntent
                 )
             } else {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendario.timeInMillis,
+                val intentMostrar = Intent(
+                    context,
+                    MainActivity::class.java
+                ).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    if ((alarma.idPaciente ?: -1) > 0 && (alarma.idFormulacion ?: -1) > 0) {
+                        putExtra(EXTRA_ABRIR_ALARMA_MEDICAMENTO, true)
+                        putExtra(EXTRA_ID_PACIENTE, alarma.idPaciente)
+                        putExtra(EXTRA_ID_FORMULACION, alarma.idFormulacion)
+                    }
+                }
+
+                val showIntent = PendingIntent.getActivity(
+                    context,
+                    alarma.id,
+                    intentMostrar,
+                    PendingIntent.FLAG_UPDATE_CURRENT or
+                            PendingIntent.FLAG_IMMUTABLE
+                )
+
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(
+                        calendario.timeInMillis,
+                        showIntent
+                    ),
                     pendingIntent
                 )
             }
 
+            true
         } catch (e: SecurityException) {
             Log.e(
                 "ALARMAS_MEDICAMENTOS",
                 "No se pudo programar la alarma",
                 e
             )
+            false
         }
     }
 
@@ -273,9 +351,9 @@ object ProgramadorAlarmasMedicamentos {
             context,
             id,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or
+            PendingIntent.FLAG_NO_CREATE or
                     PendingIntent.FLAG_IMMUTABLE
-        )
+        ) ?: return
 
         val manager = context.getSystemService(
             Context.ALARM_SERVICE

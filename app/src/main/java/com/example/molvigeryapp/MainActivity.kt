@@ -1,13 +1,16 @@
 package com.example.molvigeryapp
 
 import android.Manifest
+import android.app.AlarmManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -71,6 +74,7 @@ class MainActivity : AppCompatActivity() {
 
     private var idRolActual = -1
     private var procesandoNotificacion = false
+    private var dialogoPermisoAlarmasMostrado = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,6 +130,9 @@ class MainActivity : AppCompatActivity() {
 
         if (idRolActual == ROL_CUIDADOR) {
             iniciarActualizadorGeriApp()
+            if (savedInstanceState == null) {
+                verificarPermisoAlarmasExactas()
+            }
         }
 
         if (savedInstanceState == null) {
@@ -676,6 +683,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun verificarPermisoAlarmasExactas() {
+        if (dialogoPermisoAlarmasMostrado) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        if (idRolActual != ROL_CUIDADOR || isFinishing || isDestroyed) return
+
+        val preferencias = getSharedPreferences("SESION", MODE_PRIVATE)
+        val idUsuario = preferencias.getInt("ID_USUARIO", -1)
+        if (idUsuario <= 0) return
+
+        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+        if (alarmManager.canScheduleExactAlarms()) return
+
+        dialogoPermisoAlarmasMostrado = true
+
+        AlertDialog.Builder(this)
+            .setTitle("Permiso de alarmas exactas")
+            .setMessage(
+                "Para recibir los recordatorios de medicamentos a la hora exacta, " +
+                        "habilita el permiso de alarmas y recordatorios en los ajustes del dispositivo."
+            )
+            .setNegativeButton("Ahora no", null)
+            .setPositiveButton("Configurar") { _, _ ->
+                val intentPermiso = Intent(
+                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.parse("package:$packageName")
+                )
+
+                try {
+                    startActivity(intentPermiso)
+                } catch (e: Exception) {
+                    Log.e(
+                        TAG,
+                        "No se pudo abrir la configuración de alarmas exactas",
+                        e
+                    )
+                }
+            }
+            .show()
+    }
+
     // =========================================================
     // LLAMADA DE EMERGENCIA
     // =========================================================
@@ -715,6 +762,8 @@ class MainActivity : AppCompatActivity() {
     // =========================================================
 
     fun cerrarSesion() {
+        ProgramadorAlarmasMedicamentos.cancelarTodas(applicationContext)
+
         getSharedPreferences("SESION", MODE_PRIVATE)
             .edit()
             .clear()
