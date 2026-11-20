@@ -26,7 +26,6 @@ import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 class PacienteViewModel(
     private val repository: PacienteRepository
@@ -1051,9 +1050,11 @@ class PacienteViewModel(
             .get(java.util.Calendar.HOUR_OF_DAY)
 
         val medicamentosConGrupo = lista.filter { medicamento ->
-            grupos.any {
-                it.idGrupo == medicamento.idGrupo
-            }
+            medicamento.actualAdministrado == true &&
+                    medicamento.suspendidoFecha.isNullOrBlank() &&
+                    grupos.any {
+                        it.idGrupo == medicamento.idGrupo
+                    }
         }
 
         medicamentosManana.value =
@@ -1400,211 +1401,6 @@ class PacienteViewModel(
                     repository.registrarAplicacionMedicamento(request)
 
                 if (result.isSuccess) {
-
-                    // Leer el stock que devuelve Django después del registro.
-                    val datosRespuesta = try {
-                        JSONObject(result.getOrNull()?.string().orEmpty())
-                    } catch (e: Exception) {
-                        Log.e(
-                            "INVENTARIO_UPDATE",
-                            "No se pudo leer el stock devuelto por Django",
-                            e
-                        )
-                        null
-                    }
-
-                    val stockRestante =
-                        datosRespuesta?.optInt("cantidad_actual", -1) ?: -1
-
-                    val cantidadMinima =
-                        datosRespuesta?.optInt("cantidad_minima", -1) ?: -1
-
-                    if (stockRestante < 0 || cantidadMinima < 0) {
-
-                        Log.w(
-                            "INVENTARIO_UPDATE",
-                            "No se pudo confirmar el stock o su cantidad mínima."
-                        )
-
-                    } else {
-
-                        // Preferencias locales para evitar alertas repetidas.
-                        val preferencias = context.getSharedPreferences(
-                            "ALERTAS_STOCK",
-                            Context.MODE_PRIVATE
-                        )
-
-                        val claveLocal = "LOCAL_STOCK_BAJO_$idInventarioValido"
-                        val claveDestinatarios = "PUSH_STOCK_BAJO_$idInventarioValido"
-
-                        // Si se repone el medicamento, permitir futuras alertas.
-                        if (stockRestante > cantidadMinima) {
-
-                            preferencias.edit()
-                                .remove(claveLocal)
-                                .remove(claveDestinatarios)
-                                .apply()
-
-                        } else {
-
-                            // =========================================
-                            // NOTIFICACIÓN LOCAL AL CUIDADOR
-                            // =========================================
-
-                            if (!preferencias.getBoolean(claveLocal, false)) {
-
-                                NotificationHelper(context)
-                                    .enviarNotificacionStockBajo(
-                                        nombreMedicamento = nombreMedicamento,
-                                        nombrePaciente = nombrePaciente,
-                                        cantidadRestante = stockRestante
-                                    )
-
-                                preferencias.edit()
-                                    .putBoolean(claveLocal, true)
-                                    .apply()
-                            }
-
-                            // =========================================
-                            // NOTIFICACIONES PUSH A LOS ENCARGADOS
-                            // =========================================
-
-                            try {
-
-                                // Obtener encargados activos.
-                                val encargados = repository.obtenerUsuarios()
-                                    .filter { usuario ->
-                                        usuario.idRol == 2 && usuario.estado
-                                    }
-
-                                // Recuperar los encargados que ya recibieron
-                                // la alerta desde este dispositivo.
-                                val notificados = preferencias.getStringSet(
-                                    claveDestinatarios,
-                                    mutableSetOf()
-                                )?.toMutableSet() ?: mutableSetOf()
-
-                                // Evitar notificar dos veces al mismo encargado.
-                                val encargadosPendientes = encargados.filter { usuario ->
-
-                                    val id = usuario.idUsuario
-
-                                    id != null && !notificados.contains(id.toString())
-                                }
-
-                                if (encargadosPendientes.isEmpty()) {
-
-                                    Log.d(
-                                        "NOTIF_STOCK",
-                                        "No hay encargados pendientes de notificación."
-                                    )
-
-                                } else {
-
-                                    // Crear una sola notificación para los destinatarios
-                                    // que todavía no han recibido la alerta.
-                                    val datosNotificacion: Map<String, Any> = mapOf(
-
-                                        "titulo" to
-                                                "Stock bajo: $nombreMedicamento",
-
-                                        "tipo" to "STOCK_BAJO",
-
-                                        "mensaje" to
-                                                "El medicamento $nombreMedicamento del paciente " +
-                                                "$nombrePaciente tiene $stockRestante unidades " +
-                                                "disponibles. Cantidad mínima: $cantidadMinima.",
-
-                                        "enviar_correo" to false,
-
-                                        "fecha_hora" to fechaActual,
-
-                                        "estado" to true,
-
-                                        "id_paciente" to idPaciente
-                                    )
-
-                                    val respuestaNotif =
-                                        repository.crearNotificacionStock(
-                                            datosNotificacion
-                                        )
-
-                                    val notifCreada = respuestaNotif.getOrNull()
-
-                                    if (notifCreada != null) {
-
-                                        // Asociar la notificación a cada encargado.
-                                        for (encargado in encargadosPendientes) {
-
-                                            val idDestinatario =
-                                                encargado.idUsuario ?: continue
-
-                                            val datosDestinatario: Map<String, Any> =
-                                                mapOf(
-
-                                                    "id_notificacion" to
-                                                            notifCreada.id_notificacion,
-
-                                                    "id_usuario" to idDestinatario,
-
-                                                    // IMPORTANTE: el backend utiliza
-                                                    // el campo "leida".
-                                                    "leida" to false
-                                                )
-
-                                            val resultado =
-                                                repository.asociarNotificacionDestinatarioStock(
-                                                    datosDestinatario
-                                                )
-
-                                            if (resultado.isSuccess) {
-
-                                                // Guardar únicamente los destinatarios
-                                                // cuya asociación se realizó correctamente.
-                                                notificados.add(idDestinatario.toString())
-
-                                                preferencias.edit()
-                                                    .putStringSet(
-                                                        claveDestinatarios,
-                                                        notificados
-                                                    )
-                                                    .apply()
-
-                                                Log.d(
-                                                    "NOTIF_STOCK",
-                                                    "Alerta enviada al encargado: $idDestinatario"
-                                                )
-
-                                            } else {
-
-                                                Log.e(
-                                                    "NOTIF_STOCK",
-                                                    "Error notificando al encargado $idDestinatario",
-                                                    resultado.exceptionOrNull()
-                                                )
-                                            }
-                                        }
-
-                                    } else {
-
-                                        Log.e(
-                                            "NOTIF_STOCK",
-                                            "No se pudo crear la notificación: " +
-                                                    "${respuestaNotif.exceptionOrNull()?.message}"
-                                        )
-                                    }
-                                }
-
-                            } catch (e: Exception) {
-
-                                Log.e(
-                                    "NOTIF_STOCK",
-                                    "Error procesando alertas de stock",
-                                    e
-                                )
-                            }
-                        }
-                    }
                     _registroAplicacionState.value =
                         Result.success(
                             "Aplicación registrada con éxito"

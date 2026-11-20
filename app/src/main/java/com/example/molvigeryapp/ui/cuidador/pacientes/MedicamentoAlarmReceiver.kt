@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import android.util.Log
 import android.app.PendingIntent
 import com.example.molvigeryapp.MainActivity
+import com.example.molvigeryapp.R
 
 class MedicamentoAlarmReceiver : BroadcastReceiver() {
 
@@ -241,7 +242,13 @@ class MedicamentoAlarmReceiver : BroadcastReceiver() {
             context,
             channelId
         )
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.logo_blanco)
+            .setColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.geriapp_notification_color
+                )
+            )
             .setContentTitle("Próximo medicamento en 5 minutos")
             .setContentText(
                 "${alarma.medicamento} para ${alarma.paciente}"

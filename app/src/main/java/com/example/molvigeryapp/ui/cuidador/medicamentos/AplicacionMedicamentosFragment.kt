@@ -442,7 +442,9 @@ class AplicacionMedicamentosFragment :
         medicamentosPendientes =
             (manana + tarde + noche)
                 .filter {
-                    it.idPaciente == idPaciente
+                    it.idPaciente == idPaciente &&
+                            it.actualAdministrado == true &&
+                            it.suspendidoFecha.isNullOrBlank()
                 }
                 .distinctBy {
                     it.idFormulacion
@@ -452,9 +454,20 @@ class AplicacionMedicamentosFragment :
         val nombres =
             medicamentosPendientes.map { formulacion ->
 
-                mapaNombresMedicamentos[
+                val nombreBase = mapaNombresMedicamentos[
                     formulacion.idMedicamentos
                 ] ?: "Medicamento #${formulacion.idMedicamentos}"
+
+                val hora = obtenerHoraProgramada(formulacion)
+                    .takeIf { !it.equals("sin horario", ignoreCase = true) }
+
+                val dosis = formulacion.dosis
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+
+                val detalle = listOfNotNull(hora, dosis).joinToString(" · ")
+
+                if (detalle.isNotEmpty()) "$nombreBase ($detalle)" else nombreBase
             }
 
 
@@ -739,39 +752,50 @@ class AplicacionMedicamentosFragment :
         val hoy = formatoFecha.parse(
             formatoFecha.format(java.util.Date())
         )
-        // Buscar inventarios del medicamento seleccionado.
+        // Buscar inventarios del medicamento seleccionado (acepta lotes sin fecha de vencimiento).
         val inventariosDisponibles =
             inventariosPaciente.filter { inventario ->
 
-                val vencimiento = try {
-                    inventario.fechaVencimiento
-                        ?.take(10)
-                        ?.let { formatoFecha.parse(it) }
-                } catch (e: Exception) {
+                val fechaTexto = inventario.fechaVencimiento?.trim()
+                val vencimiento = if (fechaTexto.isNullOrEmpty()) {
                     null
+                } else {
+                    try {
+                        formatoFecha.parse(fechaTexto.take(10))
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+
+                val fechaValida = fechaTexto.isNullOrEmpty() ||
+                        (vencimiento != null && hoy != null && !vencimiento.before(hoy))
 
                 inventario.idPaciente == idPaciente &&
                         inventario.idMedicamentos ==
                         formulacion.idMedicamentos &&
                         inventario.estado == true &&
                         (inventario.cantidadActual ?: 0) > 0 &&
-                        vencimiento != null &&
-                        hoy != null &&
-                        !vencimiento.before(hoy)
+                        fechaValida
             }
 
-        // Priorizar el lote que vence primero.
-        val inventario = inventariosDisponibles.minByOrNull {
-            formatoFecha.parse(
-                it.fechaVencimiento!!.take(10)
-            )?.time ?: Long.MAX_VALUE
+        // Priorizar el lote que vence primero; los lotes sin fecha de vencimiento van al final.
+        val inventario = inventariosDisponibles.minByOrNull { inv ->
+            val fechaTexto = inv.fechaVencimiento?.trim()
+            if (fechaTexto.isNullOrEmpty()) {
+                Long.MAX_VALUE
+            } else {
+                try {
+                    formatoFecha.parse(fechaTexto.take(10))?.time ?: Long.MAX_VALUE
+                } catch (e: Exception) {
+                    Long.MAX_VALUE
+                }
+            }
         }
 
         inventarioSeleccionado = inventario
 
-        // Encontrar el elemento exacto asociado al inventario.
-        elementoSeleccionado =
+        // Encontrar el elemento exacto asociado al inventario o, como respaldo, en elementos_paciente.
+        val elementoPorInventario =
             inventario?.idElemento?.let { idElemento ->
 
                 elementosPaciente.find { elemento ->
@@ -781,6 +805,18 @@ class AplicacionMedicamentosFragment :
                             elemento.idMedicamentos ==
                             formulacion.idMedicamentos
                 }
+            }
+
+        elementoSeleccionado = elementoPorInventario
+            ?: elementosPaciente.firstOrNull { elemento ->
+                elemento.idPaciente == idPaciente &&
+                        elemento.idMedicamentos == formulacion.idMedicamentos &&
+                        elemento.estado &&
+                        elemento.cantidad > 0
+            }
+            ?: elementosPaciente.firstOrNull { elemento ->
+                elemento.idPaciente == idPaciente &&
+                        elemento.idMedicamentos == formulacion.idMedicamentos
             }
 
         android.util.Log.d(
@@ -827,10 +863,8 @@ class AplicacionMedicamentosFragment :
 
 
         val stock =
-            elementoSeleccionado
-                ?.cantidadActual
-                ?: elementoSeleccionado
-                    ?.cantidad
+            inventarioSeleccionado?.cantidadActual
+                ?: elementoSeleccionado?.cantidad
                 ?: 0
 
 
