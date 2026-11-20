@@ -22,6 +22,7 @@ import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+import com.example.molvigeryapp.ui.cuidador.pacientes.ProgramadorAlarmasMedicamentos
 import kotlinx.coroutines.launch
 
 class PerfilCuidadorFragment : Fragment() {
@@ -204,6 +205,10 @@ class PerfilCuidadorFragment : Fragment() {
 
     private fun configurarCerrarSesion() {
         binding.btnCerrarSesion.setOnClickListener {
+
+            ProgramadorAlarmasMedicamentos.cancelarTodas(
+                requireContext().applicationContext
+            )
 
             // 1. Guardamos el ID antes de limpiar la sesión.
             val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)

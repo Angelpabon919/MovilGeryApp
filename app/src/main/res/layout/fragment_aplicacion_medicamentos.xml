@@ -113,6 +113,38 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- ESTADO DEL SEGUIMIENTO -->
+                <LinearLayout
+                    android:id="@+id/layoutEstadoSeguimiento"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="#F1F5F9"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvEstadoSeguimiento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Estado: Pendiente"
+                        android:textColor="#B45309"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvMotivoNoAdministracion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="#334155"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
                 <!-- CANTIDAD -->
                 <TextView
                     android:layout_width="wrap_content"

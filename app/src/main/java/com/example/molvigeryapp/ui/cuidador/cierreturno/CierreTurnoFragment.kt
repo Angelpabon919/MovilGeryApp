@@ -22,6 +22,7 @@ import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentCierreTurnoBinding
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
+import com.example.molvigeryapp.ui.cuidador.pacientes.ProgramadorAlarmasMedicamentos
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
@@ -690,6 +691,10 @@ class CierreTurnoFragment : Fragment() {
                     RetrofitClient.apiService.crearCierreTurno(solicitud)
 
                 if (respuesta.estado.equals("Finalizado", true)) {
+
+                    ProgramadorAlarmasMedicamentos.cancelarTodas(
+                        requireContext().applicationContext
+                    )
 
                     Toast.makeText(
                         requireContext(),
