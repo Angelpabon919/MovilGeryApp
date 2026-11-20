@@ -25,10 +25,14 @@ import com.example.molvigeryapp.data.model.Inventario
 import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.repository.PacienteRepository
+import com.example.molvigeryapp.data.repository.TurnoRepository
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class PacienteViewModel(
-    private val repository: PacienteRepository
+    private val repository: PacienteRepository,
+    private val turnoRepository: TurnoRepository = TurnoRepository()
 ) : ViewModel() {
 
     // =========================================================
@@ -58,6 +62,9 @@ class PacienteViewModel(
     // false = error al guardar
     private val _seleccionGuardada = MutableLiveData<Boolean?>()
     val seleccionGuardada: LiveData<Boolean?> get() = _seleccionGuardada
+
+    private val _mensajeErrorSeleccion = MutableLiveData<String?>()
+    val mensajeErrorSeleccion: LiveData<String?> get() = _mensajeErrorSeleccion
 
     // =========================================================
     // SELECCIÓN DE PACIENTES
@@ -153,16 +160,17 @@ class PacienteViewModel(
 
                 val asignaciones =
                     repository.obtenerAsignacionesPacienteCuidador()
+                val ahora = Date()
 
                 val idsSeleccionados = asignaciones
                     .filter { asignacion ->
                         asignacion.idUsuario == idUsuarioLogueado &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
+                                AsignacionVigenciaHelper.estaVigente(
+                                    asignacion,
+                                    ahora
                                 )
                     }
-                    .mapNotNull { it.idPaciente }
+                    .map { it.idPaciente }
                     .toSet()
 
                 listaPacientesCompleta.forEach { paciente ->
@@ -202,6 +210,7 @@ class PacienteViewModel(
 
     fun reiniciarResultadoSeleccion() {
         _seleccionGuardada.value = null
+        _mensajeErrorSeleccion.value = null
     }
 
     /**
@@ -212,12 +221,15 @@ class PacienteViewModel(
         preferences: SharedPreferences
     ) {
         _seleccionGuardada.value = null
+        _mensajeErrorSeleccion.value = null
 
         if (idUsuarioLogueado <= 0) {
             Log.e(
                 "ASIGNACION_DEBUG",
                 "ID de usuario inválido"
             )
+            _mensajeErrorSeleccion.value =
+                "No se pudo identificar al cuidador. Inicia sesión nuevamente."
             _seleccionGuardada.value = false
             return
         }
@@ -234,22 +246,37 @@ class PacienteViewModel(
                 "ASIGNACION_DEBUG",
                 "No hay pacientes seleccionados"
             )
+            _mensajeErrorSeleccion.value =
+                "Por favor, selecciona al menos un paciente."
             _seleccionGuardada.value = false
             return
         }
 
-        val fechaActual = java.text.SimpleDateFormat(
-            "yyyy-MM-dd",
-            java.util.Locale.getDefault()
-        ).format(java.util.Date())
-
         viewModelScope.launch {
             try {
+                val rangoTurno =
+                    AsignacionVigenciaHelper.resolverRangoBloqueTurnoActual(
+                        idUsuario = idUsuarioLogueado,
+                        turnoRepository = turnoRepository
+                    )
+
+                if (rangoTurno == null) {
+                    Log.w(
+                        "ASIGNACION_DEBUG",
+                        "Cuidador $idUsuarioLogueado sin turno activo asignado"
+                    )
+                    _mensajeErrorSeleccion.value =
+                        "No tienes un turno asignado activo para guardar la selección de pacientes."
+                    _seleccionGuardada.value = false
+                    return@launch
+                }
+
                 val guardadoCorrecto =
                     repository.sincronizarSeleccionDelCuidador(
                         idUsuario = idUsuarioLogueado,
                         idsSeleccionados = idsSeleccionados,
-                        fechaActual = fechaActual
+                        fechaInicioIso = rangoTurno.fechaInicioIso,
+                        fechaFinIso = rangoTurno.fechaFinIso
                     )
 
                 if (guardadoCorrecto) {
@@ -271,15 +298,18 @@ class PacienteViewModel(
 
                     Log.d(
                         "ASIGNACION_DEBUG",
-                        "Selección sincronizada: $idsSeleccionados"
+                        "Selección sincronizada: $idsSeleccionados (${rangoTurno.fechaInicioIso} - ${rangoTurno.fechaFinIso})"
                     )
 
+                    _mensajeErrorSeleccion.value = null
                     _seleccionGuardada.value = true
                 } else {
                     Log.e(
                         "ASIGNACION_DEBUG",
                         "No se confirmó el guardado"
                     )
+                    _mensajeErrorSeleccion.value =
+                        "No se pudo guardar la selección. Inténtalo de nuevo."
                     _seleccionGuardada.value = false
                 }
             } catch (e: Exception) {
@@ -288,6 +318,8 @@ class PacienteViewModel(
                     "Error al sincronizar selección del cuidador",
                     e
                 )
+                _mensajeErrorSeleccion.value =
+                    "No se pudo guardar la selección. Inténtalo de nuevo."
                 _seleccionGuardada.value = false
             }
         }
@@ -331,91 +363,48 @@ class PacienteViewModel(
             try {
                 // Cargar el catálogo actualizado.
                 val pacientesNuevos = repository.obtenerPacientes()
+                if (listaPacientesCompleta.isEmpty()) {
+                    listaPacientesCompleta = pacientesNuevos
+                }
 
                 val claveEstado = claveSeleccion(idUsuario)
                 val claveIds = claveIdsSeleccionados(idUsuario)
 
-                val tieneEstadoGuardado =
-                    preferencias.contains(claveEstado)
+                // Consultar las asignaciones vigentes del cuidador.
+                val resultadoAsignaciones =
+                    repository.obtenerAsignacionesPacienteCuidadorResult()
 
-                val seleccionActivaLocal =
-                    preferencias.getBoolean(claveEstado, false)
-
-                val idsGuardadosLocal = preferencias
-                    .getStringSet(claveIds, emptySet())
-                    .orEmpty()
-                    .mapNotNull { it.toIntOrNull() }
-                    .toSet()
-
-                /*
-                 * Si el cierre del turno o de sesión reinició
-                 * explícitamente la selección, no restaurarla.
-                 */
-                if (tieneEstadoGuardado && !seleccionActivaLocal) {
-                    pacientesNuevos.forEach {
-                        it.isSelected = false
-                    }
-
-                    listaPacientesCompleta = pacientesNuevos
-                    tienePacientesSeleccionados = false
-
-                    _pacientes.value = pacientesNuevos.toList()
-                    _pacientesSeleccionadosHome.value = emptyList()
-
-                    Log.d(
-                        "SELECCION_PACIENTES",
-                        "Selección reiniciada; no se restauran pacientes"
-                    )
-
-                    return@launch
+                val asignaciones = resultadoAsignaciones.getOrElse { error ->
+                    throw error
                 }
 
-                // Consultar las asignaciones activas del cuidador.
-                val asignaciones =
-                    repository.obtenerAsignacionesPacienteCuidador()
+                val ahora = Date()
 
                 val idsBackend = asignaciones
                     .filter { asignacion ->
                         asignacion.idUsuario == idUsuario &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
+                                AsignacionVigenciaHelper.estaVigente(
+                                    asignacion,
+                                    ahora
                                 )
                     }
-                    .mapNotNull { it.idPaciente }
+                    .map { it.idPaciente }
                     .toSet()
 
-                /*
-                 * Priorizar el backend si devuelve pacientes.
-                 * Si no devuelve ninguno, conservar la selección
-                 * local mientras siga marcada como activa.
-                 */
-                val idsSeleccionados = when {
-                    idsBackend.isNotEmpty() -> idsBackend
-
-                    seleccionActivaLocal && idsGuardadosLocal.isNotEmpty() ->
-                        idsGuardadosLocal
-
-                    else -> emptySet()
-                }
-
+                // Cuando el backend responde sin error, usar únicamente las
+                // asignaciones vigentes sin restaurar caché de SharedPreferences.
                 pacientesNuevos.forEach { paciente ->
                     paciente.isSelected =
-                        paciente.idPaciente in idsSeleccionados
+                        paciente.idPaciente in idsBackend
                 }
 
                 listaPacientesCompleta = pacientesNuevos
-                tienePacientesSeleccionados = idsSeleccionados.isNotEmpty()
+                tienePacientesSeleccionados = idsBackend.isNotEmpty()
 
                 _pacientes.value = pacientesNuevos.toList()
                 _pacientesSeleccionadosHome.value =
                     pacientesNuevos.filter { it.isSelected }
 
-                /*
-                 * Guardar el resultado si el backend confirmó
-                 * asignaciones. No guardar false automáticamente
-                 * cuando el resultado viene vacío.
-                 */
                 if (idsBackend.isNotEmpty()) {
                     preferencias.edit()
                         .putBoolean(claveEstado, true)
@@ -424,29 +413,15 @@ class PacienteViewModel(
                             idsBackend.map { it.toString() }.toSet()
                         )
                         .apply()
-                } else if (
-                    !tieneEstadoGuardado &&
-                    idsSeleccionados.isNotEmpty()
-                ) {
+                } else {
                     preferencias.edit()
-                        .putBoolean(claveEstado, true)
-                        .putStringSet(
-                            claveIds,
-                            idsSeleccionados.map { it.toString() }.toSet()
-                        )
+                        .putBoolean(claveEstado, false)
+                        .remove(claveIds)
                         .apply()
                 }
 
                 Log.d("SELECCION_PACIENTES", "Usuario=$idUsuario")
-                Log.d("SELECCION_PACIENTES", "IDs backend=$idsBackend")
-                Log.d(
-                    "SELECCION_PACIENTES",
-                    "IDs locales=$idsGuardadosLocal"
-                )
-                Log.d(
-                    "SELECCION_PACIENTES",
-                    "IDs mostrados=$idsSeleccionados"
-                )
+                Log.d("SELECCION_PACIENTES", "IDs backend vigentes=$idsBackend")
 
             } catch (e: Exception) {
                 Log.e(

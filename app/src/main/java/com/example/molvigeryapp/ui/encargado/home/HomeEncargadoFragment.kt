@@ -28,10 +28,12 @@ import com.example.molvigeryapp.ui.encargado.cuidadores.DetalleCuidadorEncargado
 import com.example.molvigeryapp.ui.encargado.notificaciones.ContadorNotificaciones
 import com.example.molvigeryapp.ui.encargado.notificaciones.NotificacionesEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.perfil.PerfilEncargadoFragment
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.CancellationException
 import com.example.molvigeryapp.MainActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Date
 
 
 class HomeEncargadoFragment : Fragment() {
@@ -284,6 +286,8 @@ class HomeEncargadoFragment : Fragment() {
                 return
             }
 
+            val ahora = Date()
+
             listaCuidadores = usuarios
                 .filter { it.idRol == 3 }
                 .map { usuario ->
@@ -291,7 +295,8 @@ class HomeEncargadoFragment : Fragment() {
 
                     val cantidadPacientes = obtenerCantidadPacientes(
                         idUsuario,
-                        asignacionesPacientes
+                        asignacionesPacientes,
+                        ahora
                     )
 
                     convertirACuidador(
@@ -396,15 +401,16 @@ class HomeEncargadoFragment : Fragment() {
 
     private fun obtenerCantidadPacientes(
         idUsuario: Int,
-        asignaciones: List<AsignacionPacienteCuidador>
+        asignaciones: List<AsignacionPacienteCuidador>,
+        ahora: Date = Date()
     ): Int {
         return asignaciones
             .asSequence()
             .filter { asignacion ->
                 asignacion.idUsuario == idUsuario &&
-                        asignacion.estado.equals(
-                            "Activo",
-                            ignoreCase = true
+                        AsignacionVigenciaHelper.estaVigente(
+                            asignacion,
+                            ahora
                         )
             }
             .map { asignacion ->

@@ -14,8 +14,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Paciente
+import com.example.molvigeryapp.data.repository.TurnoRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesCierreTurnoBinding
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.Locale
 
 class PacientesCierreTurnoFragment : Fragment() {
@@ -24,17 +27,27 @@ class PacientesCierreTurnoFragment : Fragment() {
     private val binding get() = _binding!!
 
     private var idUsuarioCuidador = -1
+    private var idAsignacionTurno = -1
+
+    private val turnoRepository by lazy {
+        TurnoRepository()
+    }
 
     private lateinit var pacientesAdapter: PacienteCierreTurnoAdapter
     private var pacientesOriginales: List<Paciente> = emptyList()
 
     companion object {
         private const val ARG_ID_USUARIO = "id_usuario_cuidador"
+        private const val ARG_ID_ASIGNACION = "id_asignacion_turno_usuario"
 
-        fun newInstance(idUsuario: Int) =
+        fun newInstance(
+            idUsuario: Int,
+            idAsignacion: Int = -1
+        ) =
             PacientesCierreTurnoFragment().apply {
                 arguments = Bundle().apply {
                     putInt(ARG_ID_USUARIO, idUsuario)
+                    putInt(ARG_ID_ASIGNACION, idAsignacion)
                 }
             }
     }
@@ -57,6 +70,7 @@ class PacientesCierreTurnoFragment : Fragment() {
 
         // Primero intenta obtener el ID enviado por la navegación.
         val idRecibido = arguments?.getInt(ARG_ID_USUARIO, -1) ?: -1
+        idAsignacionTurno = arguments?.getInt(ARG_ID_ASIGNACION, -1) ?: -1
 
         // Si no llegó por navegación, lo obtiene de la sesión.
         val preferencias = requireContext()
@@ -127,6 +141,42 @@ class PacientesCierreTurnoFragment : Fragment() {
             try {
                 val api = RetrofitClient.apiService
 
+                val rangoTurno: Pair<Date, Date>? = if (idAsignacionTurno > 0) {
+                    val asignacionesTurno = turnoRepository.obtenerAsignaciones()
+                    val asignacionTurno = asignacionesTurno.firstOrNull {
+                        it.id_asignacion_turno_usuario == idAsignacionTurno
+                    }
+
+                    if (asignacionTurno != null) {
+                        val turnos = turnoRepository.obtenerTurnos()
+                        val turno = turnos.firstOrNull {
+                            it.id_turno == asignacionTurno.id_turno
+                        }
+
+                        turno?.let {
+                            AsignacionVigenciaHelper.calcularRangoTurnoDia(
+                                asignacionTurno = asignacionTurno,
+                                turno = it
+                            )
+                        } ?: AsignacionVigenciaHelper.calcularRangoDiaCompleto(
+                            asignacionTurno.fecha
+                        )
+                    } else {
+                        null
+                    }
+                } else {
+                    AsignacionVigenciaHelper.resolverRangoBloqueTurnoActual(
+                        idUsuario = idUsuarioCuidador,
+                        turnoRepository = turnoRepository,
+                        forceRefresh = false
+                    )?.let { bloque ->
+                        AsignacionVigenciaHelper.calcularRangoTurnoDia(
+                            asignacionTurno = bloque.asignacionTurno,
+                            turno = bloque.turno
+                        ) ?: Pair(bloque.inicioDate, bloque.finDate)
+                    }
+                }
+
                 val respuesta = api.getAsignacionesPacienteCuidador()
 
                 if (!respuesta.isSuccessful) {
@@ -135,22 +185,38 @@ class PacientesCierreTurnoFragment : Fragment() {
 
                 val asignaciones = respuesta.body().orEmpty()
 
-                val idsActivos = asignaciones
-                    .filter { asignacion ->
-                        asignacion.idUsuario == idUsuarioCuidador &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
-                                )
-                    }
-                    .map { it.idPaciente }
-                    .toSet()
+                val idsDelTurno = if (rangoTurno != null) {
+                    val (inicioTurno, finTurno) = rangoTurno
+                    asignaciones
+                        .filter { asignacion ->
+                            asignacion.idUsuario == idUsuarioCuidador &&
+                                    AsignacionVigenciaHelper.perteneceATurno(
+                                        asignacion = asignacion,
+                                        inicio = inicioTurno,
+                                        fin = finTurno
+                                    )
+                        }
+                        .map { it.idPaciente }
+                        .toSet()
+                } else {
+                    val ahora = Date()
+                    asignaciones
+                        .filter { asignacion ->
+                            asignacion.idUsuario == idUsuarioCuidador &&
+                                    AsignacionVigenciaHelper.estaVigente(
+                                        asignacion = asignacion,
+                                        ahora = ahora
+                                    )
+                        }
+                        .map { it.idPaciente }
+                        .toSet()
+                }
 
                 val todosLosPacientes = api.getPacientes()
 
                 pacientesOriginales = todosLosPacientes.filter { paciente ->
                     paciente.idPaciente != null &&
-                            paciente.idPaciente in idsActivos
+                            paciente.idPaciente in idsDelTurno
                 }
 
                 pacientesAdapter.actualizarLista(pacientesOriginales)
@@ -158,7 +224,7 @@ class PacientesCierreTurnoFragment : Fragment() {
 
                 if (pacientesOriginales.isEmpty()) {
                     mostrarMensaje(
-                        "No hay pacientes activos asignados a este cuidador."
+                        "No hay pacientes asignados para este turno."
                     )
                 } else {
                     binding.rvPacientesCierre.visibility = View.VISIBLE
@@ -168,7 +234,7 @@ class PacientesCierreTurnoFragment : Fragment() {
                 Log.d(
                     "PACIENTES_CIERRE",
                     "Cuidador=$idUsuarioCuidador, " +
-                            "IDs activos=$idsActivos, " +
+                            "IDs del turno=$idsDelTurno, " +
                             "pacientes=${pacientesOriginales.size}"
                 )
             } catch (e: Exception) {

@@ -22,6 +22,7 @@ import com.example.molvigeryapp.data.repository.UsuarioRepository
 import com.example.molvigeryapp.databinding.FragmentDetalleCuidadorEncBinding
 import com.example.molvigeryapp.ui.encargado.bitacora.BitacoraEncargadoFragment
 import com.example.molvigeryapp.ui.encargado.pacientes.PacientesCuidadorEncargadoFragment
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -31,6 +32,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -713,14 +715,15 @@ class DetalleCuidadorEncargadoFragment : Fragment() {
         asignaciones: List<AsignacionPacienteCuidador>,
         idUsuario: Int
     ): Int {
+        val ahora = Date()
 
         return asignaciones
             .asSequence()
             .filter { asignacion ->
                 asignacion.idUsuario == idUsuario &&
-                        asignacion.estado.equals(
-                            "Activo",
-                            ignoreCase = true
+                        AsignacionVigenciaHelper.estaVigente(
+                            asignacion,
+                            ahora
                         )
             }
             .map { asignacion ->

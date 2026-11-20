@@ -384,9 +384,13 @@ class PacientesListFragment : Fragment() {
                 }
 
                 false -> {
+                    val mensaje = viewModel.mensajeErrorSeleccion.value
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "No se pudo guardar la selección. Inténtalo de nuevo."
+
                     Toast.makeText(
                         requireContext(),
-                        "No se pudo guardar la selección. Inténtalo de nuevo.",
+                        mensaje,
                         Toast.LENGTH_LONG
                     ).show()
                 }
