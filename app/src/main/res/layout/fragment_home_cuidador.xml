@@ -423,7 +423,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="1dp"
         android:layout_marginEnd="20dp"
-        android:text="Hola, Angela"
+        android:text="Hola, "
         android:textColor="@android:color/white"
         android:textSize="24sp"
         android:textStyle="bold"
