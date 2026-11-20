@@ -1187,7 +1187,6 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
         trabajoRevisionTurno?.cancel()
         trabajoRevisionTurno = null
-
         handlerHorarioMedicamentos.removeCallbacks(
             actualizarHorarioMedicamentosRunnable
         )

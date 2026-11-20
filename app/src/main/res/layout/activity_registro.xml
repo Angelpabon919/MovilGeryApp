@@ -116,7 +116,7 @@
                             android:clipToOutline="true"
                             android:contentDescription="Vista previa de la foto de perfil"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/person" />
+                            android:src="@drawable/person_icon" />
 
                     </FrameLayout>
 

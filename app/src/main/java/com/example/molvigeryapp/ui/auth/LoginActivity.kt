@@ -85,7 +85,7 @@ class LoginActivity : AppCompatActivity() {
 
         }
 
-        binding.tvCrearCuenta.setOnClickListener {
+        binding.btnRegistro.setOnClickListener {
             val intent = Intent(this, RegistroActivity::class.java)
             startActivity(intent)
         }
