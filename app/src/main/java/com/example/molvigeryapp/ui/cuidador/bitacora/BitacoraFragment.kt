@@ -17,15 +17,20 @@ import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Bitacora
 import com.example.molvigeryapp.data.model.ControlesPeriodicosBitacora
+import com.example.molvigeryapp.data.model.NotificacionTurnoRequest
 import com.example.molvigeryapp.data.model.SignosVitales
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentBitacoraBinding
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModelFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class BitacoraFragment : Fragment() {
 
@@ -768,6 +773,15 @@ class BitacoraFragment : Fragment() {
                     consultarEstadoControles(pacienteId)
                 }
 
+                if (respuestaSignos?.alerta == true) {
+                    enviarNotificacionAlertaSignos(
+                        idUsuario = idUsuario,
+                        idPaciente = pacienteId,
+                        nombrePaciente = obtenerNombrePacienteActual(),
+                        mensajeAlerta = respuestaSignos.mensajeAlerta
+                    )
+                }
+
                 if (isAdded) {
                     if (respuestaSignos?.alerta == true) {
                         mostrarAlertaClinicaSignos(respuestaSignos.mensajeAlerta) {
@@ -807,6 +821,82 @@ class BitacoraFragment : Fragment() {
             } finally {
                 guardandoBitacora = false
                 _binding?.btnGuardar?.isEnabled = true
+            }
+        }
+    }
+
+    private fun obtenerNombrePacienteActual(): String {
+        val paciente = pacienteViewModel.pacienteSeleccionado.value ?: return ""
+        return listOf(paciente.nombre.trim(), paciente.apellido.trim())
+            .filter { it.isNotEmpty() }
+            .joinToString(" ")
+    }
+
+    private fun enviarNotificacionAlertaSignos(
+        idUsuario: Int,
+        idPaciente: Int,
+        nombrePaciente: String,
+        mensajeAlerta: String?
+    ) {
+        if (idUsuario <= 0) return
+
+        val tituloBase = if (nombrePaciente.isNotBlank()) {
+            "Alerta de signos vitales: $nombrePaciente"
+        } else {
+            "Alerta de signos vitales"
+        }
+        val titulo = if (tituloBase.length > 100) {
+            tituloBase.take(97) + "..."
+        } else {
+            tituloBase
+        }
+
+        val mensajeBase = mensajeAlerta
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: "Se detectaron signos vitales fuera de los rangos normales del paciente."
+        val mensaje = if (mensajeBase.length > 250) {
+            mensajeBase.take(247) + "..."
+        } else {
+            mensajeBase
+        }
+
+        val fechaHoraUtc = SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            Locale.US
+        ).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }.format(Date())
+
+        val solicitud = NotificacionTurnoRequest(
+            titulo = titulo,
+            tipo = "emergencia",
+            mensaje = mensaje,
+            enviar_correo = false,
+            fecha_hora = fechaHoraUtc,
+            estado = true,
+            id_paciente = idPaciente,
+            id_usuario = idUsuario
+        )
+
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                val respuesta = RetrofitClient.apiService
+                    .crearNotificacionTurno(solicitud)
+                if (!respuesta.isSuccessful) {
+                    Log.e(
+                        "BITACORA",
+                        "Error enviando notificación de alerta: ${respuesta.code()} ${respuesta.errorBody()?.string()}"
+                    )
+                } else {
+                    Log.d("BITACORA", "Notificación de alerta de signos vitales enviada")
+                }
+            } catch (e: Exception) {
+                Log.e(
+                    "BITACORA",
+                    "Error al enviar notificación de alerta de signos vitales",
+                    e
+                )
             }
         }
     }
