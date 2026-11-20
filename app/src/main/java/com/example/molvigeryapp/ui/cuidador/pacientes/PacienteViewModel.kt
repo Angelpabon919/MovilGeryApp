@@ -25,11 +25,14 @@ import com.example.molvigeryapp.data.model.Inventario
 import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.repository.PacienteRepository
+import com.example.molvigeryapp.data.repository.TurnoRepository
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.launch
-import org.json.JSONObject
+import java.util.Date
 
 class PacienteViewModel(
-    private val repository: PacienteRepository
+    private val repository: PacienteRepository,
+    private val turnoRepository: TurnoRepository = TurnoRepository()
 ) : ViewModel() {
 
     // =========================================================
@@ -59,6 +62,9 @@ class PacienteViewModel(
     // false = error al guardar
     private val _seleccionGuardada = MutableLiveData<Boolean?>()
     val seleccionGuardada: LiveData<Boolean?> get() = _seleccionGuardada
+
+    private val _mensajeErrorSeleccion = MutableLiveData<String?>()
+    val mensajeErrorSeleccion: LiveData<String?> get() = _mensajeErrorSeleccion
 
     // =========================================================
     // SELECCIÓN DE PACIENTES
@@ -154,16 +160,17 @@ class PacienteViewModel(
 
                 val asignaciones =
                     repository.obtenerAsignacionesPacienteCuidador()
+                val ahora = Date()
 
                 val idsSeleccionados = asignaciones
                     .filter { asignacion ->
                         asignacion.idUsuario == idUsuarioLogueado &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
+                                AsignacionVigenciaHelper.estaVigente(
+                                    asignacion,
+                                    ahora
                                 )
                     }
-                    .mapNotNull { it.idPaciente }
+                    .map { it.idPaciente }
                     .toSet()
 
                 listaPacientesCompleta.forEach { paciente ->
@@ -203,6 +210,7 @@ class PacienteViewModel(
 
     fun reiniciarResultadoSeleccion() {
         _seleccionGuardada.value = null
+        _mensajeErrorSeleccion.value = null
     }
 
     /**
@@ -213,12 +221,15 @@ class PacienteViewModel(
         preferences: SharedPreferences
     ) {
         _seleccionGuardada.value = null
+        _mensajeErrorSeleccion.value = null
 
         if (idUsuarioLogueado <= 0) {
             Log.e(
                 "ASIGNACION_DEBUG",
                 "ID de usuario inválido"
             )
+            _mensajeErrorSeleccion.value =
+                "No se pudo identificar al cuidador. Inicia sesión nuevamente."
             _seleccionGuardada.value = false
             return
         }
@@ -235,22 +246,37 @@ class PacienteViewModel(
                 "ASIGNACION_DEBUG",
                 "No hay pacientes seleccionados"
             )
+            _mensajeErrorSeleccion.value =
+                "Por favor, selecciona al menos un paciente."
             _seleccionGuardada.value = false
             return
         }
 
-        val fechaActual = java.text.SimpleDateFormat(
-            "yyyy-MM-dd",
-            java.util.Locale.getDefault()
-        ).format(java.util.Date())
-
         viewModelScope.launch {
             try {
+                val rangoTurno =
+                    AsignacionVigenciaHelper.resolverRangoBloqueTurnoActual(
+                        idUsuario = idUsuarioLogueado,
+                        turnoRepository = turnoRepository
+                    )
+
+                if (rangoTurno == null) {
+                    Log.w(
+                        "ASIGNACION_DEBUG",
+                        "Cuidador $idUsuarioLogueado sin turno activo asignado"
+                    )
+                    _mensajeErrorSeleccion.value =
+                        "No tienes un turno asignado activo para guardar la selección de pacientes."
+                    _seleccionGuardada.value = false
+                    return@launch
+                }
+
                 val guardadoCorrecto =
                     repository.sincronizarSeleccionDelCuidador(
                         idUsuario = idUsuarioLogueado,
                         idsSeleccionados = idsSeleccionados,
-                        fechaActual = fechaActual
+                        fechaInicioIso = rangoTurno.fechaInicioIso,
+                        fechaFinIso = rangoTurno.fechaFinIso
                     )
 
                 if (guardadoCorrecto) {
@@ -272,15 +298,18 @@ class PacienteViewModel(
 
                     Log.d(
                         "ASIGNACION_DEBUG",
-                        "Selección sincronizada: $idsSeleccionados"
+                        "Selección sincronizada: $idsSeleccionados (${rangoTurno.fechaInicioIso} - ${rangoTurno.fechaFinIso})"
                     )
 
+                    _mensajeErrorSeleccion.value = null
                     _seleccionGuardada.value = true
                 } else {
                     Log.e(
                         "ASIGNACION_DEBUG",
                         "No se confirmó el guardado"
                     )
+                    _mensajeErrorSeleccion.value =
+                        "No se pudo guardar la selección. Inténtalo de nuevo."
                     _seleccionGuardada.value = false
                 }
             } catch (e: Exception) {
@@ -289,6 +318,8 @@ class PacienteViewModel(
                     "Error al sincronizar selección del cuidador",
                     e
                 )
+                _mensajeErrorSeleccion.value =
+                    "No se pudo guardar la selección. Inténtalo de nuevo."
                 _seleccionGuardada.value = false
             }
         }
@@ -332,91 +363,48 @@ class PacienteViewModel(
             try {
                 // Cargar el catálogo actualizado.
                 val pacientesNuevos = repository.obtenerPacientes()
+                if (listaPacientesCompleta.isEmpty()) {
+                    listaPacientesCompleta = pacientesNuevos
+                }
 
                 val claveEstado = claveSeleccion(idUsuario)
                 val claveIds = claveIdsSeleccionados(idUsuario)
 
-                val tieneEstadoGuardado =
-                    preferencias.contains(claveEstado)
+                // Consultar las asignaciones vigentes del cuidador.
+                val resultadoAsignaciones =
+                    repository.obtenerAsignacionesPacienteCuidadorResult()
 
-                val seleccionActivaLocal =
-                    preferencias.getBoolean(claveEstado, false)
-
-                val idsGuardadosLocal = preferencias
-                    .getStringSet(claveIds, emptySet())
-                    .orEmpty()
-                    .mapNotNull { it.toIntOrNull() }
-                    .toSet()
-
-                /*
-                 * Si el cierre del turno o de sesión reinició
-                 * explícitamente la selección, no restaurarla.
-                 */
-                if (tieneEstadoGuardado && !seleccionActivaLocal) {
-                    pacientesNuevos.forEach {
-                        it.isSelected = false
-                    }
-
-                    listaPacientesCompleta = pacientesNuevos
-                    tienePacientesSeleccionados = false
-
-                    _pacientes.value = pacientesNuevos.toList()
-                    _pacientesSeleccionadosHome.value = emptyList()
-
-                    Log.d(
-                        "SELECCION_PACIENTES",
-                        "Selección reiniciada; no se restauran pacientes"
-                    )
-
-                    return@launch
+                val asignaciones = resultadoAsignaciones.getOrElse { error ->
+                    throw error
                 }
 
-                // Consultar las asignaciones activas del cuidador.
-                val asignaciones =
-                    repository.obtenerAsignacionesPacienteCuidador()
+                val ahora = Date()
 
                 val idsBackend = asignaciones
                     .filter { asignacion ->
                         asignacion.idUsuario == idUsuario &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
+                                AsignacionVigenciaHelper.estaVigente(
+                                    asignacion,
+                                    ahora
                                 )
                     }
-                    .mapNotNull { it.idPaciente }
+                    .map { it.idPaciente }
                     .toSet()
 
-                /*
-                 * Priorizar el backend si devuelve pacientes.
-                 * Si no devuelve ninguno, conservar la selección
-                 * local mientras siga marcada como activa.
-                 */
-                val idsSeleccionados = when {
-                    idsBackend.isNotEmpty() -> idsBackend
-
-                    seleccionActivaLocal && idsGuardadosLocal.isNotEmpty() ->
-                        idsGuardadosLocal
-
-                    else -> emptySet()
-                }
-
+                // Cuando el backend responde sin error, usar únicamente las
+                // asignaciones vigentes sin restaurar caché de SharedPreferences.
                 pacientesNuevos.forEach { paciente ->
                     paciente.isSelected =
-                        paciente.idPaciente in idsSeleccionados
+                        paciente.idPaciente in idsBackend
                 }
 
                 listaPacientesCompleta = pacientesNuevos
-                tienePacientesSeleccionados = idsSeleccionados.isNotEmpty()
+                tienePacientesSeleccionados = idsBackend.isNotEmpty()
 
                 _pacientes.value = pacientesNuevos.toList()
                 _pacientesSeleccionadosHome.value =
                     pacientesNuevos.filter { it.isSelected }
 
-                /*
-                 * Guardar el resultado si el backend confirmó
-                 * asignaciones. No guardar false automáticamente
-                 * cuando el resultado viene vacío.
-                 */
                 if (idsBackend.isNotEmpty()) {
                     preferencias.edit()
                         .putBoolean(claveEstado, true)
@@ -425,29 +413,15 @@ class PacienteViewModel(
                             idsBackend.map { it.toString() }.toSet()
                         )
                         .apply()
-                } else if (
-                    !tieneEstadoGuardado &&
-                    idsSeleccionados.isNotEmpty()
-                ) {
+                } else {
                     preferencias.edit()
-                        .putBoolean(claveEstado, true)
-                        .putStringSet(
-                            claveIds,
-                            idsSeleccionados.map { it.toString() }.toSet()
-                        )
+                        .putBoolean(claveEstado, false)
+                        .remove(claveIds)
                         .apply()
                 }
 
                 Log.d("SELECCION_PACIENTES", "Usuario=$idUsuario")
-                Log.d("SELECCION_PACIENTES", "IDs backend=$idsBackend")
-                Log.d(
-                    "SELECCION_PACIENTES",
-                    "IDs locales=$idsGuardadosLocal"
-                )
-                Log.d(
-                    "SELECCION_PACIENTES",
-                    "IDs mostrados=$idsSeleccionados"
-                )
+                Log.d("SELECCION_PACIENTES", "IDs backend vigentes=$idsBackend")
 
             } catch (e: Exception) {
                 Log.e(
@@ -1014,11 +988,14 @@ class PacienteViewModel(
     fun cargarGruposMedicacion() {
         viewModelScope.launch {
             try {
-                _gruposMedicacion.value =
-                    repository.getGrupoMedicacion() ?: emptyList()
                 val grupos = repository.getGrupoMedicacion() ?: emptyList()
 
                 _gruposMedicacion.value = grupos
+
+                val formulaciones = _formulacionesMedicamentos.value
+                if (!formulaciones.isNullOrEmpty()) {
+                    separarMedicamentosPorHorario(formulaciones, grupos)
+                }
 
                 Log.d(
                     "GRUPOS_MEDICACION",
@@ -1048,9 +1025,11 @@ class PacienteViewModel(
             .get(java.util.Calendar.HOUR_OF_DAY)
 
         val medicamentosConGrupo = lista.filter { medicamento ->
-            grupos.any {
-                it.idGrupo == medicamento.idGrupo
-            }
+            medicamento.actualAdministrado == true &&
+                    medicamento.suspendidoFecha.isNullOrBlank() &&
+                    grupos.any {
+                        it.idGrupo == medicamento.idGrupo
+                    }
         }
 
         medicamentosManana.value =
@@ -1098,23 +1077,119 @@ class PacienteViewModel(
     val noAdministradoState: LiveData<Result<String>>
         get() = _noAdministradoState
 
+    private suspend fun obtenerOCrearSeguimientoPendiente(
+        idSeguimiento: Int?,
+        idFormulacion: Int?,
+        horaAdministrada: String?
+    ): Int {
+        idSeguimiento?.takeIf { it > 0 }?.let { return it }
+
+        val formulacionValida = idFormulacion
+            ?.takeIf { it > 0 }
+            ?: throw Exception(
+                "No se identificó la formulación del medicamento"
+            )
+
+        val horaTexto = horaAdministrada
+            ?.trim()
+            ?.substringAfterLast("T")
+            ?.substringBefore("Z")
+            ?.substringBefore("+")
+            ?.substringBefore("-")
+            ?: throw Exception(
+                "No se encontró la hora programada"
+            )
+
+        val partesHora = horaTexto.split(":")
+        val horaNum = partesHora.getOrNull(0)?.toIntOrNull() ?: 0
+        val minutoNum = partesHora.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
+
+        val calProg = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, horaNum)
+            set(java.util.Calendar.MINUTE, minutoNum)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+
+        val sdfProg = java.text.SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            java.util.Locale.US
+        ).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+
+        val fechaHoraProgramada = sdfProg.format(calProg.time)
+
+        val resultadoSeguimiento =
+            repository.crearSeguimientoMedicamento(
+                CrearSeguimientoMedicamentoRequest(
+                    idFormulacion = formulacionValida,
+                    fechaHoraProgramada = fechaHoraProgramada
+                )
+            )
+
+        val seguimiento = resultadoSeguimiento.getOrElse {
+            throw it
+        }
+
+        val estadoSeguimiento = seguimiento.estado?.trim().orEmpty()
+        if (
+            estadoSeguimiento.isNotEmpty() &&
+            !estadoSeguimiento.equals("PENDIENTE", ignoreCase = true)
+        ) {
+            val mensaje = when {
+                estadoSeguimiento.equals("ADMINISTRADO", ignoreCase = true) ->
+                    "Esta dosis ya fue administrada."
+                estadoSeguimiento.equals("NO_ADMINISTRADO", ignoreCase = true) ->
+                    "Esta dosis ya fue registrada como no administrada."
+                else ->
+                    "Esta dosis ya tiene un seguimiento cerrado."
+            }
+            throw Exception(mensaje)
+        }
+
+        val idRecuperado = seguimiento.idSeguimiento
+            ?.takeIf { it > 0 }
+            ?: throw Exception(
+                "No se recibió el ID del seguimiento"
+            )
+
+        Log.d(
+            "SEGUIMIENTO_MEDICAMENTO",
+            "Seguimiento asociado: $idRecuperado | " +
+                    "Formulación: $formulacionValida | " +
+                    "Fecha: $fechaHoraProgramada"
+        )
+
+        return idRecuperado
+    }
+
     fun registrarMedicamentoNoAdministrado(
-        idSeguimiento: Int,
-        motivo: String
+        idSeguimiento: Int? = null,
+        motivo: String,
+        idFormulacion: Int? = null,
+        horaAdministrada: String? = null
     ) {
-        if (idSeguimiento <= 0 || motivo.isBlank()) {
+        if (motivo.isBlank()) {
             _noAdministradoState.value =
                 Result.failure(
-                    Exception("Debes seleccionar un seguimiento e indicar el motivo")
+                    Exception("Debes indicar el motivo")
                 )
             return
         }
 
         viewModelScope.launch {
             try {
+                val idSeguimientoValido =
+                    obtenerOCrearSeguimientoPendiente(
+                        idSeguimiento = idSeguimiento,
+                        idFormulacion = idFormulacion,
+                        horaAdministrada = horaAdministrada
+                    )
+
                 val resultado =
                     repository.registrarNoAdministrado(
-                        idSeguimiento,
+                        idSeguimientoValido,
                         MotivoNoAdministracionRequest(
                             motivoNoAdministracion = motivo.trim()
                         )
@@ -1257,8 +1332,10 @@ class PacienteViewModel(
 
                 val fechaActual = java.text.SimpleDateFormat(
                     "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                    java.util.Locale.getDefault()
-                ).format(java.util.Date())
+                    java.util.Locale.US
+                ).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }.format(java.util.Date())
 
                 Log.d(
                     "APLICACION_DEBUG",
@@ -1275,71 +1352,11 @@ class PacienteViewModel(
                 // ================================================
 
                 val idSeguimientoParaAplicacion =
-                    idSeguimiento?.takeIf { it > 0 } ?: run {
-
-                        val formulacionValida = idFormulacion
-                            ?.takeIf { it > 0 }
-                            ?: throw Exception(
-                                "No se identificó la formulación del medicamento"
-                            )
-
-                        val horaTexto = horaAdministrada
-                            ?.trim()
-                            ?.substringAfterLast("T")
-                            ?.substringBefore("Z")
-                            ?.substringBefore("+")
-                            ?.substringBefore("-")
-                            ?: throw Exception(
-                                "No se encontró la hora programada"
-                            )
-
-                        val partesHora = horaTexto.split(":")
-                        val horaNum = partesHora.getOrNull(0)?.toIntOrNull() ?: 0
-                        val minutoNum = partesHora.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
-
-                        val calProg = java.util.Calendar.getInstance().apply {
-                            set(java.util.Calendar.HOUR_OF_DAY, horaNum)
-                            set(java.util.Calendar.MINUTE, minutoNum)
-                            set(java.util.Calendar.SECOND, 0)
-                            set(java.util.Calendar.MILLISECOND, 0)
-                        }
-
-                        val sdfProg = java.text.SimpleDateFormat(
-                            "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                            java.util.Locale.getDefault()
-                        ).apply {
-                            timeZone = java.util.TimeZone.getTimeZone("UTC")
-                        }
-
-                        val fechaHoraProgramada = sdfProg.format(calProg.time)
-
-                        val resultadoSeguimiento =
-                            repository.crearSeguimientoMedicamento(
-                                CrearSeguimientoMedicamentoRequest(
-                                    idFormulacion = formulacionValida,
-                                    fechaHoraProgramada = fechaHoraProgramada
-                                )
-                            )
-
-                        val seguimiento = resultadoSeguimiento.getOrElse {
-                            throw it
-                        }
-
-                        val idRecuperado = seguimiento.idSeguimiento
-                            ?.takeIf { it > 0 }
-                            ?: throw Exception(
-                                "No se recibió el ID del seguimiento"
-                            )
-
-                        Log.d(
-                            "SEGUIMIENTO_MEDICAMENTO",
-                            "Seguimiento asociado: $idRecuperado | " +
-                                    "Formulación: $formulacionValida | " +
-                                    "Fecha: $fechaHoraProgramada"
-                        )
-
-                        idRecuperado
-                    }
+                    obtenerOCrearSeguimientoPendiente(
+                        idSeguimiento = idSeguimiento,
+                        idFormulacion = idFormulacion,
+                        horaAdministrada = horaAdministrada
+                    )
 
                 val request = AplicacionRequest(
                     idPaciente = idPaciente,
@@ -1359,211 +1376,6 @@ class PacienteViewModel(
                     repository.registrarAplicacionMedicamento(request)
 
                 if (result.isSuccess) {
-
-                    // Leer el stock que devuelve Django después del registro.
-                    val datosRespuesta = try {
-                        JSONObject(result.getOrNull()?.string().orEmpty())
-                    } catch (e: Exception) {
-                        Log.e(
-                            "INVENTARIO_UPDATE",
-                            "No se pudo leer el stock devuelto por Django",
-                            e
-                        )
-                        null
-                    }
-
-                    val stockRestante =
-                        datosRespuesta?.optInt("cantidad_actual", -1) ?: -1
-
-                    val cantidadMinima =
-                        datosRespuesta?.optInt("cantidad_minima", -1) ?: -1
-
-                    if (stockRestante < 0 || cantidadMinima < 0) {
-
-                        Log.w(
-                            "INVENTARIO_UPDATE",
-                            "No se pudo confirmar el stock o su cantidad mínima."
-                        )
-
-                    } else {
-
-                        // Preferencias locales para evitar alertas repetidas.
-                        val preferencias = context.getSharedPreferences(
-                            "ALERTAS_STOCK",
-                            Context.MODE_PRIVATE
-                        )
-
-                        val claveLocal = "LOCAL_STOCK_BAJO_$idInventarioValido"
-                        val claveDestinatarios = "PUSH_STOCK_BAJO_$idInventarioValido"
-
-                        // Si se repone el medicamento, permitir futuras alertas.
-                        if (stockRestante > cantidadMinima) {
-
-                            preferencias.edit()
-                                .remove(claveLocal)
-                                .remove(claveDestinatarios)
-                                .apply()
-
-                        } else {
-
-                            // =========================================
-                            // NOTIFICACIÓN LOCAL AL CUIDADOR
-                            // =========================================
-
-                            if (!preferencias.getBoolean(claveLocal, false)) {
-
-                                NotificationHelper(context)
-                                    .enviarNotificacionStockBajo(
-                                        nombreMedicamento = nombreMedicamento,
-                                        nombrePaciente = nombrePaciente,
-                                        cantidadRestante = stockRestante
-                                    )
-
-                                preferencias.edit()
-                                    .putBoolean(claveLocal, true)
-                                    .apply()
-                            }
-
-                            // =========================================
-                            // NOTIFICACIONES PUSH A LOS ENCARGADOS
-                            // =========================================
-
-                            try {
-
-                                // Obtener encargados activos.
-                                val encargados = repository.obtenerUsuarios()
-                                    .filter { usuario ->
-                                        usuario.idRol == 2 && usuario.estado
-                                    }
-
-                                // Recuperar los encargados que ya recibieron
-                                // la alerta desde este dispositivo.
-                                val notificados = preferencias.getStringSet(
-                                    claveDestinatarios,
-                                    mutableSetOf()
-                                )?.toMutableSet() ?: mutableSetOf()
-
-                                // Evitar notificar dos veces al mismo encargado.
-                                val encargadosPendientes = encargados.filter { usuario ->
-
-                                    val id = usuario.idUsuario
-
-                                    id != null && !notificados.contains(id.toString())
-                                }
-
-                                if (encargadosPendientes.isEmpty()) {
-
-                                    Log.d(
-                                        "NOTIF_STOCK",
-                                        "No hay encargados pendientes de notificación."
-                                    )
-
-                                } else {
-
-                                    // Crear una sola notificación para los destinatarios
-                                    // que todavía no han recibido la alerta.
-                                    val datosNotificacion: Map<String, Any> = mapOf(
-
-                                        "titulo" to
-                                                "Stock bajo: $nombreMedicamento",
-
-                                        "tipo" to "STOCK_BAJO",
-
-                                        "mensaje" to
-                                                "El medicamento $nombreMedicamento del paciente " +
-                                                "$nombrePaciente tiene $stockRestante unidades " +
-                                                "disponibles. Cantidad mínima: $cantidadMinima.",
-
-                                        "enviar_correo" to false,
-
-                                        "fecha_hora" to fechaActual,
-
-                                        "estado" to true,
-
-                                        "id_paciente" to idPaciente
-                                    )
-
-                                    val respuestaNotif =
-                                        repository.crearNotificacionStock(
-                                            datosNotificacion
-                                        )
-
-                                    val notifCreada = respuestaNotif.getOrNull()
-
-                                    if (notifCreada != null) {
-
-                                        // Asociar la notificación a cada encargado.
-                                        for (encargado in encargadosPendientes) {
-
-                                            val idDestinatario =
-                                                encargado.idUsuario ?: continue
-
-                                            val datosDestinatario: Map<String, Any> =
-                                                mapOf(
-
-                                                    "id_notificacion" to
-                                                            notifCreada.id_notificacion,
-
-                                                    "id_usuario" to idDestinatario,
-
-                                                    // IMPORTANTE: el backend utiliza
-                                                    // el campo "leida".
-                                                    "leida" to false
-                                                )
-
-                                            val resultado =
-                                                repository.asociarNotificacionDestinatarioStock(
-                                                    datosDestinatario
-                                                )
-
-                                            if (resultado.isSuccess) {
-
-                                                // Guardar únicamente los destinatarios
-                                                // cuya asociación se realizó correctamente.
-                                                notificados.add(idDestinatario.toString())
-
-                                                preferencias.edit()
-                                                    .putStringSet(
-                                                        claveDestinatarios,
-                                                        notificados
-                                                    )
-                                                    .apply()
-
-                                                Log.d(
-                                                    "NOTIF_STOCK",
-                                                    "Alerta enviada al encargado: $idDestinatario"
-                                                )
-
-                                            } else {
-
-                                                Log.e(
-                                                    "NOTIF_STOCK",
-                                                    "Error notificando al encargado $idDestinatario",
-                                                    resultado.exceptionOrNull()
-                                                )
-                                            }
-                                        }
-
-                                    } else {
-
-                                        Log.e(
-                                            "NOTIF_STOCK",
-                                            "No se pudo crear la notificación: " +
-                                                    "${respuestaNotif.exceptionOrNull()?.message}"
-                                        )
-                                    }
-                                }
-
-                            } catch (e: Exception) {
-
-                                Log.e(
-                                    "NOTIF_STOCK",
-                                    "Error procesando alertas de stock",
-                                    e
-                                )
-                            }
-                        }
-                    }
                     _registroAplicacionState.value =
                         Result.success(
                             "Aplicación registrada con éxito"

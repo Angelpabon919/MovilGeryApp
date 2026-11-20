@@ -15,9 +15,11 @@ import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesCuidadorEncargadoBinding
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Date
 
 
 class PacientesCuidadorEncargadoFragment : Fragment() {
@@ -348,15 +350,17 @@ class PacientesCuidadorEncargadoFragment : Fragment() {
             // 2. FILTRAR ASIGNACIONES DEL CUIDADOR
             // =================================================
 
+            val ahora = Date()
+
             val asignacionesCuidador =
                 asignaciones.filter { asignacion ->
 
                     asignacion.idUsuario ==
                             idUsuarioCuidador &&
 
-                            asignacion.estado.equals(
-                                "Activo",
-                                ignoreCase = true
+                            AsignacionVigenciaHelper.estaVigente(
+                                asignacion,
+                                ahora
                             )
                 }
 

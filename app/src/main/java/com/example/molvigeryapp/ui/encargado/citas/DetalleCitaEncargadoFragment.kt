@@ -21,10 +21,12 @@ import com.example.molvigeryapp.data.model.Usuario
 import com.example.molvigeryapp.data.repository.CitasRepository
 import com.example.molvigeryapp.databinding.DialogEliminarCitaEncargadoBinding
 import com.example.molvigeryapp.databinding.FragmentDetalleCitaEncargadoBinding
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class DetalleCitaEncargadoFragment : Fragment() {
 
@@ -343,16 +345,22 @@ class DetalleCitaEncargadoFragment : Fragment() {
                             emptyList()
                         }
 
-                    // Priorizar la asignación activa.
-                    val asignacion = asignaciones.firstOrNull {
-                        it.idPaciente == cita.idPaciente &&
-                                it.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
-                                )
-                    } ?: asignaciones.firstOrNull {
-                        it.idPaciente == cita.idPaciente
-                    }
+                    val ahora = Date()
+
+                    // Buscar la asignación vigente actual del paciente.
+                    val asignacion = asignaciones
+                        .filter {
+                            it.idPaciente == cita.idPaciente &&
+                                    AsignacionVigenciaHelper.estaVigente(
+                                        it,
+                                        ahora
+                                    )
+                        }
+                        .maxByOrNull {
+                            AsignacionVigenciaHelper.parsearFechaIso(
+                                it.fechaInicio
+                            )?.time ?: 0L
+                        }
 
                     if (asignacion != null) {
                         val usuarios =

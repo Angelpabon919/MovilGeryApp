@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class AgendaViewModel(
     private val repository: PacienteRepository
@@ -124,13 +126,15 @@ class AgendaViewModel(
                 //    Y QUE ESTEN ACTIVAS
                 // --------------------------------------------------
 
+                val ahora = Date()
+
                 val asignacionesDelCuidador =
                     asignaciones.filter { asignacion ->
 
                         asignacion.idUsuario == idUsuario &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
+                                AsignacionVigenciaHelper.estaVigente(
+                                    asignacion,
+                                    ahora
                                 )
                     }
 

@@ -1,10 +1,12 @@
 package com.example.molvigeryapp.ui.cuidador.medicamentos
 
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -33,8 +35,10 @@ class AplicacionMedicamentosFragment :
     private lateinit var cbConfirmarAdministracion: MaterialCheckBox
     private lateinit var btnVerInformacion: MaterialButton
     private lateinit var btnRegistrar: MaterialButton
-
-    private var btnNoAdministrado: MaterialButton? = null
+    private lateinit var btnNoAdministrado: MaterialButton
+    private lateinit var layoutEstadoSeguimiento: LinearLayout
+    private lateinit var tvEstadoSeguimiento: TextView
+    private lateinit var tvMotivoNoAdministracion: TextView
 
     private var formulacionSeleccionada: FormulacionMedicamento? = null
     private var elementoSeleccionado: ElementoPaciente? = null
@@ -129,17 +133,6 @@ class AplicacionMedicamentosFragment :
                     { it.nombreMedicamento }
                 ) ?: emptyMap()
 
-            actualizarSelectorMedicamentos(idPaciente)
-        }
-        viewModel.medicamentosManana.observe(viewLifecycleOwner) {
-            actualizarSelectorMedicamentos(idPaciente)
-        }
-
-        viewModel.medicamentosTarde.observe(viewLifecycleOwner) {
-            actualizarSelectorMedicamentos(idPaciente)
-        }
-
-        viewModel.medicamentosNoche.observe(viewLifecycleOwner) {
             actualizarSelectorMedicamentos(idPaciente)
         }
         // =====================================================
@@ -291,24 +284,45 @@ class AplicacionMedicamentosFragment :
 // REGISTRAR MEDICAMENTO NO ADMINISTRADO
 // =====================================================
 
-        btnNoAdministrado?.setOnClickListener {
+        btnNoAdministrado.setOnClickListener {
 
-            val seguimiento = seguimientoSeleccionado
-            val idSeguimiento = seguimiento?.idSeguimiento ?: 0
+            val formulacion = formulacionSeleccionada
 
-            if (seguimiento == null || idSeguimiento <= 0) {
+            if (formulacion == null) {
                 Toast.makeText(
                     requireContext(),
-                    "No existe un seguimiento pendiente para este medicamento",
-                    Toast.LENGTH_LONG
+                    "Seleccione un medicamento",
+                    Toast.LENGTH_SHORT
                 ).show()
-
                 return@setOnClickListener
             }
 
-            if (seguimiento.estado.orEmpty()
-                    .trim()
-                    .uppercase() != "PENDIENTE"
+            val idFormulacion = formulacion.idFormulacion
+            val horaAdministrada = formulacion.horaAdministrada
+
+            if (idFormulacion == null || idFormulacion <= 0) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se identificó la formulación",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
+            if (horaAdministrada.isNullOrBlank()) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró el horario del medicamento",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+
+            val seguimiento = seguimientoSeleccionado
+
+            if (
+                seguimiento != null &&
+                !seguimiento.estado.equals("PENDIENTE", ignoreCase = true)
             ) {
                 Toast.makeText(
                     requireContext(),
@@ -346,11 +360,13 @@ class AplicacionMedicamentosFragment :
                     } else {
                         Log.d(
                             "NO_ADMIN_MED",
-                            "Enviando solicitud. ID seguimiento=${seguimiento.idSeguimiento}"
+                            "Enviando solicitud. ID seguimiento=${seguimiento?.idSeguimiento} | Formulación=$idFormulacion"
                         )
                         viewModel.registrarMedicamentoNoAdministrado(
-                            idSeguimiento,
-                            motivo
+                            idSeguimiento = seguimiento?.idSeguimiento,
+                            motivo = motivo,
+                            idFormulacion = idFormulacion,
+                            horaAdministrada = horaAdministrada
                         )
                     }
                 }
@@ -388,8 +404,17 @@ class AplicacionMedicamentosFragment :
         btnRegistrar =
             view.findViewById(R.id.btnRegistrarAplicacion)
 
-        val resIdNoAdmin = resources.getIdentifier("btnNoAdministrado", "id", requireContext().packageName)
-        btnNoAdministrado = if (resIdNoAdmin != 0) view.findViewById(resIdNoAdmin) else null
+        btnNoAdministrado =
+            view.findViewById(R.id.btnNoAdministrado)
+
+        layoutEstadoSeguimiento =
+            view.findViewById(R.id.layoutEstadoSeguimiento)
+
+        tvEstadoSeguimiento =
+            view.findViewById(R.id.tvEstadoSeguimiento)
+
+        tvMotivoNoAdministracion =
+            view.findViewById(R.id.tvMotivoNoAdministracion)
     }
 
 
@@ -417,7 +442,9 @@ class AplicacionMedicamentosFragment :
         medicamentosPendientes =
             (manana + tarde + noche)
                 .filter {
-                    it.idPaciente == idPaciente
+                    it.idPaciente == idPaciente &&
+                            it.actualAdministrado == true &&
+                            it.suspendidoFecha.isNullOrBlank()
                 }
                 .distinctBy {
                     it.idFormulacion
@@ -427,9 +454,20 @@ class AplicacionMedicamentosFragment :
         val nombres =
             medicamentosPendientes.map { formulacion ->
 
-                mapaNombresMedicamentos[
+                val nombreBase = mapaNombresMedicamentos[
                     formulacion.idMedicamentos
                 ] ?: "Medicamento #${formulacion.idMedicamentos}"
+
+                val hora = obtenerHoraProgramada(formulacion)
+                    .takeIf { !it.equals("sin horario", ignoreCase = true) }
+
+                val dosis = formulacion.dosis
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+
+                val detalle = listOfNotNull(hora, dosis).joinToString(" · ")
+
+                if (detalle.isNotEmpty()) "$nombreBase ($detalle)" else nombreBase
             }
 
 
@@ -501,6 +539,7 @@ class AplicacionMedicamentosFragment :
 
         if (idFormulacion == null || idFormulacion <= 0) {
             seguimientoSeleccionado = null
+            actualizarEstadoVisualSeguimiento()
             return
         }
 
@@ -510,6 +549,7 @@ class AplicacionMedicamentosFragment :
 
         if (horaProgramada == null) {
             seguimientoSeleccionado = null
+            actualizarEstadoVisualSeguimiento()
             return
         }
 
@@ -539,12 +579,75 @@ class AplicacionMedicamentosFragment :
                 it.estado.equals("PENDIENTE", ignoreCase = true)
             } ?: coincidencias.firstOrNull()
 
+        actualizarEstadoVisualSeguimiento()
+
         android.util.Log.d(
             "SEGUIMIENTO_SELECCION",
             "FORMULACION=$idFormulacion | " +
                     "SEGUIMIENTO=${seguimientoSeleccionado?.idSeguimiento} | " +
                     "ESTADO=${seguimientoSeleccionado?.estado}"
         )
+    }
+
+    private fun actualizarEstadoVisualSeguimiento() {
+        val formulacion = formulacionSeleccionada
+
+        if (formulacion == null) {
+            layoutEstadoSeguimiento.visibility = View.GONE
+            tvMotivoNoAdministracion.visibility = View.GONE
+            btnRegistrar.isEnabled = true
+            btnRegistrar.alpha = 1f
+            btnNoAdministrado.isEnabled = true
+            btnNoAdministrado.alpha = 1f
+            return
+        }
+
+        layoutEstadoSeguimiento.visibility = View.VISIBLE
+
+        val estado = seguimientoSeleccionado?.estado
+            ?.trim()
+            ?.uppercase()
+            ?: "PENDIENTE"
+
+        when (estado) {
+            "ADMINISTRADO" -> {
+                tvEstadoSeguimiento.text = "Estado: Administrado"
+                tvEstadoSeguimiento.setTextColor(Color.parseColor("#15803D"))
+                tvMotivoNoAdministracion.visibility = View.GONE
+                btnRegistrar.isEnabled = false
+                btnRegistrar.alpha = 0.5f
+                btnNoAdministrado.isEnabled = false
+                btnNoAdministrado.alpha = 0.5f
+            }
+
+            "NO_ADMINISTRADO" -> {
+                tvEstadoSeguimiento.text = "Estado: No administrado"
+                tvEstadoSeguimiento.setTextColor(Color.parseColor("#B91C1C"))
+
+                val motivo = seguimientoSeleccionado?.motivoNoAdministracion?.trim().orEmpty()
+                if (motivo.isNotEmpty()) {
+                    tvMotivoNoAdministracion.text = "Motivo: $motivo"
+                    tvMotivoNoAdministracion.visibility = View.VISIBLE
+                } else {
+                    tvMotivoNoAdministracion.visibility = View.GONE
+                }
+
+                btnRegistrar.isEnabled = false
+                btnRegistrar.alpha = 0.5f
+                btnNoAdministrado.isEnabled = false
+                btnNoAdministrado.alpha = 0.5f
+            }
+
+            else -> {
+                tvEstadoSeguimiento.text = "Estado: Pendiente"
+                tvEstadoSeguimiento.setTextColor(Color.parseColor("#B45309"))
+                tvMotivoNoAdministracion.visibility = View.GONE
+                btnRegistrar.isEnabled = true
+                btnRegistrar.alpha = 1f
+                btnNoAdministrado.isEnabled = true
+                btnNoAdministrado.alpha = 1f
+            }
+        }
     }
 
 
@@ -649,39 +752,50 @@ class AplicacionMedicamentosFragment :
         val hoy = formatoFecha.parse(
             formatoFecha.format(java.util.Date())
         )
-        // Buscar inventarios del medicamento seleccionado.
+        // Buscar inventarios del medicamento seleccionado (acepta lotes sin fecha de vencimiento).
         val inventariosDisponibles =
             inventariosPaciente.filter { inventario ->
 
-                val vencimiento = try {
-                    inventario.fechaVencimiento
-                        ?.take(10)
-                        ?.let { formatoFecha.parse(it) }
-                } catch (e: Exception) {
+                val fechaTexto = inventario.fechaVencimiento?.trim()
+                val vencimiento = if (fechaTexto.isNullOrEmpty()) {
                     null
+                } else {
+                    try {
+                        formatoFecha.parse(fechaTexto.take(10))
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+
+                val fechaValida = fechaTexto.isNullOrEmpty() ||
+                        (vencimiento != null && hoy != null && !vencimiento.before(hoy))
 
                 inventario.idPaciente == idPaciente &&
                         inventario.idMedicamentos ==
                         formulacion.idMedicamentos &&
                         inventario.estado == true &&
                         (inventario.cantidadActual ?: 0) > 0 &&
-                        vencimiento != null &&
-                        hoy != null &&
-                        !vencimiento.before(hoy)
+                        fechaValida
             }
 
-        // Priorizar el lote que vence primero.
-        val inventario = inventariosDisponibles.minByOrNull {
-            formatoFecha.parse(
-                it.fechaVencimiento!!.take(10)
-            )?.time ?: Long.MAX_VALUE
+        // Priorizar el lote que vence primero; los lotes sin fecha de vencimiento van al final.
+        val inventario = inventariosDisponibles.minByOrNull { inv ->
+            val fechaTexto = inv.fechaVencimiento?.trim()
+            if (fechaTexto.isNullOrEmpty()) {
+                Long.MAX_VALUE
+            } else {
+                try {
+                    formatoFecha.parse(fechaTexto.take(10))?.time ?: Long.MAX_VALUE
+                } catch (e: Exception) {
+                    Long.MAX_VALUE
+                }
+            }
         }
 
         inventarioSeleccionado = inventario
 
-        // Encontrar el elemento exacto asociado al inventario.
-        elementoSeleccionado =
+        // Encontrar el elemento exacto asociado al inventario o, como respaldo, en elementos_paciente.
+        val elementoPorInventario =
             inventario?.idElemento?.let { idElemento ->
 
                 elementosPaciente.find { elemento ->
@@ -691,6 +805,18 @@ class AplicacionMedicamentosFragment :
                             elemento.idMedicamentos ==
                             formulacion.idMedicamentos
                 }
+            }
+
+        elementoSeleccionado = elementoPorInventario
+            ?: elementosPaciente.firstOrNull { elemento ->
+                elemento.idPaciente == idPaciente &&
+                        elemento.idMedicamentos == formulacion.idMedicamentos &&
+                        elemento.estado &&
+                        elemento.cantidad > 0
+            }
+            ?: elementosPaciente.firstOrNull { elemento ->
+                elemento.idPaciente == idPaciente &&
+                        elemento.idMedicamentos == formulacion.idMedicamentos
             }
 
         android.util.Log.d(
@@ -737,10 +863,8 @@ class AplicacionMedicamentosFragment :
 
 
         val stock =
-            elementoSeleccionado
-                ?.cantidadActual
-                ?: elementoSeleccionado
-                    ?.cantidad
+            inventarioSeleccionado?.cantidadActual
+                ?: elementoSeleccionado?.cantidad
                 ?: 0
 
 

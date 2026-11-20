@@ -35,5 +35,14 @@ class SignosVitales (
     val fechaHora: String = "",
 
     @SerializedName("observaciones")
-    val observaciones: String = ""
+    val observaciones: String = "",
+
+    @SerializedName("alerta")
+    val alerta: Boolean? = null,
+
+    @SerializedName("mensaje_alerta")
+    val mensajeAlerta: String? = null,
+
+    @SerializedName("alerta_generada")
+    val alertaGenerada: String? = null
 )

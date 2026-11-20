@@ -19,9 +19,13 @@ import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.CierreTurnoRequest
 import com.example.molvigeryapp.data.model.Turno
 import com.example.molvigeryapp.data.repository.PacienteRepository
+import com.example.molvigeryapp.data.repository.TurnoRepository
 import com.example.molvigeryapp.databinding.FragmentCierreTurnoBinding
 import com.example.molvigeryapp.ui.cuidador.llegada.VerificacionLlegadaFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
+import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModelFactory
+import com.example.molvigeryapp.ui.cuidador.pacientes.ProgramadorAlarmasMedicamentos
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
@@ -29,17 +33,24 @@ import java.util.Locale
 
 class CierreTurnoFragment : Fragment() {
 
-    private val pacienteViewModel: PacienteViewModel by activityViewModels()
+    private val pacienteViewModel: PacienteViewModel by activityViewModels {
+        PacienteViewModelFactory(PacienteRepository())
+    }
 
     private var _binding: FragmentCierreTurnoBinding? = null
     private val binding get() = _binding!!
 
     private var asignacionActual: AsignacionTurnoUsuario? = null
     private var turnoActual: Turno? = null
+    private var asignacionesTurnoCargadas: List<AsignacionTurnoUsuario> = emptyList()
     private var enviandoCierre = false
 
     private val usuarioRepository by lazy {
         PacienteRepository()
+    }
+
+    private val turnoRepository by lazy {
+        TurnoRepository()
     }
 
     private val preferenciasSesion by lazy {
@@ -194,6 +205,18 @@ class CierreTurnoFragment : Fragment() {
         // Lista de pacientes.
         binding.cardPacientesCierre.setOnClickListener {
 
+            val asignacion = asignacionActual
+            val idAsignacion = asignacion?.id_asignacion_turno_usuario
+
+            if (idAsignacion == null || idAsignacion <= 0) {
+                Toast.makeText(
+                    requireContext(),
+                    "No se encontró la asignación del turno.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
             val contenedor = requireView().parent as? ViewGroup
 
             if (contenedor == null || contenedor.id == View.NO_ID) {
@@ -208,7 +231,10 @@ class CierreTurnoFragment : Fragment() {
             parentFragmentManager.beginTransaction()
                 .replace(
                     contenedor.id,
-                    PacientesCierreTurnoFragment()
+                    PacientesCierreTurnoFragment.newInstance(
+                        idUsuario = asignacion.id_usuario,
+                        idAsignacion = idAsignacion
+                    )
                 )
                 .addToBackStack("pacientes_cierre_turno")
                 .commit()
@@ -288,13 +314,6 @@ class CierreTurnoFragment : Fragment() {
                 .addToBackStack("resumen_cuidados_turno")
                 .commit()
         }
-
-        val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
-
-        pacienteViewModel.reiniciarSeleccionDespuesDelCierre(
-            idUsuario = idUsuario,
-            preferencias = preferenciasSesion
-        )
 
         configurarResumenInicial()
         configurarFotoPredeterminada()
@@ -427,6 +446,7 @@ class CierreTurnoFragment : Fragment() {
                 val api = RetrofitClient.apiService
 
                 val asignaciones = api.getAsignacionesTurno()
+                asignacionesTurnoCargadas = asignaciones
 
                 val asignacion = asignaciones.firstOrNull {
                     it.id_asignacion_turno_usuario == idAsignacion
@@ -541,22 +561,34 @@ class CierreTurnoFragment : Fragment() {
                 "Total de asignaciones recibidas: ${todasLasAsignaciones.size}"
             )
 
-            // 2. Usar el mismo criterio de cuidador y estado
-            // que funciona en CitasCierreTurnoFragment.
-            val pacientesAsignados = todasLasAsignaciones
-                .filter { asignacion ->
-                    asignacion.idUsuario == idCuidador &&
-                            asignacion.estado.equals(
-                                "Activo",
-                                ignoreCase = true
-                            )
-                }
-                .map { it.idPaciente }
-                .toSet()
+            val rangoTurno = turnoActual?.let {
+                AsignacionVigenciaHelper.calcularRangoTurnoDia(
+                    asignacionTurno = asignacionTurno,
+                    turno = it
+                )
+            } ?: AsignacionVigenciaHelper.calcularRangoDiaCompleto(fechaTurno)
+
+            // 2. Filtrar asignaciones que se solapan con el rango del turno.
+            val pacientesAsignados = if (rangoTurno != null) {
+                val (inicioTurno, finTurno) = rangoTurno
+                todasLasAsignaciones
+                    .filter { asignacion ->
+                        asignacion.idUsuario == idCuidador &&
+                                AsignacionVigenciaHelper.perteneceATurno(
+                                    asignacion = asignacion,
+                                    inicio = inicioTurno,
+                                    fin = finTurno
+                                )
+                    }
+                    .map { it.idPaciente }
+                    .toSet()
+            } else {
+                emptySet()
+            }
 
             Log.d(
                 "CIERRE_TURNO",
-                "Pacientes activos del cuidador: $pacientesAsignados"
+                "Pacientes del turno del cuidador: $pacientesAsignados"
             )
 
             // 3. Consultar citas del día del turno.
@@ -690,6 +722,37 @@ class CierreTurnoFragment : Fragment() {
                     RetrofitClient.apiService.crearCierreTurno(solicitud)
 
                 if (respuesta.estado.equals("Finalizado", true)) {
+
+                    ProgramadorAlarmasMedicamentos.cancelarTodas(
+                        requireContext().applicationContext
+                    )
+
+                    val esUltimoDia = try {
+                        AsignacionVigenciaHelper.esUltimoDiaBloqueTurno(
+                            asignacionCerrada = asignacion,
+                            turnoRepository = turnoRepository
+                        )
+                    } catch (e: Exception) {
+                        Log.e(
+                            "CIERRE_TURNO",
+                            "Error verificando si es último día del bloque",
+                            e
+                        )
+                        AsignacionVigenciaHelper.esUltimoDiaBloqueTurno(
+                            asignacionCerrada = asignacion,
+                            todasLasAsignacionesTurno = asignacionesTurnoCargadas
+                        )
+                    }
+
+                    if (esUltimoDia) {
+                        val idUsuario = asignacion.id_usuario.takeIf { it > 0 }
+                            ?: preferenciasSesion.getInt("ID_USUARIO", -1)
+
+                        pacienteViewModel.reiniciarSeleccionDespuesDelCierre(
+                            idUsuario = idUsuario,
+                            preferencias = preferenciasSesion
+                        )
+                    }
 
                     Toast.makeText(
                         requireContext(),

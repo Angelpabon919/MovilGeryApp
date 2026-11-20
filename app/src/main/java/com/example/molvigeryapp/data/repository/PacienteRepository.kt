@@ -24,10 +24,12 @@ import com.example.molvigeryapp.data.model.AplicacionMedicamento
 import com.example.molvigeryapp.data.model.CrearSeguimientoMedicamentoRequest
 import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import okhttp3.MultipartBody
+import java.util.Date
 
 class PacienteRepository {
 
@@ -275,18 +277,21 @@ class PacienteRepository {
 
     suspend fun obtenerAsignacionesPacienteCuidador():
             List<AsignacionPacienteCuidador> =
+        obtenerAsignacionesPacienteCuidadorResult().getOrDefault(emptyList())
+
+    suspend fun obtenerAsignacionesPacienteCuidadorResult():
+            Result<List<AsignacionPacienteCuidador>> =
         withContext(Dispatchers.IO) {
             try {
                 val respuesta = api.getAsignacionesPacienteCuidador()
 
                 if (respuesta.isSuccessful) {
-                    respuesta.body() ?: emptyList()
+                    Result.success(respuesta.body() ?: emptyList())
                 } else {
-                    Log.e(
-                        "ASIGNACION_ERROR",
+                    val mensaje =
                         "Error HTTP ${respuesta.code()} al consultar asignaciones"
-                    )
-                    emptyList()
+                    Log.e("ASIGNACION_ERROR", mensaje)
+                    Result.failure(Exception(mensaje))
                 }
             } catch (e: Exception) {
                 Log.e(
@@ -294,7 +299,7 @@ class PacienteRepository {
                     "Error al obtener asignaciones de pacientes",
                     e
                 )
-                emptyList()
+                Result.failure(e)
             }
         }
 
@@ -358,7 +363,8 @@ class PacienteRepository {
     suspend fun sincronizarSeleccionDelCuidador(
         idUsuario: Int,
         idsSeleccionados: Set<Int>,
-        fechaActual: String
+        fechaInicioIso: String,
+        fechaFinIso: String
     ): Boolean = withContext(Dispatchers.IO) {
 
         try {
@@ -380,9 +386,11 @@ class PacienteRepository {
                 it.idUsuario == idUsuario
             }
 
+            val ahora = Date()
+            val ahoraIso = AsignacionVigenciaHelper.formatearIsoColombia(ahora)
             var operacionesCorrectas = true
 
-            // 2. Desactivar las asignaciones de pacientes desmarcados.
+            // 2. Desactivar las asignaciones de pacientes desmarcados y actualizar fecha_fin.
             val asignacionesPorDesactivar = asignacionesUsuario.filter {
                 it.estado.equals("Activo", ignoreCase = true) &&
                         it.idPaciente !in idsSeleccionados
@@ -396,16 +404,28 @@ class PacienteRepository {
                     continue
                 }
 
+                val inicioExistente =
+                    AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaInicio)
+                val fechaFinCierreIso =
+                    if (inicioExistente != null && inicioExistente.after(ahora)) {
+                        AsignacionVigenciaHelper.formatearIsoColombia(inicioExistente)
+                    } else {
+                        ahoraIso
+                    }
+
                 try {
                     val respuesta = api.actualizarEstadoAsignacion(
                         idAsignacion,
-                        mapOf("estado" to "Inactivo")
+                        mapOf(
+                            "estado" to "Inactivo",
+                            "fecha_fin" to fechaFinCierreIso
+                        )
                     )
 
                     if (respuesta.isSuccessful) {
                         Log.d(
                             "SINCRONIZAR_PACIENTES",
-                            "Asignación $idAsignacion desactivada"
+                            "Asignación $idAsignacion desactivada con fecha_fin=$fechaFinCierreIso"
                         )
                     } else {
                         operacionesCorrectas = false
@@ -431,20 +451,70 @@ class PacienteRepository {
                     it.idPaciente == idPaciente
                 }
 
-                val yaEstaActivo = asignacionesDelPaciente.any {
-                    it.estado.equals("Activo", ignoreCase = true)
-                }
+                val asignacionActiva = asignacionesDelPaciente
+                    .filter {
+                        it.estado.equals("Activo", ignoreCase = true)
+                    }
+                    .maxByOrNull { it.idAsignacion ?: 0 }
 
-                if (yaEstaActivo) {
-                    // Ya existe una asignación activa. No crear duplicados.
-                    Log.d(
-                        "SINCRONIZAR_PACIENTES",
-                        "Paciente $idPaciente ya tiene una asignación activa"
-                    )
+                if (asignacionActiva != null) {
+                    if (
+                        AsignacionVigenciaHelper.coincideConRangoObjetivo(
+                            asignacion = asignacionActiva,
+                            fechaInicioIso = fechaInicioIso,
+                            fechaFinIso = fechaFinIso,
+                            ahora = ahora
+                        )
+                    ) {
+                        // Ya existe una asignación activa y vigente para este bloque de turno.
+                        Log.d(
+                            "SINCRONIZAR_PACIENTES",
+                            "Paciente $idPaciente ya tiene una asignación vigente para el turno actual"
+                        )
+                        continue
+                    }
+
+                    // Renovar asignación activa con fechas vencidas o de otro turno.
+                    val idAsignacion = asignacionActiva.idAsignacion
+                    if (idAsignacion == null) {
+                        operacionesCorrectas = false
+                        continue
+                    }
+
+                    try {
+                        val respuesta = api.actualizarEstadoAsignacion(
+                            idAsignacion,
+                            mapOf(
+                                "estado" to "Activo",
+                                "fecha_inicio" to fechaInicioIso,
+                                "fecha_fin" to fechaFinIso
+                            )
+                        )
+
+                        if (respuesta.isSuccessful) {
+                            Log.d(
+                                "SINCRONIZAR_PACIENTES",
+                                "Asignación activa $idAsignacion renovada para paciente $idPaciente"
+                            )
+                        } else {
+                            operacionesCorrectas = false
+                            Log.e(
+                                "SINCRONIZAR_PACIENTES",
+                                "Error al renovar $idAsignacion: HTTP ${respuesta.code()}"
+                            )
+                        }
+                    } catch (e: Exception) {
+                        operacionesCorrectas = false
+                        Log.e(
+                            "SINCRONIZAR_PACIENTES",
+                            "Error al renovar asignación del paciente $idPaciente",
+                            e
+                        )
+                    }
                     continue
                 }
 
-                // Buscar una asignación anterior para reactivarla.
+                // Buscar una asignación anterior para reactivarla con el rango del turno actual.
                 val asignacionAnterior = asignacionesDelPaciente
                     .filter {
                         it.estado.equals("Inactivo", ignoreCase = true)
@@ -463,7 +533,11 @@ class PacienteRepository {
                     try {
                         val respuesta = api.actualizarEstadoAsignacion(
                             idAsignacion,
-                            mapOf("estado" to "Activo")
+                            mapOf(
+                                "estado" to "Activo",
+                                "fecha_inicio" to fechaInicioIso,
+                                "fecha_fin" to fechaFinIso
+                            )
                         )
 
                         if (respuesta.isSuccessful) {
@@ -493,8 +567,8 @@ class PacienteRepository {
                         idAsignacion = null,
                         idUsuario = idUsuario,
                         idPaciente = idPaciente,
-                        fechaInicio = fechaActual,
-                        fechaFin = fechaActual,
+                        fechaInicio = fechaInicioIso,
+                        fechaFin = fechaFinIso,
                         estado = "Activo",
                         observaciones = "Asignación desde app Cuidador"
                     )

@@ -3,8 +3,10 @@ package com.example.molvigeryapp.ui.cuidador.pacientes
 import android.content.Context
 import android.util.Log
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -40,7 +42,7 @@ class CrearSeguimientoMedicamentoWorker(
 
         return try {
 
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
             val fechaProgramada = sdf.format(Date(fechaMillis))
@@ -74,7 +76,13 @@ class CrearSeguimientoMedicamentoWorker(
                     error
                 )
 
-                if (runAttemptCount < 3) {
+                if (esErrorHttpPermanente(error)) {
+                    Log.w(
+                        TAG,
+                        "Error HTTP 4xx permanente; no se reintenta. Formulación=$idFormulacion"
+                    )
+                    Result.failure()
+                } else if (runAttemptCount < 3) {
                     Result.retry()
                 } else {
                     Result.failure()
@@ -89,12 +97,26 @@ class CrearSeguimientoMedicamentoWorker(
                 e
             )
 
-            if (runAttemptCount < 3) {
+            if (esErrorHttpPermanente(e)) {
+                Result.failure()
+            } else if (runAttemptCount < 3) {
                 Result.retry()
             } else {
                 Result.failure()
             }
         }
+    }
+
+    private fun esErrorHttpPermanente(error: Throwable?): Boolean {
+        val mensaje = error?.message.orEmpty()
+        val codigoHttp = Regex("HTTP\\s+(\\d{3})")
+            .find(mensaje)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?.toIntOrNull()
+            ?: return false
+
+        return codigoHttp in 400..499
     }
 
     companion object {
@@ -118,9 +140,14 @@ class CrearSeguimientoMedicamentoWorker(
                 KEY_FECHA_PROGRAMADA to fechaHoraProgramadaMillis
             )
 
+            val restricciones = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
             val trabajo =
                 OneTimeWorkRequestBuilder<CrearSeguimientoMedicamentoWorker>()
                     .setInputData(datos)
+                    .setConstraints(restricciones)
                     .setBackoffCriteria(
                         BackoffPolicy.EXPONENTIAL,
                         30,

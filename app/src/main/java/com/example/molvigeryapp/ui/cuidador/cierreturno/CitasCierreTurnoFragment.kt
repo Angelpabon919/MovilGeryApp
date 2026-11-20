@@ -19,6 +19,7 @@ import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.databinding.FragmentCitasCierreTurnoBinding
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -117,6 +118,18 @@ class CitasCierreTurnoFragment : Fragment() {
                 binding.tvFechaCitasCierre.text =
                     "Fecha: ${formatearFecha(fechaTurno)}"
 
+                val turnos = api.getTurnos()
+                val turno = turnos.firstOrNull {
+                    it.id_turno == asignacionTurno.id_turno
+                }
+
+                val rangoTurno = turno?.let {
+                    AsignacionVigenciaHelper.calcularRangoTurnoDia(
+                        asignacionTurno = asignacionTurno,
+                        turno = it
+                    )
+                } ?: AsignacionVigenciaHelper.calcularRangoDiaCompleto(fechaTurno)
+
                 // 2. Obtener las asignaciones paciente-cuidador
                 val respuestaAsignaciones =
                     api.getAsignacionesPacienteCuidador()
@@ -129,23 +142,27 @@ class CitasCierreTurnoFragment : Fragment() {
                 val todasLasAsignaciones =
                     respuestaAsignaciones.body().orEmpty()
 
-                // 3. Filtrar pacientes asignados activos al cuidador
-                // Se conserva temporalmente el filtro probado,
-                // sin fecha_fin, por la inconsistencia encontrada.
-                val pacientesAsignados = todasLasAsignaciones
-                    .filter { asignacion ->
-                        asignacion.idUsuario == idCuidador &&
-                                asignacion.estado.equals(
-                                    "Activo",
-                                    ignoreCase = true
-                                )
-                    }
-                    .map { it.idPaciente }
-                    .toSet()
+                // 3. Filtrar pacientes cuyas asignaciones se solapan con el rango del turno.
+                val pacientesAsignados = if (rangoTurno != null) {
+                    val (inicioTurno, finTurno) = rangoTurno
+                    todasLasAsignaciones
+                        .filter { asignacion ->
+                            asignacion.idUsuario == idCuidador &&
+                                    AsignacionVigenciaHelper.perteneceATurno(
+                                        asignacion = asignacion,
+                                        inicio = inicioTurno,
+                                        fin = finTurno
+                                    )
+                        }
+                        .map { it.idPaciente }
+                        .toSet()
+                } else {
+                    emptySet()
+                }
 
                 Log.d(
                     TAG,
-                    "Pacientes activos del cuidador: $pacientesAsignados"
+                    "Pacientes del turno del cuidador: $pacientesAsignados"
                 )
 
                 // 4. Consultar los pacientes para obtener sus nombres
