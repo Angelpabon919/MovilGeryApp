@@ -430,6 +430,40 @@
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
+            <!-- BOTÓN CONFIRMAR LLEGADA -->
+            <FrameLayout
+                android:id="@+id/containerBotonLlegada"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnYaLlegue"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:alpha="0.45"
+                    android:enabled="false"
+                    android:text="Ya llegué"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#3B5BDB"
+                    app:cornerRadius="16dp"
+                    app:elevation="4dp"/>
+
+                <ProgressBar
+                    android:id="@+id/progressRegistroLlegada"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:elevation="12dp"
+                    android:indeterminateTint="#FFFFFF"
+                    android:translationZ="12dp"
+                    android:visibility="gone"/>
+            </FrameLayout>
+
             <!-- TURNOS PENDIENTES -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardTurnosPendientes"
@@ -535,7 +569,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="La llegada se registra automáticamente al entrar en el radio permitido."
+                    android:text="Al entrar en el radio permitido, presiona Ya llegué para confirmar tu llegada."
                     android:textColor="#172B65"
                     android:textSize="13sp"/>
             </LinearLayout>
