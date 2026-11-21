@@ -19,5 +19,8 @@ data class AsignacionTurnoUsuario(
     val estado: String = "Asignado",
 
     @SerializedName("id_grupo_asignacion")
-    val id_grupo_asignacion: String? = null
+    val id_grupo_asignacion: String? = null,
+
+    @SerializedName("fecha_hora_llegada")
+    val fecha_hora_llegada: String? = null
 )
