@@ -1,116 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F8F9FA">
+    android:layout_height="match_parent">
 
-    <!-- HEADER AZUL SUPERIOR CON ESQUINAS REDONDEADAS -->
+    <!-- ESTRUCTURA ORIGINAL DEL DETALLE DEL PACIENTE -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="@drawable/bg_rounded"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="24dp"
-        android:elevation="4dp">
+        android:background="#F8F9FA">
 
-        <!-- Encabezado superior: Volver e Historia Clínica -->
-        <RelativeLayout
+        <!-- HEADER AZUL SUPERIOR CON ESQUINAS REDONDEADAS -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp">
+            android:layout_height="200dp"
+            android:background="@drawable/bg_rounded"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp"
+            android:elevation="4dp">
 
-            <ImageView
-                android:id="@+id/btnVolver"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_centerVertical="true"
-                android:src="@drawable/arrow_back"
-                app:tint="#FFFFFF" />
-
-            <Button
-                android:id="@+id/btnHistoriaClinica"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <!-- Encabezado superior: Volver -->
+            <RelativeLayout
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="0dp"
-                android:text="Historia clínica"
-                android:textAllCaps="false"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="20dp">
+
+                <ImageView
+                    android:id="@+id/btnVolver"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/arrow_back"
+                    app:tint="#FFFFFF" />
+
+            </RelativeLayout>
+
+            <!-- Información del Paciente -->
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/shape_rounded_avatar"
+                android:clipToOutline="true">
+
+                <ImageView
+                    android:id="@+id/imgAvatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/person_icon"
+                    android:contentDescription="Foto del paciente"
+                    android:scaleType="centerCrop" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvNombrePacientePerfil"
+                android:layout_width="195dp"
+                android:layout_height="41dp"
+                android:layout_marginStart="80dp"
+                android:layout_marginTop="-54dp"
+                android:text="Nombre del Paciente"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:layout_marginTop="18dp"
-                app:cornerRadius="18dp"
-                app:strokeColor="#FFFFFF" />
-        </RelativeLayout>
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-        <!-- Información del Paciente -->
-        <FrameLayout
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/shape_rounded_avatar"
-            android:clipToOutline="true"
-            >
+        </LinearLayout>
 
-            <ImageView
-                android:id="@+id/imgAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/person_icon"
-                android:contentDescription="Foto del paciente"
-                android:scaleType="centerCrop"
-                />
-
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/tvNombrePacientePerfil"
-            android:layout_width="195dp"
-            android:layout_height="41dp"
-            android:layout_marginStart="80dp"
-            android:layout_marginTop="-54dp"
-            android:text="Nombre del Paciente"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
-    <!-- Contenido inferior con pestañas y ViewPager -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="12dp">
-
-        <!-- Tabs para la navegación entre secciones -->
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabLayoutPaciente"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            app:tabIndicatorColor="#2563EB"
-            app:tabIndicatorHeight="3dp"
-            app:tabSelectedTextColor="#2563EB"
-            app:tabTextColor="#64748B"
-            app:tabMode="fixed" />
-
-        <!-- ViewPager2 para alojar las pestañas -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/viewPagerPaciente"
+        <!-- Contenido inferior con pestañas y ViewPager -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="8dp" />
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp">
+
+            <!-- Tabs para la navegación entre secciones -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayoutPaciente"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:tabIndicatorColor="#2563EB"
+                app:tabIndicatorHeight="3dp"
+                app:tabSelectedTextColor="#2563EB"
+                app:tabTextColor="#64748B"
+                app:tabMode="fixed" />
+
+            <!-- ViewPager2 para alojar las pestañas -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewPagerPaciente"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+    <!-- BOTÓN FLOTANTE HISTORIA CLÍNICA -->
+    <include
+        android:id="@+id/fabHistoriaClinicaInclude"
+        layout="@layout/fab_historia_clinica"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</FrameLayout>

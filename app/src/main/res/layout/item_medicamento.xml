@@ -135,8 +135,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:text="Guardar Registro"
+            app:backgroundTint="@color/color_primary"
             android:textAllCaps="false"
             android:textSize="14sp"
+            android:textColor="@color/white"
             app:cornerRadius="10dp" />
 
     </LinearLayout>

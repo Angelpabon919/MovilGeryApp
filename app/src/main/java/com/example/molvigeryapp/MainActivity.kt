@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         private const val TAG_PANTALLA = "GERIAPP_PANTALLA"
 
         private const val REQUEST_NOTIFICATION_PERMISSION = 1001
+        private const val REQUEST_LOCATION_PERMISSION = 1002
 
         private const val EXTRA_ABRIR_NOTIFICACION =
             "ABRIR_DESDE_NOTIFICACION"
@@ -680,6 +681,138 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                 REQUEST_NOTIFICATION_PERMISSION
             )
+        } else {
+            solicitarPermisosUbicacion()
+        }
+    }
+
+    // =========================================================
+// PERMISOS DE UBICACIÓN
+// =========================================================
+
+    private fun solicitarPermisosUbicacion() {
+
+        val tieneUbicacionPrecisa =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val tieneUbicacionAproximada =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // Si ya tiene ubicación precisa, no solicitamos nuevamente.
+        if (tieneUbicacionPrecisa) {
+            Log.d(TAG, "Permiso de ubicación precisa concedido")
+            return
+        }
+
+        // Si solo tiene ubicación aproximada, tampoco repetimos
+        // la solicitud automáticamente.
+        if (tieneUbicacionAproximada) {
+            Log.d(TAG, "Permiso de ubicación aproximada concedido")
+            return
+        }
+
+        // Solicitar ambos permisos simultáneamente.
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),
+            REQUEST_LOCATION_PERMISSION
+        )
+    }
+
+    private var dialogoUbicacionMostrado = false
+
+    private fun comprobarEstadoGPS() {
+        if (isFinishing || isDestroyed || dialogoUbicacionMostrado) return
+
+        val locationManager =
+            getSystemService(LOCATION_SERVICE) as android.location.LocationManager
+
+        val ubicacionActivada =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                locationManager.isLocationEnabled
+            } else {
+                locationManager.isProviderEnabled(
+                    android.location.LocationManager.GPS_PROVIDER
+                ) || locationManager.isProviderEnabled(
+                    android.location.LocationManager.NETWORK_PROVIDER
+                )
+            }
+
+        if (ubicacionActivada) {
+            Log.d(TAG, "Ubicación activada correctamente")
+            return
+        }
+
+        dialogoUbicacionMostrado = true
+
+        AlertDialog.Builder(this)
+            .setTitle("Activa tu ubicación")
+            .setMessage(
+                "GerIApp necesita que actives la ubicación de tu dispositivo " +
+                        "para verificar tu llegada y utilizar la geolocalización."
+            )
+            .setCancelable(false)
+            .setNegativeButton("Ahora no", null)
+            .setPositiveButton("Activar ubicación") { _, _ ->
+                startActivity(
+                    Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                )
+            }
+            .show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults
+        )
+
+        when (requestCode) {
+
+            REQUEST_NOTIFICATION_PERMISSION -> {
+                // Después de responder notificaciones,
+                // solicitar ubicación inmediatamente.
+                solicitarPermisosUbicacion()
+            }
+
+            REQUEST_LOCATION_PERMISSION -> {
+
+                val tienePrecisa =
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                val tieneAproximada =
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                if (tienePrecisa || tieneAproximada) {
+                    comprobarEstadoGPS()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "GerIApp necesita permisos de ubicación para verificar tu llegada.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
     }
 
