@@ -72,6 +72,7 @@ class VerificacionLlegadaFragment : Fragment() {
     private var asignacionActiva: AsignacionTurnoUsuario? = null
     private var ubicacionDentroRadio = false
     private var registroEnProgreso = false
+    private var registroAutomaticoSolicitado = false
 
     // =========================================================
     // UBICACIÓN DE PRUEBA
@@ -111,7 +112,6 @@ class VerificacionLlegadaFragment : Fragment() {
                 val safeBinding = _binding ?: return@registerForActivityResult
 
                 ubicacionDentroRadio = false
-                actualizarEstadoBotonLlegada()
 
                 safeBinding.tvEsperandoUbicacion.visibility = View.VISIBLE
                 safeBinding.tvEsperandoUbicacion.text =
@@ -190,10 +190,6 @@ class VerificacionLlegadaFragment : Fragment() {
 
         binding.btnMiUbicacion.setOnClickListener {
             centrarEnMiUbicacion()
-        }
-
-        binding.btnYaLlegue.setOnClickListener {
-            confirmarLlegada()
         }
 
         configurarMapa()
@@ -438,6 +434,7 @@ class VerificacionLlegadaFragment : Fragment() {
         asignacionActiva = null
         ubicacionDentroRadio = false
         registroEnProgreso = false
+        registroAutomaticoSolicitado = false
 
         binding.tvEstadoLlegada.text =
             "Verificando turno..."
@@ -450,32 +447,6 @@ class VerificacionLlegadaFragment : Fragment() {
 
         binding.tvDistancia.text =
             "Calculando..."
-
-        actualizarEstadoBotonLlegada()
-    }
-
-    private fun actualizarEstadoBotonLlegada() {
-        val safeBinding = _binding ?: return
-
-        val puedeRegistrar =
-            asignacionCargada &&
-                idAsignacionActiva != null &&
-                ubicacionDentroRadio &&
-                !registroEnProgreso &&
-                !navegacionRealizada
-
-        safeBinding.btnYaLlegue.isEnabled = puedeRegistrar
-        safeBinding.btnYaLlegue.isClickable = puedeRegistrar
-
-        if (registroEnProgreso) {
-            safeBinding.btnYaLlegue.text = ""
-            safeBinding.btnYaLlegue.alpha = 0.85f
-            safeBinding.progressRegistroLlegada.visibility = View.VISIBLE
-        } else {
-            safeBinding.btnYaLlegue.text = "Ya llegué"
-            safeBinding.btnYaLlegue.alpha = if (puedeRegistrar) 1f else 0.45f
-            safeBinding.progressRegistroLlegada.visibility = View.GONE
-        }
     }
 
     private fun mostrarSinTurnoActivo(mensajeUbicacion: String) {
@@ -487,8 +458,6 @@ class VerificacionLlegadaFragment : Fragment() {
         safeBinding.tvEsperandoUbicacion.visibility = View.VISIBLE
         safeBinding.tvEsperandoUbicacion.text = mensajeUbicacion
         safeBinding.tvDistancia.text = "--"
-
-        actualizarEstadoBotonLlegada()
     }
 
     // =========================================================
@@ -544,7 +513,7 @@ class VerificacionLlegadaFragment : Fragment() {
         idAsignacionActiva = null
         asignacionActiva = null
         ubicacionDentroRadio = false
-        actualizarEstadoBotonLlegada()
+        registroAutomaticoSolicitado = false
 
         propietarioVista.lifecycleScope.launch {
 
@@ -623,7 +592,6 @@ class VerificacionLlegadaFragment : Fragment() {
 
                 if (idAsignacionActiva != null) {
                     _binding?.tvEstadoLlegada?.text = "Esperando llegada..."
-                    actualizarEstadoBotonLlegada()
                     verificarPermisoUbicacion()
                 } else {
                     detenerActualizacionesUbicacion()
@@ -1305,7 +1273,6 @@ class VerificacionLlegadaFragment : Fragment() {
 
             detenerActualizacionesUbicacion()
             ubicacionDentroRadio = false
-            actualizarEstadoBotonLlegada()
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.VISIBLE
@@ -1324,7 +1291,6 @@ class VerificacionLlegadaFragment : Fragment() {
 
             detenerActualizacionesUbicacion()
             ubicacionDentroRadio = false
-            actualizarEstadoBotonLlegada()
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.VISIBLE
@@ -1370,7 +1336,6 @@ class VerificacionLlegadaFragment : Fragment() {
         if (!gpsEstaActivado()) {
 
             ubicacionDentroRadio = false
-            actualizarEstadoBotonLlegada()
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.VISIBLE
@@ -1401,7 +1366,6 @@ class VerificacionLlegadaFragment : Fragment() {
 
                         detenerActualizacionesUbicacion()
                         ubicacionDentroRadio = false
-                        actualizarEstadoBotonLlegada()
 
                         return
                     }
@@ -1582,7 +1546,9 @@ class VerificacionLlegadaFragment : Fragment() {
                     "Ubicación verificada"
             }
 
-            actualizarEstadoBotonLlegada()
+            if (!registroEnProgreso && !navegacionRealizada && !registroAutomaticoSolicitado) {
+                confirmarLlegada()
+            }
 
         } else {
 
@@ -1599,8 +1565,6 @@ class VerificacionLlegadaFragment : Fragment() {
                 safeBinding.tvEstadoLlegada.text =
                     "Fuera del área permitida"
             }
-
-            actualizarEstadoBotonLlegada()
         }
 
         safeBinding.mapa.invalidate()
@@ -1612,7 +1576,7 @@ class VerificacionLlegadaFragment : Fragment() {
 
     private fun confirmarLlegada() {
 
-        if (navegacionRealizada || registroEnProgreso) return
+        if (navegacionRealizada || registroEnProgreso || registroAutomaticoSolicitado) return
 
         val idAsignacion = idAsignacionActiva
         if (!asignacionCargada || idAsignacion == null) {
@@ -1621,7 +1585,6 @@ class VerificacionLlegadaFragment : Fragment() {
                 "No tienes un turno activo para registrar la llegada.",
                 Toast.LENGTH_SHORT
             ).show()
-            actualizarEstadoBotonLlegada()
             return
         }
 
@@ -1631,15 +1594,14 @@ class VerificacionLlegadaFragment : Fragment() {
                 "Debes estar dentro del radio permitido para confirmar tu llegada.",
                 Toast.LENGTH_SHORT
             ).show()
-            actualizarEstadoBotonLlegada()
             return
         }
 
         val propietarioVista = viewLifecycleOwner
 
+        registroAutomaticoSolicitado = true
         registroEnProgreso = true
         _binding?.tvEstadoLlegada?.text = "Registrando llegada..."
-        actualizarEstadoBotonLlegada()
 
         propietarioVista.lifecycleScope.launch {
             val resultado = try {
@@ -1689,7 +1651,6 @@ class VerificacionLlegadaFragment : Fragment() {
                     detenerActualizacionesUbicacion()
 
                     safeBinding.tvEstadoLlegada.text = "Llegada verificada"
-                    actualizarEstadoBotonLlegada()
 
                     Toast.makeText(
                         requireContext(),
@@ -1714,7 +1675,6 @@ class VerificacionLlegadaFragment : Fragment() {
                 is LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorPermisos -> {
                     registroEnProgreso = false
                     safeBinding.tvEstadoLlegada.text = "Sin autorización"
-                    actualizarEstadoBotonLlegada()
 
                     Toast.makeText(
                         requireContext(),
@@ -1729,7 +1689,6 @@ class VerificacionLlegadaFragment : Fragment() {
                     asignacionActiva = null
                     detenerActualizacionesUbicacion()
                     safeBinding.tvEstadoLlegada.text = "Turno finalizado"
-                    actualizarEstadoBotonLlegada()
 
                     Toast.makeText(
                         requireContext(),
@@ -1742,7 +1701,6 @@ class VerificacionLlegadaFragment : Fragment() {
                     registroEnProgreso = false
                     safeBinding.tvEstadoLlegada.text =
                         if (ubicacionDentroRadio) "Ubicación verificada" else "Fuera del área permitida"
-                    actualizarEstadoBotonLlegada()
 
                     Toast.makeText(
                         requireContext(),
@@ -1755,7 +1713,6 @@ class VerificacionLlegadaFragment : Fragment() {
                     registroEnProgreso = false
                     safeBinding.tvEstadoLlegada.text =
                         if (ubicacionDentroRadio) "Ubicación verificada" else "Fuera del área permitida"
-                    actualizarEstadoBotonLlegada()
 
                     Toast.makeText(
                         requireContext(),
@@ -1785,6 +1742,7 @@ class VerificacionLlegadaFragment : Fragment() {
         marcadorDestino = null
         circuloGeocerca = null
         registroEnProgreso = false
+        registroAutomaticoSolicitado = false
         ubicacionDentroRadio = false
 
         _binding = null

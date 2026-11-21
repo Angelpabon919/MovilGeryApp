@@ -96,7 +96,7 @@ class PacientesListFragment : Fragment() {
     }
 
     private fun observarDatos() {
-        viewModel.pacientes.observe(viewLifecycleOwner) { pacientes ->
+        viewModel.pacientesDisponiblesSeleccion.observe(viewLifecycleOwner) { pacientes ->
             listaCompletaPacientes = pacientes
 
             // Conserva las selecciones existentes en los objetos Paciente.
