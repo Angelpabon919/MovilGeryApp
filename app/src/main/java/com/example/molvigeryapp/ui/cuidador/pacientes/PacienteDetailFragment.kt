@@ -110,7 +110,7 @@ class DetallePacienteFragment : Fragment() {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
-        binding.btnHistoriaClinica.setOnClickListener {
+        binding.fabHistoriaClinicaInclude.fabHistoriaClinica.setOnClickListener {
 
             parentFragmentManager.beginTransaction()
                 .replace(

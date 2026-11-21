@@ -50,7 +50,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Mi perfil de cuidadora"
+                    android:text="Mi perfil de cuidador"
                     android:textColor="#DDE5FF"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -91,7 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="5dp"
-            android:text="Ángela"
+            android:text=""
             android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -180,7 +180,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Ángela Lizbeth Pabón Hoyos"
+                    android:text=""
                     android:textColor="#1D2939"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -204,7 +204,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="CC 1.000.000.000"
+                    android:text="CC"
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
 
@@ -227,7 +227,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="angela.pabon@geriapp.com"
+                    android:text=""
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
 
@@ -250,7 +250,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="300 000 0000"
+                    android:text=""
                     android:textColor="#1D2939"
                     android:textSize="15sp" />
 

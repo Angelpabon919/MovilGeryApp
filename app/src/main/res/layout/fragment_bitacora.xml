@@ -667,32 +667,29 @@
 
             <!-- BOTONES -->
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnGuardar"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/bg_button_primary"
-                android:text="Guardar bitácora"
+                android:layout_height="54dp"
+                android:backgroundTint="#2563EB"
+                android:text="Guardar Bitácora"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
                 android:textSize="16sp"
+                android:textColor="@color/white"
                 android:textStyle="bold"
-                app:backgroundTint="@null" />
+                app:cornerRadius="12dp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEventoAdverso"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/bg_button_primary"
-                android:text="Registrar evento adverso"
+                android:layout_height="54dp"
+                android:backgroundTint="#2563EB"
+                android:text="Registrar Evento Adverso"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
                 android:textSize="16sp"
+                android:textColor="@color/white"
                 android:textStyle="bold"
-                app:backgroundTint="@null" />
+                app:cornerRadius="12dp" />
 
         </LinearLayout>
     </ScrollView>

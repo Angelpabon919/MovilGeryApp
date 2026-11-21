@@ -77,8 +77,8 @@ class VerificacionLlegadaFragment : Fragment() {
     // UBICACIÓN DE PRUEBA
     // =========================================================
 
-    private val latitudDestino = 2.482059
-    private val longitudDestino = -76.562166
+    private val latitudDestino = 2.426545
+    private val longitudDestino = -76.603616
 
     private val radioPermitido = 100.0
 
