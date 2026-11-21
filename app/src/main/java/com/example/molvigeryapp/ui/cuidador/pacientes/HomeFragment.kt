@@ -24,6 +24,7 @@ import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.cierreturno.CierreTurnoFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
+import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -248,7 +250,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     val asignaciones = api.getAsignacionesTurno()
                     val turnos = api.getTurnos()
 
-                    val ahora = LocalDateTime.now()
+                    val ahora = LocalDateTime.now(ZoneId.of("America/Bogota"))
 
                     Log.d(
                         "CIERRE_TURNO",
@@ -259,8 +261,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
 
                         if (
                             asignacion.id_usuario != idUsuario ||
-                            asignacion.estado.equals("Finalizado", true) ||
-                            asignacion.estado.equals("Inactivo", true)
+                            AsignacionVigenciaHelper.esEstadoTurnoNoPendiente(asignacion.estado)
                         ) {
                             false
                         } else {
@@ -301,7 +302,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                                 val fechaValida =
                                     fecha == ahora.toLocalDate() ||
                                             (
-                                                    horaFin.isBefore(horaInicio) &&
+                                                    !horaFin.isAfter(horaInicio) &&
                                                             fecha.plusDays(1) == ahora.toLocalDate()
                                                     )
 
@@ -1038,7 +1039,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
             val asignaciones = api.getAsignacionesTurno()
             val turnos = api.getTurnos()
 
-            val ahora = LocalDateTime.now()
+            val ahora = LocalDateTime.now(ZoneId.of("America/Bogota"))
             val hoy = ahora.toLocalDate()
 
             val debeMostrar = asignaciones.any { asignacion ->
@@ -1048,11 +1049,8 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                     return@any false
                 }
 
-                // Ignorar asignaciones finalizadas o inactivas
-                if (
-                    asignacion.estado.equals("Finalizado", true) ||
-                    asignacion.estado.equals("Inactivo", true)
-                ) {
+                // Ignorar asignaciones finalizadas, completadas, canceladas, anuladas o inactivas
+                if (AsignacionVigenciaHelper.esEstadoTurnoNoPendiente(asignacion.estado)) {
                     return@any false
                 }
 
@@ -1089,7 +1087,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
                 val fechaValida =
                     fechaAsignacion == hoy ||
                             (
-                                    horaFin.isBefore(horaInicio) &&
+                                    !horaFin.isAfter(horaInicio) &&
                                             fechaAsignacion.plusDays(1) == hoy
                                     )
 
@@ -1170,7 +1168,7 @@ class HomeFragment : Fragment(R.layout.fragment_home_cuidador) {
         horaFin: LocalTime
     ): LocalDateTime {
 
-        val fechaFin = if (horaFin.isBefore(horaInicio)) {
+        val fechaFin = if (!horaFin.isAfter(horaInicio)) {
             fechaAsignacion.plusDays(1)
         } else {
             fechaAsignacion

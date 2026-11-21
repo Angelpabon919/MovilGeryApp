@@ -494,8 +494,8 @@ class CierreTurnoFragment : Fragment() {
 
                 cargarResumenCitas()
 
-                // Evitar intentar cerrar un turno ya finalizado.
-                if (asignacion.estado.equals("Finalizado", true)) {
+                // Evitar intentar cerrar un turno ya finalizado, completado, cancelado, anulado o inactivo.
+                if (AsignacionVigenciaHelper.esEstadoTurnoNoPendiente(asignacion.estado)) {
                     binding.btnContinuarCierre.isEnabled = false
                 }
 
@@ -662,10 +662,15 @@ class CierreTurnoFragment : Fragment() {
             return
         }
 
-        if (asignacion.estado.equals("Finalizado", true)) {
+        if (AsignacionVigenciaHelper.esEstadoTurnoNoPendiente(asignacion.estado)) {
+            val mensaje = if (AsignacionVigenciaHelper.esEstadoTurnoFinalizado(asignacion.estado)) {
+                "Este turno ya está finalizado."
+            } else {
+                "Este turno no está disponible para cierre."
+            }
             Toast.makeText(
                 requireContext(),
-                "Este turno ya está finalizado.",
+                mensaje,
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -693,14 +698,22 @@ class CierreTurnoFragment : Fragment() {
     ) {
         if (enviandoCierre) return
 
-        if (asignacion.estado.equals("Finalizado", true)) {
+        if (AsignacionVigenciaHelper.esEstadoTurnoNoPendiente(asignacion.estado)) {
+            val mensaje = if (AsignacionVigenciaHelper.esEstadoTurnoFinalizado(asignacion.estado)) {
+                "Este turno ya está finalizado."
+            } else {
+                "Este turno no está disponible para cierre."
+            }
             Toast.makeText(
                 requireContext(),
-                "Este turno ya está finalizado.",
+                mensaje,
                 Toast.LENGTH_LONG
             ).show()
             return
         }
+
+        val appContext = requireContext().applicationContext
+        val preferencias = preferenciasSesion
 
         enviandoCierre = true
         binding.btnContinuarCierre.isEnabled = false
@@ -721,21 +734,20 @@ class CierreTurnoFragment : Fragment() {
                 val respuesta =
                     RetrofitClient.apiService.crearCierreTurno(solicitud)
 
-                if (respuesta.estado.equals("Finalizado", true)) {
+                if (AsignacionVigenciaHelper.esEstadoTurnoFinalizado(respuesta.estado)) {
 
-                    ProgramadorAlarmasMedicamentos.cancelarTodas(
-                        requireContext().applicationContext
-                    )
+                    turnoRepository.invalidarCacheAsignaciones()
 
                     val esUltimoDia = try {
                         AsignacionVigenciaHelper.esUltimoDiaBloqueTurno(
                             asignacionCerrada = asignacion,
-                            turnoRepository = turnoRepository
+                            turnoRepository = turnoRepository,
+                            forceRefresh = true
                         )
                     } catch (e: Exception) {
                         Log.e(
                             "CIERRE_TURNO",
-                            "Error verificando si es último día del bloque",
+                            "Error verificando si es último día del bloque; usando respaldo cargado",
                             e
                         )
                         AsignacionVigenciaHelper.esUltimoDiaBloqueTurno(
@@ -744,15 +756,38 @@ class CierreTurnoFragment : Fragment() {
                         )
                     }
 
+                    Log.d(
+                        "CIERRE_TURNO",
+                        "Cierre confirmado | asignacion=$idAsignacion | " +
+                            "usuario=${asignacion.id_usuario} | " +
+                            "grupo=${asignacion.id_grupo_asignacion.orEmpty()} | " +
+                            "fecha=${asignacion.fecha.orEmpty()} | " +
+                            "esUltimoDia=$esUltimoDia"
+                    )
+
                     if (esUltimoDia) {
+                        ProgramadorAlarmasMedicamentos.cancelarTodas(appContext)
+
                         val idUsuario = asignacion.id_usuario.takeIf { it > 0 }
-                            ?: preferenciasSesion.getInt("ID_USUARIO", -1)
+                            ?: preferencias.getInt("ID_USUARIO", -1)
 
                         pacienteViewModel.reiniciarSeleccionDespuesDelCierre(
                             idUsuario = idUsuario,
-                            preferencias = preferenciasSesion
+                            preferencias = preferencias
+                        )
+
+                        Log.d(
+                            "CIERRE_TURNO",
+                            "Último día del bloque finalizado: selección reiniciada y alarmas canceladas para usuario=$idUsuario"
+                        )
+                    } else {
+                        Log.d(
+                            "CIERRE_TURNO",
+                            "Día intermedio o bloque no verificable: se conservan los pacientes seleccionados y las alarmas de medicamentos."
                         )
                     }
+
+                    if (!isAdded || _binding == null) return@launch
 
                     Toast.makeText(
                         requireContext(),
@@ -781,13 +816,15 @@ class CierreTurnoFragment : Fragment() {
                         .commit()
 
                 } else {
-                    binding.btnContinuarCierre.isEnabled = true
+                    if (isAdded && _binding != null) {
+                        binding.btnContinuarCierre.isEnabled = true
 
-                    Toast.makeText(
-                        requireContext(),
-                        "El servidor no confirmó el cierre.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "El servidor no confirmó el cierre.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
 
             } catch (e: HttpException) {

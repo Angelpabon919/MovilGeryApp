@@ -1,5 +1,6 @@
 package com.example.molvigeryapp.utils
 
+import android.util.Log
 import com.example.molvigeryapp.data.model.AsignacionPacienteCuidador
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Turno
@@ -14,9 +15,38 @@ import kotlin.math.abs
 
 object AsignacionVigenciaHelper {
 
+    private const val TAG = "ASIGNACION_VIGENCIA"
     private const val ZONA_COLOMBIA_ID = "America/Bogota"
     private const val MARGEN_LLEGADA_ANTICIPADA_MS = 60L * 60L * 1000L
     private const val TOLERANCIA_COMPARACION_MS = 60L * 1000L
+
+    // Estados que invalidan una fila para formar parte del rango [fechaMin, fechaMax] de un bloque.
+    // Alineado con core/asignaciones_vigencia.py (ESTADOS_TURNO_EXCLUIDOS_BLOQUE).
+    private val ESTADOS_TURNO_EXCLUIDOS_BLOQUE = setOf(
+        "inactivo",
+        "inactiva",
+        "cancelado",
+        "cancelada",
+        "anulado",
+        "anulada"
+    )
+
+    // Estados de turno concluidos: conservan el rango del bloque en días posteriores,
+    // pero ya no representan días pendientes de ejecución o cierre.
+    private val ESTADOS_TURNO_FINALIZADOS = setOf(
+        "finalizado",
+        "finalizada",
+        "completado",
+        "completada"
+    )
+
+    // Estados que indican que un día de turno ya no está pendiente.
+    // Alineado con core/asignaciones_vigencia.py (ESTADOS_TURNO_NO_PENDIENTES).
+    private val ESTADOS_TURNO_NO_PENDIENTES =
+        ESTADOS_TURNO_EXCLUIDOS_BLOQUE + ESTADOS_TURNO_FINALIZADOS
+
+    private val REGEX_FECHA_ISO =
+        Regex("^\\d{4}-\\d{2}-\\d{2}$")
 
     private val REGEX_ESPACIO_FECHA_HORA =
         Regex("^(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2}.*)$")
@@ -43,8 +73,52 @@ object AsignacionVigenciaHelper {
         val inicioDate: Date,
         val finDate: Date,
         val asignacionTurno: AsignacionTurnoUsuario,
-        val turno: Turno
+        val turno: Turno,
+        val inicioBaseDate: Date = inicioDate
     )
+
+    fun normalizarEstado(estado: String?): String =
+        estado?.trim()?.lowercase(Locale.ROOT).orEmpty()
+
+    fun esEstadoTurnoExcluidoDeBloque(estado: String?): Boolean =
+        normalizarEstado(estado) in ESTADOS_TURNO_EXCLUIDOS_BLOQUE
+
+    fun esEstadoTurnoFinalizado(estado: String?): Boolean =
+        normalizarEstado(estado) in ESTADOS_TURNO_FINALIZADOS
+
+    fun esEstadoTurnoNoPendiente(estado: String?): Boolean =
+        normalizarEstado(estado) in ESTADOS_TURNO_NO_PENDIENTES
+
+    fun esEstadoAsignacionPacienteActivo(estado: String?): Boolean =
+        normalizarEstado(estado) == "activo"
+
+    fun esEstadoAsignacionPacienteInactivo(estado: String?): Boolean =
+        normalizarEstado(estado) == "inactivo"
+
+    private fun logDebug(mensaje: String) {
+        try {
+            Log.d(TAG, mensaje)
+        } catch (_: Throwable) {
+            // Entorno de pruebas unitarias JVM sin android.util.Log
+        }
+    }
+
+    private fun logError(mensaje: String, throwable: Throwable? = null) {
+        try {
+            if (throwable != null) {
+                Log.e(TAG, mensaje, throwable)
+            } else {
+                Log.e(TAG, mensaje)
+            }
+        } catch (_: Throwable) {
+            // Entorno de pruebas unitarias JVM sin android.util.Log
+        }
+    }
+
+    private fun esFechaIsoValida(fecha: String): Boolean {
+        if (!REGEX_FECHA_ISO.matches(fecha)) return false
+        return intentarParsear(fecha, "yyyy-MM-dd", zonaColombia()) != null
+    }
 
     private fun zonaColombia(): TimeZone =
         TimeZone.getTimeZone(ZONA_COLOMBIA_ID)
@@ -138,12 +212,13 @@ object AsignacionVigenciaHelper {
         asignacion: AsignacionPacienteCuidador,
         ahora: Date = Date()
     ): Boolean {
-        if (!asignacion.estado.equals("Activo", ignoreCase = true)) {
+        if (!esEstadoAsignacionPacienteActivo(asignacion.estado)) {
             return false
         }
 
         val inicio = parsearFechaIso(asignacion.fechaInicio) ?: return false
         val fin = parsearFechaIso(asignacion.fechaFin) ?: return false
+        if (inicio.after(fin)) return false
 
         val ahoraMs = ahora.time
         return inicio.time <= ahoraMs && ahoraMs <= fin.time
@@ -154,10 +229,21 @@ object AsignacionVigenciaHelper {
         inicio: Date,
         fin: Date
     ): Boolean {
+        if (inicio.after(fin)) return false
+
         val inicioAsignacion = parsearFechaIso(asignacion.fechaInicio) ?: return false
         val finAsignacion = parsearFechaIso(asignacion.fechaFin) ?: return false
+        if (inicioAsignacion.after(finAsignacion)) return false
 
-        return inicioAsignacion.time <= fin.time && finAsignacion.time >= inicio.time
+        if (inicio.time == fin.time) {
+            return inicioAsignacion.time <= fin.time && finAsignacion.time >= inicio.time
+        }
+
+        if (inicioAsignacion.time == finAsignacion.time) {
+            return inicioAsignacion.time in inicio.time..fin.time
+        }
+
+        return inicioAsignacion.time < fin.time && finAsignacion.time > inicio.time
     }
 
     fun coincideConRangoObjetivo(
@@ -181,18 +267,135 @@ object AsignacionVigenciaHelper {
         return mismoFin && inicioEnBloque
     }
 
+    private fun perteneceARangoBloque(
+        inicioActual: Date,
+        finActual: Date,
+        inicioBloque: Date,
+        finBloque: Date,
+        inicioBaseBloque: Date = inicioBloque
+    ): Boolean {
+        if (inicioActual.after(finActual) || inicioBloque.after(finBloque)) {
+            return false
+        }
+
+        val inicioReferencia = minOf(inicioBloque.time, inicioBaseBloque.time)
+
+        // Compatibilidad con registros antiguos puntuales (fecha_inicio == fecha_fin).
+        if (inicioActual.time == finActual.time) {
+            return inicioActual.time >= (inicioReferencia - MARGEN_LLEGADA_ANTICIPADA_MS) &&
+                inicioActual.time <= finBloque.time
+        }
+
+        // 1. Coincide con el fin del bloque (incluye selección anticipada en el día 1
+        //    o pacientes agregados en días intermedios del mismo bloque).
+        val mismoFin =
+            abs(finActual.time - finBloque.time) <= TOLERANCIA_COMPARACION_MS
+        if (
+            mismoFin &&
+            inicioActual.time <= finBloque.time &&
+            finActual.time > (inicioBaseBloque.time + TOLERANCIA_COMPARACION_MS)
+        ) {
+            return true
+        }
+
+        // 2. Contenido dentro del bloque (con margen de llegada anticipada),
+        //    sin invadir bloques pasados, futuros ni turnos adyacentes de otro bloque.
+        val inicioEnBloque =
+            inicioActual.time >= (inicioReferencia - MARGEN_LLEGADA_ANTICIPADA_MS - TOLERANCIA_COMPARACION_MS) &&
+                inicioActual.time < (finBloque.time - TOLERANCIA_COMPARACION_MS)
+        val finDentroDelBloque =
+            finActual.time > (inicioBaseBloque.time + TOLERANCIA_COMPARACION_MS) &&
+                finActual.time <= (finBloque.time + TOLERANCIA_COMPARACION_MS)
+
+        return inicioEnBloque && finDentroDelBloque
+    }
+
+    /**
+     * Verifica si una asignación paciente-cuidador vigente pertenece al bloque de turno activo.
+     * Evita recuperar asignaciones residuales de bloques ya finalizados o de otros bloques.
+     */
+    fun perteneceABloqueVigente(
+        asignacion: AsignacionPacienteCuidador,
+        bloque: RangoBloqueTurno,
+        ahora: Date = Date()
+    ): Boolean {
+        if (!estaVigente(asignacion, ahora)) return false
+
+        val inicioActual = parsearFechaIso(asignacion.fechaInicio) ?: return false
+        val finActual = parsearFechaIso(asignacion.fechaFin) ?: return false
+
+        return perteneceARangoBloque(
+            inicioActual = inicioActual,
+            finActual = finActual,
+            inicioBloque = bloque.inicioDate,
+            finBloque = bloque.finDate,
+            inicioBaseBloque = bloque.inicioBaseDate
+        )
+    }
+
+    /**
+     * Verifica si una asignación activa pertenece al bloque/rango objetivo que se está sincronizando,
+     * evitando modificar asignaciones históricas (bloques pasados) o programadas para bloques futuros.
+     */
+    fun perteneceAlRangoDeSincronizacion(
+        asignacion: AsignacionPacienteCuidador,
+        fechaInicioIso: String,
+        fechaFinIso: String
+    ): Boolean {
+        val inicioActual = parsearFechaIso(asignacion.fechaInicio) ?: return false
+        val finActual = parsearFechaIso(asignacion.fechaFin) ?: return false
+        val inicioObjetivo = parsearFechaIso(fechaInicioIso) ?: return false
+        val finObjetivo = parsearFechaIso(fechaFinIso) ?: return false
+
+        return perteneceARangoBloque(
+            inicioActual = inicioActual,
+            finActual = finActual,
+            inicioBloque = inicioObjetivo,
+            finBloque = finObjetivo
+        )
+    }
+
+    /**
+     * Verifica si una asignación inactiva pertenece al mismo bloque en curso para poder
+     * reactivarla (por ejemplo, paciente desmarcado y vuelto a seleccionar en el mismo bloque)
+     * sin alterar registros históricos de bloques anteriores ni futuros.
+     */
+    fun perteneceAMismoBloqueParaReactivar(
+        asignacion: AsignacionPacienteCuidador,
+        fechaInicioIso: String,
+        fechaFinIso: String
+    ): Boolean {
+        val inicioActual = parsearFechaIso(asignacion.fechaInicio) ?: return false
+        val finActual = parsearFechaIso(asignacion.fechaFin) ?: return false
+        val inicioObjetivo = parsearFechaIso(fechaInicioIso) ?: return false
+        val finObjetivo = parsearFechaIso(fechaFinIso) ?: return false
+
+        if (inicioActual.after(finActual) || inicioObjetivo.after(finObjetivo)) {
+            return false
+        }
+
+        val inicioDentro =
+            inicioActual.time >= (inicioObjetivo.time - TOLERANCIA_COMPARACION_MS) &&
+                inicioActual.time < (finObjetivo.time - TOLERANCIA_COMPARACION_MS)
+        val finDentro =
+            finActual.time >= inicioObjetivo.time &&
+                finActual.time <= (finObjetivo.time + TOLERANCIA_COMPARACION_MS)
+
+        return inicioDentro && finDentro
+    }
+
     fun calcularRangoTurnoDia(
         asignacionTurno: AsignacionTurnoUsuario,
         turno: Turno
     ): Pair<Date, Date>? {
-        val fecha = asignacionTurno.fecha?.take(10)?.trim().orEmpty()
-        if (fecha.length != 10) return null
+        val fecha = asignacionTurno.fecha?.trim()?.take(10).orEmpty()
+        if (!esFechaIsoValida(fecha)) return null
         return calcularRangoConTurno(fecha, fecha, turno)
     }
 
     fun calcularRangoDiaCompleto(fechaIso: String?): Pair<Date, Date>? {
-        val fecha = fechaIso?.take(10)?.trim().orEmpty()
-        if (fecha.length != 10) return null
+        val fecha = fechaIso?.trim()?.take(10).orEmpty()
+        if (!esFechaIsoValida(fecha)) return null
         val inicio = construirFechaColombia(fecha, "00:00:00", 0) ?: return null
         val fin = construirFechaColombia(fecha, "23:59:59", 0) ?: return null
         return Pair(inicio, fin)
@@ -231,14 +434,14 @@ object AsignacionVigenciaHelper {
 
         val candidatas = asignacionesTurno
             .filter { asignacion ->
+                val fechaLimpia = asignacion.fecha?.trim()?.take(10).orEmpty()
                 asignacion.id_usuario == idUsuario &&
-                    !asignacion.estado.equals("Finalizado", ignoreCase = true) &&
-                    !asignacion.estado.equals("Inactivo", ignoreCase = true) &&
-                    !asignacion.fecha.isNullOrBlank() &&
+                    !esEstadoTurnoNoPendiente(asignacion.estado) &&
+                    esFechaIsoValida(fechaLimpia) &&
                     turnosPorId[asignacion.id_turno] != null
             }
             .sortedWith(
-                compareBy<AsignacionTurnoUsuario> { it.fecha?.take(10).orEmpty() }
+                compareBy<AsignacionTurnoUsuario> { it.fecha?.trim()?.take(10).orEmpty() }
                     .thenBy { it.id_asignacion_turno_usuario ?: Int.MAX_VALUE }
             )
 
@@ -250,10 +453,11 @@ object AsignacionVigenciaHelper {
 
         fun construirBloque(
             asignacion: AsignacionTurnoUsuario,
-            turno: Turno
+            turno: Turno,
+            ajustarInicioAnticipado: Boolean = true
         ): RangoBloqueTurno? {
-            val fechaFila = asignacion.fecha?.take(10)?.trim().orEmpty()
-            if (fechaFila.length != 10) return null
+            val fechaFila = asignacion.fecha?.trim()?.take(10).orEmpty()
+            if (!esFechaIsoValida(fechaFila)) return null
 
             val idGrupo = asignacion.id_grupo_asignacion?.trim().orEmpty()
 
@@ -262,11 +466,12 @@ object AsignacionVigenciaHelper {
                     .filter { otra ->
                         otra.id_usuario == idUsuario &&
                             otra.id_grupo_asignacion?.trim() == idGrupo &&
-                            !otra.estado.equals("Inactivo", ignoreCase = true) &&
+                            !esEstadoTurnoExcluidoDeBloque(otra.estado) &&
                             !otra.fecha.isNullOrBlank()
                     }
-                    .map { it.fecha!!.take(10) }
-                    .filter { it.length == 10 }
+                    .mapNotNull { otra ->
+                        otra.fecha?.trim()?.take(10)?.takeIf { esFechaIsoValida(it) }
+                    }
 
                 if (fechasGrupo.isNotEmpty()) {
                     Pair(fechasGrupo.min(), fechasGrupo.max())
@@ -280,10 +485,7 @@ object AsignacionVigenciaHelper {
             val (inicioBase, finBase) =
                 calcularRangoConTurno(fechaMin, fechaMax, turno) ?: return null
 
-            val inicioReal = if (
-                ahora.before(inicioBase) &&
-                (inicioBase.time - ahora.time) <= MARGEN_LLEGADA_ANTICIPADA_MS
-            ) {
+            val inicioReal = if (ajustarInicioAnticipado && ahora.before(inicioBase)) {
                 ahora
             } else {
                 inicioBase
@@ -295,13 +497,14 @@ object AsignacionVigenciaHelper {
                 inicioDate = inicioReal,
                 finDate = finBase,
                 asignacionTurno = asignacion,
-                turno = turno
+                turno = turno,
+                inicioBaseDate = inicioBase
             )
         }
 
-        // 1. Turno cuya jornada diaria contiene el momento actual.
+        // 1. Turno cuya jornada diaria contiene el momento actual (incluye cruce de medianoche).
         for (asignacion in candidatas) {
-            val fecha = asignacion.fecha?.take(10).orEmpty()
+            val fecha = asignacion.fecha?.trim()?.take(10).orEmpty()
             if (fecha != ayer && fecha != hoy) continue
 
             val turno = turnosPorId[asignacion.id_turno] ?: continue
@@ -312,9 +515,10 @@ object AsignacionVigenciaHelper {
             }
         }
 
-        // 2. Turno próximo que inicia en los siguientes 60 minutos (llegada anticipada).
+        // 2. Turno próximo que inicia en los siguientes 60 minutos (llegada anticipada,
+        //    incluyendo cruce de medianoche).
         for (asignacion in candidatas) {
-            val fecha = asignacion.fecha?.take(10).orEmpty()
+            val fecha = asignacion.fecha?.trim()?.take(10).orEmpty()
             if (fecha != hoy && fecha != manana) continue
 
             val turno = turnosPorId[asignacion.id_turno] ?: continue
@@ -330,7 +534,7 @@ object AsignacionVigenciaHelper {
 
         // 3. Turno programado para hoy que aún no termina.
         for (asignacion in candidatas) {
-            val fecha = asignacion.fecha?.take(10).orEmpty()
+            val fecha = asignacion.fecha?.trim()?.take(10).orEmpty()
             if (fecha != hoy) continue
 
             val turno = turnosPorId[asignacion.id_turno] ?: continue
@@ -341,16 +545,21 @@ object AsignacionVigenciaHelper {
             }
         }
 
-        // 4. Bloque multi-día que cubre el momento actual.
+        // 4. Bloque multi-día que cubre el momento actual (aunque la jornada del día ya haya cerrado
+        //    o el cuidador esté entre días del bloque).
         val gruposRevisados = mutableSetOf<String>()
         for (asignacion in candidatas) {
             val idGrupo = asignacion.id_grupo_asignacion?.trim().orEmpty()
             if (idGrupo.isBlank() || !gruposRevisados.add(idGrupo)) continue
 
             val turno = turnosPorId[asignacion.id_turno] ?: continue
-            val bloque = construirBloque(asignacion, turno) ?: continue
+            val bloque = construirBloque(
+                asignacion = asignacion,
+                turno = turno,
+                ajustarInicioAnticipado = false
+            ) ?: continue
 
-            if (bloque.inicioDate.time <= ahora.time && ahora.time <= bloque.finDate.time) {
+            if (bloque.inicioBaseDate.time <= ahora.time && ahora.time <= bloque.finDate.time) {
                 return bloque
             }
         }
@@ -363,9 +572,6 @@ object AsignacionVigenciaHelper {
         turnoRepository: TurnoRepository = TurnoRepository(),
         forceRefresh: Boolean = true
     ): Boolean {
-        val idGrupo = asignacionCerrada.id_grupo_asignacion?.trim().orEmpty()
-        if (idGrupo.isBlank()) return true
-
         val todasLasAsignaciones =
             turnoRepository.obtenerAsignaciones(forceRefresh = forceRefresh)
 
@@ -379,25 +585,87 @@ object AsignacionVigenciaHelper {
         asignacionCerrada: AsignacionTurnoUsuario,
         todasLasAsignacionesTurno: List<AsignacionTurnoUsuario>
     ): Boolean {
-        val idGrupo = asignacionCerrada.id_grupo_asignacion?.trim().orEmpty()
-        if (idGrupo.isBlank()) return true
-
-        val fechaCerrada = asignacionCerrada.fecha?.take(10)?.trim().orEmpty()
-        if (fechaCerrada.length != 10) return true
-
-        val quedanDiasFuturos = todasLasAsignacionesTurno.any { otra ->
-            val fechaOtra = otra.fecha?.take(10)?.trim().orEmpty()
-
-            otra.id_usuario == asignacionCerrada.id_usuario &&
-                otra.id_grupo_asignacion?.trim() == idGrupo &&
-                otra.id_asignacion_turno_usuario != asignacionCerrada.id_asignacion_turno_usuario &&
-                !otra.estado.equals("Finalizado", ignoreCase = true) &&
-                !otra.estado.equals("Inactivo", ignoreCase = true) &&
-                fechaOtra.length == 10 &&
-                fechaOtra > fechaCerrada
+        if (todasLasAsignacionesTurno.isEmpty()) {
+            logError(
+                "No se puede verificar último día (asignación=${asignacionCerrada.id_asignacion_turno_usuario}): " +
+                    "lista de asignaciones vacía. Se conserva la selección por seguridad."
+            )
+            return false
         }
 
-        return !quedanDiasFuturos
+        val asignacionActualizada = asignacionCerrada.id_asignacion_turno_usuario?.let { id ->
+            todasLasAsignacionesTurno.firstOrNull { it.id_asignacion_turno_usuario == id }
+        }
+
+        val idUsuario = asignacionActualizada?.id_usuario?.takeIf { it > 0 }
+            ?: asignacionCerrada.id_usuario.takeIf { it > 0 }
+        if (idUsuario == null) {
+            logError(
+                "No se puede verificar último día (asignación=${asignacionCerrada.id_asignacion_turno_usuario}): " +
+                    "id_usuario inválido. Se conserva la selección por seguridad."
+            )
+            return false
+        }
+
+        val idGrupo = asignacionActualizada?.id_grupo_asignacion?.trim()?.takeIf { it.isNotBlank() }
+            ?: asignacionCerrada.id_grupo_asignacion?.trim()?.takeIf { it.isNotBlank() }
+        if (idGrupo == null) {
+            logError(
+                "No se puede verificar último día (asignación=${asignacionCerrada.id_asignacion_turno_usuario}, " +
+                    "usuario=$idUsuario): id_grupo_asignacion vacío. Se conserva la selección por seguridad."
+            )
+            return false
+        }
+
+        val fechaCerrada = (asignacionActualizada?.fecha ?: asignacionCerrada.fecha)
+            ?.trim()?.take(10).orEmpty()
+        if (!esFechaIsoValida(fechaCerrada)) {
+            logError(
+                "No se puede verificar último día (asignación=${asignacionCerrada.id_asignacion_turno_usuario}, " +
+                    "grupo=$idGrupo): fecha inválida '$fechaCerrada'. Se conserva la selección por seguridad."
+            )
+            return false
+        }
+
+        val asignacionesGrupoUsuario = todasLasAsignacionesTurno.filter { otra ->
+            otra.id_usuario == idUsuario &&
+                otra.id_grupo_asignacion?.trim() == idGrupo &&
+                !esEstadoTurnoExcluidoDeBloque(otra.estado)
+        }
+
+        if (asignacionesGrupoUsuario.isEmpty()) {
+            logError(
+                "No se encontraron asignaciones válidas para grupo=$idGrupo y usuario=$idUsuario. " +
+                    "Se conserva la selección por seguridad."
+            )
+            return false
+        }
+
+        val pendientesOtras = asignacionesGrupoUsuario.filter { otra ->
+            otra.id_asignacion_turno_usuario != asignacionCerrada.id_asignacion_turno_usuario &&
+                !esEstadoTurnoNoPendiente(otra.estado)
+        }
+
+        if (pendientesOtras.any { !esFechaIsoValida(it.fecha?.trim()?.take(10).orEmpty()) }) {
+            logError(
+                "Existe una asignación pendiente con fecha inválida en grupo=$idGrupo (usuario=$idUsuario). " +
+                    "Se conserva la selección por seguridad."
+            )
+            return false
+        }
+
+        val quedanDiasFuturos = pendientesOtras.any { otra ->
+            otra.fecha!!.trim().take(10) > fechaCerrada
+        }
+
+        val esUltimoDia = !quedanDiasFuturos
+        logDebug(
+            "esUltimoDiaBloqueTurno: usuario=$idUsuario, grupo=$idGrupo, " +
+                "fechaCerrada=$fechaCerrada, pendientesOtras=${pendientesOtras.size}, " +
+                "quedanDiasFuturos=$quedanDiasFuturos, esUltimoDia=$esUltimoDia"
+        )
+
+        return esUltimoDia
     }
 
     private fun calcularRangoConTurno(
@@ -441,7 +709,10 @@ object AsignacionVigenciaHelper {
         hora: String,
         sumarDias: Int
     ): Date? {
-        val partesFecha = fechaIso.take(10).split("-")
+        val fechaLimpia = fechaIso.trim().take(10)
+        if (!esFechaIsoValida(fechaLimpia)) return null
+
+        val partesFecha = fechaLimpia.split("-")
         if (partesFecha.size != 3) return null
 
         val anio = partesFecha[0].toIntOrNull() ?: return null
@@ -463,16 +734,20 @@ object AsignacionVigenciaHelper {
             return null
         }
 
-        val calendario = Calendar.getInstance(zonaColombia()).apply {
-            clear()
-            set(anio, mes - 1, dia, hh, mm, ss)
-            set(Calendar.MILLISECOND, 0)
-            if (sumarDias != 0) {
-                add(Calendar.DAY_OF_MONTH, sumarDias)
+        return try {
+            val calendario = Calendar.getInstance(zonaColombia()).apply {
+                isLenient = false
+                clear()
+                set(anio, mes - 1, dia, hh, mm, ss)
+                set(Calendar.MILLISECOND, 0)
+                if (sumarDias != 0) {
+                    add(Calendar.DAY_OF_MONTH, sumarDias)
+                }
             }
+            calendario.time
+        } catch (_: Exception) {
+            null
         }
-
-        return calendario.time
     }
 
     private fun formatearFechaDiaColombia(

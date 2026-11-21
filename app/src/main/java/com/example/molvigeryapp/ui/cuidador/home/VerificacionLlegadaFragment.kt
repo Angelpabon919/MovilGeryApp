@@ -52,6 +52,7 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
 
 class VerificacionLlegadaFragment : Fragment() {
 
@@ -66,6 +67,11 @@ class VerificacionLlegadaFragment : Fragment() {
     private var ubicacionInicializada = false
     private var navegacionRealizada = false
     private var actualizacionesUbicacionActivas = false
+    private var asignacionCargada = false
+    private var idAsignacionActiva: Int? = null
+    private var asignacionActiva: AsignacionTurnoUsuario? = null
+    private var ubicacionDentroRadio = false
+    private var registroEnProgreso = false
 
     // =========================================================
     // UBICACIÓN DE PRUEBA
@@ -96,11 +102,16 @@ class VerificacionLlegadaFragment : Fragment() {
 
             if (permisoPreciso || permisoAproximado) {
 
-                comprobarEstadoGpsAlRegresar()
+                if (asignacionCargada && idAsignacionActiva != null && !navegacionRealizada) {
+                    comprobarEstadoGpsAlRegresar()
+                }
 
             } else {
 
                 val safeBinding = _binding ?: return@registerForActivityResult
+
+                ubicacionDentroRadio = false
+                actualizarEstadoBotonLlegada()
 
                 safeBinding.tvEsperandoUbicacion.visibility = View.VISIBLE
                 safeBinding.tvEsperandoUbicacion.text =
@@ -181,6 +192,10 @@ class VerificacionLlegadaFragment : Fragment() {
             centrarEnMiUbicacion()
         }
 
+        binding.btnYaLlegue.setOnClickListener {
+            confirmarLlegada()
+        }
+
         configurarMapa()
 
         configurarPantalla()
@@ -188,8 +203,6 @@ class VerificacionLlegadaFragment : Fragment() {
         configurarTarjetaTurnos()
 
         cargarTurnosPendientes()
-
-        verificarPermisoUbicacion()
     }
 
     // =========================================================
@@ -199,7 +212,13 @@ class VerificacionLlegadaFragment : Fragment() {
     override fun onStart() {
         super.onStart()
 
-        if (_binding != null && tienePermisoUbicacion()) {
+        if (
+            _binding != null &&
+            asignacionCargada &&
+            idAsignacionActiva != null &&
+            !navegacionRealizada &&
+            tienePermisoUbicacion()
+        ) {
             comprobarEstadoGpsAlRegresar()
         }
     }
@@ -414,17 +433,62 @@ class VerificacionLlegadaFragment : Fragment() {
 
     private fun configurarPantalla() {
 
+        asignacionCargada = false
+        idAsignacionActiva = null
+        asignacionActiva = null
+        ubicacionDentroRadio = false
+        registroEnProgreso = false
+
         binding.tvEstadoLlegada.text =
-            "Esperando llegada..."
+            "Verificando turno..."
 
         binding.tvEsperandoUbicacion.visibility =
             View.VISIBLE
 
         binding.tvEsperandoUbicacion.text =
-            "Obteniendo ubicación..."
+            "Consultando turno asignado..."
 
         binding.tvDistancia.text =
             "Calculando..."
+
+        actualizarEstadoBotonLlegada()
+    }
+
+    private fun actualizarEstadoBotonLlegada() {
+        val safeBinding = _binding ?: return
+
+        val puedeRegistrar =
+            asignacionCargada &&
+                idAsignacionActiva != null &&
+                ubicacionDentroRadio &&
+                !registroEnProgreso &&
+                !navegacionRealizada
+
+        safeBinding.btnYaLlegue.isEnabled = puedeRegistrar
+        safeBinding.btnYaLlegue.isClickable = puedeRegistrar
+
+        if (registroEnProgreso) {
+            safeBinding.btnYaLlegue.text = ""
+            safeBinding.btnYaLlegue.alpha = 0.85f
+            safeBinding.progressRegistroLlegada.visibility = View.VISIBLE
+        } else {
+            safeBinding.btnYaLlegue.text = "Ya llegué"
+            safeBinding.btnYaLlegue.alpha = if (puedeRegistrar) 1f else 0.45f
+            safeBinding.progressRegistroLlegada.visibility = View.GONE
+        }
+    }
+
+    private fun mostrarSinTurnoActivo(mensajeUbicacion: String) {
+        val safeBinding = _binding ?: return
+
+        ubicacionDentroRadio = false
+        safeBinding.tvHoraProgramada.text = "Sin turno programado"
+        safeBinding.tvEstadoLlegada.text = "Sin turno activo"
+        safeBinding.tvEsperandoUbicacion.visibility = View.VISIBLE
+        safeBinding.tvEsperandoUbicacion.text = mensajeUbicacion
+        safeBinding.tvDistancia.text = "--"
+
+        actualizarEstadoBotonLlegada()
     }
 
     // =========================================================
@@ -476,6 +540,12 @@ class VerificacionLlegadaFragment : Fragment() {
 
         val propietarioVista = viewLifecycleOwner
 
+        asignacionCargada = false
+        idAsignacionActiva = null
+        asignacionActiva = null
+        ubicacionDentroRadio = false
+        actualizarEstadoBotonLlegada()
+
         propietarioVista.lifecycleScope.launch {
 
             try {
@@ -491,12 +561,16 @@ class VerificacionLlegadaFragment : Fragment() {
 
                 if (idUsuario <= 0) {
 
+                    asignacionCargada = true
+
                     if (
                         _binding != null &&
                         propietarioVista.lifecycle.currentState.isAtLeast(
                             Lifecycle.State.STARTED
                         )
                     ) {
+                        detenerActualizacionesUbicacion()
+                        mostrarSinTurnoActivo("No se identificó el usuario autenticado")
                         mostrarSinTurnos()
                     }
 
@@ -523,12 +597,21 @@ class VerificacionLlegadaFragment : Fragment() {
                     return@launch
                 }
 
-                actualizarHorarioProgramado(
-                    idUsuario,
-                    datos.first,
-                    datos.second
-                )
+                val asignacionResuelta =
+                    LlegadaTurnoHelper.resolverAsignacionActivaParaLlegada(
+                        idUsuario = idUsuario,
+                        asignaciones = datos.first,
+                        turnos = datos.second
+                    )
 
+                asignacionCargada = true
+                asignacionActiva = asignacionResuelta?.asignacion
+                idAsignacionActiva = asignacionResuelta?.asignacion?.id_asignacion_turno_usuario
+
+                // Actualizar horario programado del turno activo
+                actualizarHorarioProgramado(asignacionResuelta)
+
+                // Mostrar turnos pendientes/activos
                 val turnosPendientes =
                     obtenerTurnosPendientes(
                         idUsuario,
@@ -537,6 +620,15 @@ class VerificacionLlegadaFragment : Fragment() {
                     )
 
                 mostrarTurnos(turnosPendientes)
+
+                if (idAsignacionActiva != null) {
+                    _binding?.tvEstadoLlegada?.text = "Esperando llegada..."
+                    actualizarEstadoBotonLlegada()
+                    verificarPermisoUbicacion()
+                } else {
+                    detenerActualizacionesUbicacion()
+                    mostrarSinTurnoActivo("No tienes un turno activo para registrar llegada")
+                }
 
             } catch (e: kotlinx.coroutines.CancellationException) {
 
@@ -550,12 +642,18 @@ class VerificacionLlegadaFragment : Fragment() {
                     e
                 )
 
+                asignacionCargada = true
+                idAsignacionActiva = null
+                asignacionActiva = null
+
                 if (
                     _binding != null &&
                     propietarioVista.lifecycle.currentState.isAtLeast(
                         Lifecycle.State.STARTED
                     )
                 ) {
+                    detenerActualizacionesUbicacion()
+                    mostrarSinTurnoActivo("No se pudo consultar tu turno asignado")
                     mostrarSinTurnos()
                 }
             }
@@ -598,7 +696,7 @@ class VerificacionLlegadaFragment : Fragment() {
         val asignacionesValidas = asignaciones
             .filter { it.id_usuario == idUsuario }
             .filter {
-                it.estado.equals("Asignado", ignoreCase = true)
+                LlegadaTurnoHelper.esEstadoElegibleParaLlegada(it.estado)
             }
             .mapNotNull { asignacion ->
 
@@ -694,43 +792,12 @@ class VerificacionLlegadaFragment : Fragment() {
     // =========================================================
 
     private fun actualizarHorarioProgramado(
-        idUsuario: Int,
-        asignaciones: List<AsignacionTurnoUsuario>,
-        turnos: List<Turno>
+        asignacionResuelta: LlegadaTurnoHelper.AsignacionActivaLlegada?
     ) {
 
         val safeBinding = _binding ?: return
 
-        val fechaHoy = SimpleDateFormat(
-            "yyyy-MM-dd",
-            Locale.getDefault()
-        ).format(Calendar.getInstance().time)
-
-        val asignacionHoy = asignaciones.firstOrNull { asignacion ->
-
-            asignacion.id_usuario == idUsuario &&
-                    asignacion.fecha?.take(10) == fechaHoy &&
-                    asignacion.estado.equals(
-                        "Asignado",
-                        ignoreCase = true
-                    )
-        }
-
-        if (asignacionHoy == null) {
-
-            safeBinding.tvHoraProgramada.text =
-                "Sin turno programado"
-
-            return
-        }
-
-        val turnoHoy = turnos.firstOrNull {
-
-            it.id_turno == asignacionHoy.id_turno &&
-                    it.estado
-        }
-
-        if (turnoHoy == null) {
+        if (asignacionResuelta == null) {
 
             safeBinding.tvHoraProgramada.text =
                 "Sin turno programado"
@@ -739,7 +806,7 @@ class VerificacionLlegadaFragment : Fragment() {
         }
 
         safeBinding.tvHoraProgramada.text =
-            formatearHoraAMPM(turnoHoy.hora_inicio)
+            formatearHoraAMPM(asignacionResuelta.turno.hora_inicio)
     }
 
     // =========================================================
@@ -1229,10 +1296,16 @@ class VerificacionLlegadaFragment : Fragment() {
 
         val safeBinding = _binding ?: return
 
+        if (!asignacionCargada || idAsignacionActiva == null || navegacionRealizada) {
+            return
+        }
+
         // Comprobar permisos
         if (!tienePermisoUbicacion()) {
 
             detenerActualizacionesUbicacion()
+            ubicacionDentroRadio = false
+            actualizarEstadoBotonLlegada()
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.VISIBLE
@@ -1250,6 +1323,8 @@ class VerificacionLlegadaFragment : Fragment() {
         if (!gpsEstaActivado()) {
 
             detenerActualizacionesUbicacion()
+            ubicacionDentroRadio = false
+            actualizarEstadoBotonLlegada()
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.VISIBLE
@@ -1286,19 +1361,24 @@ class VerificacionLlegadaFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun iniciarActualizacionesUbicacion() {
 
-        if (_binding == null) return
+        val safeBinding = _binding ?: return
+
+        if (!asignacionCargada || idAsignacionActiva == null || navegacionRealizada) return
 
         if (!tienePermisoUbicacion()) return
 
         if (!gpsEstaActivado()) {
 
-            binding.tvEsperandoUbicacion.visibility =
+            ubicacionDentroRadio = false
+            actualizarEstadoBotonLlegada()
+
+            safeBinding.tvEsperandoUbicacion.visibility =
                 View.VISIBLE
 
-            binding.tvEsperandoUbicacion.text =
+            safeBinding.tvEsperandoUbicacion.text =
                 "Activa la ubicación GPS para continuar"
 
-            binding.tvEstadoLlegada.text =
+            safeBinding.tvEstadoLlegada.text =
                 "Esperando activación del GPS"
 
             return
@@ -1320,6 +1400,8 @@ class VerificacionLlegadaFragment : Fragment() {
                     if (!gpsEstaActivado()) {
 
                         detenerActualizacionesUbicacion()
+                        ubicacionDentroRadio = false
+                        actualizarEstadoBotonLlegada()
 
                         return
                     }
@@ -1354,24 +1436,24 @@ class VerificacionLlegadaFragment : Fragment() {
                 Looper.getMainLooper()
             ).addOnSuccessListener {
 
-                if (_binding == null) {
+                val bindingActual = _binding
+                if (
+                    bindingActual == null ||
+                    !asignacionCargada ||
+                    idAsignacionActiva == null ||
+                    navegacionRealizada ||
+                    !gpsEstaActivado()
+                ) {
 
                     detenerActualizacionesUbicacion()
 
                     return@addOnSuccessListener
                 }
 
-                if (!gpsEstaActivado()) {
-
-                    detenerActualizacionesUbicacion()
-
-                    return@addOnSuccessListener
-                }
-
-                binding.tvEsperandoUbicacion.visibility =
+                bindingActual.tvEsperandoUbicacion.visibility =
                     View.VISIBLE
 
-                binding.tvEsperandoUbicacion.text =
+                bindingActual.tvEsperandoUbicacion.text =
                     "Obteniendo ubicación GPS..."
 
             }.addOnFailureListener { error ->
@@ -1433,7 +1515,7 @@ class VerificacionLlegadaFragment : Fragment() {
 
         val safeBinding = _binding ?: return
 
-        if (navegacionRealizada) return
+        if (navegacionRealizada || !asignacionCargada || idAsignacionActiva == null) return
 
         val puntoActual = GeoPoint(
             ubicacion.latitude,
@@ -1490,30 +1572,17 @@ class VerificacionLlegadaFragment : Fragment() {
 
         if (distancia <= radioPermitido) {
 
-            safeBinding.tvEstadoLlegada.text =
-                "Llegada verificada"
+            ubicacionDentroRadio = true
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.GONE
 
-            navegacionRealizada = true
+            if (!registroEnProgreso) {
+                safeBinding.tvEstadoLlegada.text =
+                    "Ubicación verificada"
+            }
 
-            detenerActualizacionesUbicacion()
-
-            safeBinding.mapa.invalidate()
-
-            // Mostrar pantalla de bienvenida de la sede
-            parentFragmentManager
-                .beginTransaction()
-                .setCustomAnimations(
-                    android.R.anim.fade_in,
-                    android.R.anim.fade_out
-                )
-                .replace(
-                    R.id.fragmentContainer,
-                    BienvenidaSedeCuidadorFragment()
-                )
-                .commit()
+            actualizarEstadoBotonLlegada()
 
         } else {
 
@@ -1521,14 +1590,181 @@ class VerificacionLlegadaFragment : Fragment() {
             // FUERA DEL RADIO
             // -------------------------------------------------
 
-            safeBinding.tvEstadoLlegada.text =
-                "Fuera del área permitida"
+            ubicacionDentroRadio = false
 
             safeBinding.tvEsperandoUbicacion.visibility =
                 View.GONE
+
+            if (!registroEnProgreso) {
+                safeBinding.tvEstadoLlegada.text =
+                    "Fuera del área permitida"
+            }
+
+            actualizarEstadoBotonLlegada()
         }
 
         safeBinding.mapa.invalidate()
+    }
+
+    // =========================================================
+    // CONFIRMAR LLEGADA EN BACKEND
+    // =========================================================
+
+    private fun confirmarLlegada() {
+
+        if (navegacionRealizada || registroEnProgreso) return
+
+        val idAsignacion = idAsignacionActiva
+        if (!asignacionCargada || idAsignacion == null) {
+            Toast.makeText(
+                requireContext(),
+                "No tienes un turno activo para registrar la llegada.",
+                Toast.LENGTH_SHORT
+            ).show()
+            actualizarEstadoBotonLlegada()
+            return
+        }
+
+        if (!ubicacionDentroRadio) {
+            Toast.makeText(
+                requireContext(),
+                "Debes estar dentro del radio permitido para confirmar tu llegada.",
+                Toast.LENGTH_SHORT
+            ).show()
+            actualizarEstadoBotonLlegada()
+            return
+        }
+
+        val propietarioVista = viewLifecycleOwner
+
+        registroEnProgreso = true
+        _binding?.tvEstadoLlegada?.text = "Registrando llegada..."
+        actualizarEstadoBotonLlegada()
+
+        propietarioVista.lifecycleScope.launch {
+            val resultado = try {
+                withContext(Dispatchers.IO) {
+                    val response =
+                        RetrofitClient.apiService.registrarLlegadaTurno(idAsignacion)
+                    LlegadaTurnoHelper.interpretarRespuestaRegistroLlegada(response)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: IOException) {
+                Log.e(
+                    "VERIFICACION_LLEGADA",
+                    "Error de conexión al registrar llegada (id=$idAsignacion)",
+                    e
+                )
+                LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorConexion(
+                    "Error de conexión. Verifica tu internet e intenta nuevamente."
+                )
+            } catch (e: Exception) {
+                Log.e(
+                    "VERIFICACION_LLEGADA",
+                    "Error inesperado al registrar llegada (id=$idAsignacion)",
+                    e
+                )
+                LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorConexion(
+                    "No se pudo conectar con el servidor. Intenta nuevamente."
+                )
+            }
+
+            val safeBinding = _binding
+            if (
+                safeBinding == null ||
+                !isAdded ||
+                !propietarioVista.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+            ) {
+                registroEnProgreso = false
+                return@launch
+            }
+
+            when (resultado) {
+                is LlegadaTurnoHelper.ResultadoRegistroLlegada.Exito -> {
+                    asignacionActiva = resultado.asignacion ?: asignacionActiva
+                    navegacionRealizada = true
+                    registroEnProgreso = false
+
+                    detenerActualizacionesUbicacion()
+
+                    safeBinding.tvEstadoLlegada.text = "Llegada verificada"
+                    actualizarEstadoBotonLlegada()
+
+                    Toast.makeText(
+                        requireContext(),
+                        resultado.mensaje,
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    // Mostrar pantalla de bienvenida de la sede tras confirmar en el backend
+                    parentFragmentManager
+                        .beginTransaction()
+                        .setCustomAnimations(
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                        )
+                        .replace(
+                            R.id.fragmentContainer,
+                            BienvenidaSedeCuidadorFragment()
+                        )
+                        .commit()
+                }
+
+                is LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorPermisos -> {
+                    registroEnProgreso = false
+                    safeBinding.tvEstadoLlegada.text = "Sin autorización"
+                    actualizarEstadoBotonLlegada()
+
+                    Toast.makeText(
+                        requireContext(),
+                        resultado.mensaje,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                is LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorTurnoFinalizado -> {
+                    registroEnProgreso = false
+                    idAsignacionActiva = null
+                    asignacionActiva = null
+                    detenerActualizacionesUbicacion()
+                    safeBinding.tvEstadoLlegada.text = "Turno finalizado"
+                    actualizarEstadoBotonLlegada()
+
+                    Toast.makeText(
+                        requireContext(),
+                        resultado.mensaje,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                is LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorServidor -> {
+                    registroEnProgreso = false
+                    safeBinding.tvEstadoLlegada.text =
+                        if (ubicacionDentroRadio) "Ubicación verificada" else "Fuera del área permitida"
+                    actualizarEstadoBotonLlegada()
+
+                    Toast.makeText(
+                        requireContext(),
+                        resultado.mensaje,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                is LlegadaTurnoHelper.ResultadoRegistroLlegada.ErrorConexion -> {
+                    registroEnProgreso = false
+                    safeBinding.tvEstadoLlegada.text =
+                        if (ubicacionDentroRadio) "Ubicación verificada" else "Fuera del área permitida"
+                    actualizarEstadoBotonLlegada()
+
+                    Toast.makeText(
+                        requireContext(),
+                        resultado.mensaje,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
 
     // =========================================================
@@ -1548,6 +1784,8 @@ class VerificacionLlegadaFragment : Fragment() {
 
         marcadorDestino = null
         circuloGeocerca = null
+        registroEnProgreso = false
+        ubicacionDentroRadio = false
 
         _binding = null
 

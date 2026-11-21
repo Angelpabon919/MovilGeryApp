@@ -55,6 +55,7 @@ import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaRequest
 import com.example.molvigeryapp.data.model.MarcarNotificacionLeidaCompletaRequest
 import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.NotificacionTurnoRequest
+import com.example.molvigeryapp.data.model.RegistrarLlegadaResponse
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.data.model.TipoEventoIa
 import retrofit2.http.Multipart
@@ -385,6 +386,11 @@ interface ApiService {
     suspend fun eliminarAsignacionTurno(
         @Path("id") id: Int
     )
+
+    @POST("asignacion_turno_usuario/{id}/registrar-llegada/")
+    suspend fun registrarLlegadaTurno(
+        @Path("id") id: Int
+    ): Response<RegistrarLlegadaResponse>
 
 
     // =========================================================
