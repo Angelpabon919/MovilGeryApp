@@ -80,6 +80,11 @@ interface ApiService {
     @GET("pacientes/")
     suspend fun getPacientes(): List<Paciente>
 
+    @GET("pacientes/")
+    suspend fun getPacientesDisponiblesSeleccion(
+        @Query("disponibles_seleccion") disponiblesSeleccion: Boolean = true
+    ): List<Paciente>
+
     @GET("pacientes/{id}/")
     suspend fun getPacienteById(
         @Path("id") id: Int

@@ -26,11 +26,20 @@ import com.example.molvigeryapp.data.model.CrearSeguimientoMedicamentoRequest
 import com.example.molvigeryapp.data.model.MotivoNoAdministracionRequest
 import com.example.molvigeryapp.data.model.SeguimientoAdministracionMedicamento
 import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
+import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import okhttp3.MultipartBody
 import java.util.Date
+
+data class ResultadoSincronizacionSeleccion(
+    val exitoso: Boolean,
+    val huboConflictoExclusividad: Boolean = false,
+    val idsEnConflicto: Set<Int> = emptySet(),
+    val idsConfirmados: Set<Int> = emptySet(),
+    val mensajeError: String? = null
+)
 
 class PacienteRepository(
     private val api: ApiService = RetrofitClient.apiService
@@ -63,6 +72,11 @@ class PacienteRepository(
     suspend fun obtenerPacientes(): List<Paciente> =
         withContext(Dispatchers.IO) {
             api.getPacientes()
+        }
+
+    suspend fun obtenerPacientesDisponiblesParaSeleccion(): List<Paciente> =
+        withContext(Dispatchers.IO) {
+            api.getPacientesDisponiblesSeleccion(true)
         }
 
     suspend fun obtenerPacientePorId(id: Int): Paciente =
@@ -381,13 +395,62 @@ class PacienteRepository(
     // SINCRONIZAR SELECCIÓN DE PACIENTES DEL CUIDADOR
     // =========================================================
 
+    companion object {
+        private const val HTTP_CONFLICT = 409
+        private const val MENSAJE_CONFLICTO_POR_DEFECTO =
+            "Este paciente ya fue seleccionado por otro cuidador y no se encuentra disponible para este turno."
+    }
+
+    private fun extraerMensajeErrorBackend(
+        rawBody: String?,
+        fallback: String
+    ): String {
+        val limpio = rawBody?.trim().orEmpty()
+        if (limpio.isEmpty()) return fallback
+
+        return try {
+            val json = JsonParser.parseString(limpio)
+            if (json.isJsonObject) {
+                val obj = json.asJsonObject
+                val mensaje = listOf("error", "detail", "mensaje")
+                    .firstNotNullOfOrNull { clave ->
+                        val elem = obj.get(clave)
+                        if (elem != null && !elem.isJsonNull && elem.isJsonPrimitive) {
+                            elem.asString?.trim()?.takeIf { it.isNotBlank() }
+                        } else {
+                            null
+                        }
+                    }
+                mensaje ?: fallback
+            } else {
+                fallback
+            }
+        } catch (_: Exception) {
+            fallback
+        }
+    }
+
     suspend fun sincronizarSeleccionDelCuidador(
         idUsuario: Int,
         idsSeleccionados: Set<Int>,
         fechaInicioIso: String,
         fechaFinIso: String,
         ahora: Date = Date()
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Boolean = sincronizarSeleccionDelCuidadorDetallado(
+        idUsuario = idUsuario,
+        idsSeleccionados = idsSeleccionados,
+        fechaInicioIso = fechaInicioIso,
+        fechaFinIso = fechaFinIso,
+        ahora = ahora
+    ).exitoso
+
+    suspend fun sincronizarSeleccionDelCuidadorDetallado(
+        idUsuario: Int,
+        idsSeleccionados: Set<Int>,
+        fechaInicioIso: String,
+        fechaFinIso: String,
+        ahora: Date = Date()
+    ): ResultadoSincronizacionSeleccion = withContext(Dispatchers.IO) {
 
         try {
             val inicioObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaInicioIso)
@@ -397,7 +460,7 @@ class PacienteRepository(
                 logSyncError(
                     "Rango de fechas inválido para sincronizar: inicio=$fechaInicioIso, fin=$fechaFinIso"
                 )
-                return@withContext false
+                return@withContext ResultadoSincronizacionSeleccion(exitoso = false)
             }
 
             // 1. Consultar las asignaciones existentes.
@@ -407,7 +470,7 @@ class PacienteRepository(
                 logSyncError(
                     "Error al consultar asignaciones: HTTP ${respuestaGet.code()}"
                 )
-                return@withContext false
+                return@withContext ResultadoSincronizacionSeleccion(exitoso = false)
             }
 
             val todasLasAsignaciones =
@@ -419,6 +482,9 @@ class PacienteRepository(
 
             val ahoraIso = AsignacionVigenciaHelper.formatearIsoColombia(ahora)
             var operacionesCorrectas = true
+            val idsEnConflicto = mutableSetOf<Int>()
+            val idsConfirmados = mutableSetOf<Int>()
+            var mensajeConflicto: String? = null
 
             // 2. Desactivar únicamente las asignaciones activas del bloque actual
             //    correspondientes a pacientes desmarcados (sin tocar otros bloques).
@@ -522,6 +588,7 @@ class PacienteRepository(
                         )
                     ) {
                         // Ya existe una asignación activa y vigente para este bloque de turno.
+                        idsConfirmados.add(idPaciente)
                         logSyncDebug(
                             "Paciente $idPaciente ya tiene una asignación vigente (${asignacionActiva.idAsignacion}) para el bloque actual"
                         )
@@ -546,13 +613,24 @@ class PacienteRepository(
                         )
 
                         if (respuesta.isSuccessful) {
+                            idsConfirmados.add(idPaciente)
                             logSyncDebug(
                                 "Asignación activa $idAsignacion ajustada al rango del bloque actual para paciente $idPaciente"
                             )
                         } else {
                             operacionesCorrectas = false
+                            val detalle = respuesta.errorBody()?.string()
+                            if (respuesta.code() == HTTP_CONFLICT) {
+                                idsEnConflicto.add(idPaciente)
+                                if (mensajeConflicto == null) {
+                                    mensajeConflicto = extraerMensajeErrorBackend(
+                                        rawBody = detalle,
+                                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
+                                    )
+                                }
+                            }
                             logSyncError(
-                                "Error al ajustar $idAsignacion: HTTP ${respuesta.code()}"
+                                "Error al ajustar $idAsignacion: HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
                             )
                         }
                     } catch (e: Exception) {
@@ -598,13 +676,24 @@ class PacienteRepository(
                         )
 
                         if (respuesta.isSuccessful) {
+                            idsConfirmados.add(idPaciente)
                             logSyncDebug(
                                 "Asignación $idAsignacion del mismo bloque reactivada para paciente $idPaciente"
                             )
                         } else {
                             operacionesCorrectas = false
+                            val detalle = respuesta.errorBody()?.string()
+                            if (respuesta.code() == HTTP_CONFLICT) {
+                                idsEnConflicto.add(idPaciente)
+                                if (mensajeConflicto == null) {
+                                    mensajeConflicto = extraerMensajeErrorBackend(
+                                        rawBody = detalle,
+                                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
+                                    )
+                                }
+                            }
                             logSyncError(
-                                "Error al reactivar $idAsignacion: HTTP ${respuesta.code()}"
+                                "Error al reactivar $idAsignacion: HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
                             )
                         }
                     } catch (e: Exception) {
@@ -631,17 +720,27 @@ class PacienteRepository(
                         val respuesta = api.guardarAsignacion(nuevaAsignacion)
 
                         if (respuesta.isSuccessful) {
+                            idsConfirmados.add(idPaciente)
                             logSyncDebug(
                                 "Nueva asignación creada para paciente $idPaciente en rango [$fechaInicioIso .. $fechaFinIso]"
                             )
                         } else {
                             operacionesCorrectas = false
                             val detalle = respuesta.errorBody()?.string()
-                                ?: "Sin detalle"
+
+                            if (respuesta.code() == HTTP_CONFLICT) {
+                                idsEnConflicto.add(idPaciente)
+                                if (mensajeConflicto == null) {
+                                    mensajeConflicto = extraerMensajeErrorBackend(
+                                        rawBody = detalle,
+                                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
+                                    )
+                                }
+                            }
 
                             logSyncError(
                                 "Error al crear asignación para $idPaciente: " +
-                                    "HTTP ${respuesta.code()} - $detalle"
+                                    "HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
                             )
                         }
                     } catch (e: Exception) {
@@ -655,17 +754,24 @@ class PacienteRepository(
             }
 
             logSyncDebug(
-                "Sincronización finalizada. Correcta: $operacionesCorrectas"
+                "Sincronización finalizada. Correcta: $operacionesCorrectas | " +
+                    "confirmados=$idsConfirmados | conflictos=$idsEnConflicto"
             )
 
-            operacionesCorrectas
+            ResultadoSincronizacionSeleccion(
+                exitoso = operacionesCorrectas,
+                huboConflictoExclusividad = idsEnConflicto.isNotEmpty(),
+                idsEnConflicto = idsEnConflicto.toSet(),
+                idsConfirmados = idsConfirmados.toSet(),
+                mensajeError = mensajeConflicto
+            )
 
         } catch (e: Exception) {
             logSyncError(
                 "Error general al sincronizar asignaciones",
                 e
             )
-            false
+            ResultadoSincronizacionSeleccion(exitoso = false)
         }
     }
 
