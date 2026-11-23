@@ -78,8 +78,8 @@ class VerificacionLlegadaFragment : Fragment() {
     // UBICACIÓN DE PRUEBA
     // =========================================================
 
-    private val latitudDestino = 2.426545
-    private val longitudDestino = -76.603616
+    private val latitudDestino = 2.447291
+    private val longitudDestino = -76.631944
 
     private val radioPermitido = 100.0
 
@@ -199,6 +199,7 @@ class VerificacionLlegadaFragment : Fragment() {
         configurarTarjetaTurnos()
 
         cargarTurnosPendientes()
+        verificarPermisoUbicacion()
     }
 
     // =========================================================

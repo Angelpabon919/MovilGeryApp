@@ -475,7 +475,9 @@ class PacienteViewModel(
                         idUsuario = idUsuarioLogueado,
                         idsSeleccionados = idsSeleccionados,
                         fechaInicioIso = rangoTurno.fechaInicioIso,
-                        fechaFinIso = rangoTurno.fechaFinIso
+                        fechaFinIso = rangoTurno.fechaFinIso,
+                        idGrupoAsignacion = rangoTurno.asignacionTurno.id_grupo_asignacion
+                            ?: ""
                     )
 
                 if (resultado.exitoso) {

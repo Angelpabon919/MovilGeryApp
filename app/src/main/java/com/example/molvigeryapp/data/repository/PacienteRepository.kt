@@ -430,18 +430,38 @@ class PacienteRepository(
         }
     }
 
+    /**
+     * Compatibilidad con las llamadas anteriores que sincronizan por rango de fechas.
+     * Cuando no se proporciona un grupo, el helper determina qué asignaciones
+     * pertenecen al bloque usando las fechas.
+     */
+    suspend fun sincronizarSeleccionDelCuidador(
+        idUsuario: Int,
+        idsSeleccionados: Set<Int>,
+        fechaInicioIso: String,
+        fechaFinIso: String
+    ): Boolean = sincronizarSeleccionDelCuidadorDetallado(
+        idUsuario = idUsuario,
+        idsSeleccionados = idsSeleccionados,
+        fechaInicioIso = fechaInicioIso,
+        fechaFinIso = fechaFinIso
+    ).exitoso
+
+    /**
+     * Variante utilizada por el flujo nuevo: limita todas las operaciones al grupo.
+     */
     suspend fun sincronizarSeleccionDelCuidador(
         idUsuario: Int,
         idsSeleccionados: Set<Int>,
         fechaInicioIso: String,
         fechaFinIso: String,
-        ahora: Date = Date()
+        idGrupoAsignacion: String
     ): Boolean = sincronizarSeleccionDelCuidadorDetallado(
         idUsuario = idUsuario,
         idsSeleccionados = idsSeleccionados,
         fechaInicioIso = fechaInicioIso,
         fechaFinIso = fechaFinIso,
-        ahora = ahora
+        idGrupoAsignacion = idGrupoAsignacion
     ).exitoso
 
     suspend fun sincronizarSeleccionDelCuidadorDetallado(
@@ -449,16 +469,33 @@ class PacienteRepository(
         idsSeleccionados: Set<Int>,
         fechaInicioIso: String,
         fechaFinIso: String,
-        ahora: Date = Date()
+        ahora: Date = Date(),
+        idGrupoAsignacion: String? = null
     ): ResultadoSincronizacionSeleccion = withContext(Dispatchers.IO) {
 
         try {
-            val inicioObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaInicioIso)
-            val finObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaFinIso)
+            if (idUsuario <= 0) {
+                logSyncError("No se puede sincronizar: idUsuario inválido ($idUsuario).")
+                return@withContext ResultadoSincronizacionSeleccion(exitoso = false)
+            }
 
-            if (inicioObjetivo == null || finObjetivo == null || finObjetivo.before(inicioObjetivo)) {
+            if (idGrupoAsignacion != null && idGrupoAsignacion.isBlank()) {
+                logSyncError("No se puede sincronizar: idGrupoAsignacion está vacío.")
+                return@withContext ResultadoSincronizacionSeleccion(exitoso = false)
+            }
+
+            val inicioObjetivo =
+                AsignacionVigenciaHelper.parsearFechaIso(fechaInicioIso)
+            val finObjetivo =
+                AsignacionVigenciaHelper.parsearFechaIso(fechaFinIso)
+
+            if (
+                inicioObjetivo == null ||
+                finObjetivo == null ||
+                !finObjetivo.after(inicioObjetivo)
+            ) {
                 logSyncError(
-                    "Rango de fechas inválido para sincronizar: inicio=$fechaInicioIso, fin=$fechaFinIso"
+                    "Rango de fechas inválido: inicio=$fechaInicioIso, fin=$fechaFinIso"
                 )
                 return@withContext ResultadoSincronizacionSeleccion(exitoso = false)
             }
@@ -473,40 +510,63 @@ class PacienteRepository(
                 return@withContext ResultadoSincronizacionSeleccion(exitoso = false)
             }
 
-            val todasLasAsignaciones =
-                respuestaGet.body() ?: emptyList()
+            val todasLasAsignaciones = respuestaGet.body() ?: emptyList()
 
+            // Siempre limitar primero al cuidador. Si hay grupo, limitar por grupo;
+            // si no, se conserva la compatibilidad por rango de fechas.
             val asignacionesUsuario = todasLasAsignaciones.filter {
                 it.idUsuario == idUsuario
             }
 
+            fun perteneceAlBloque(asignacion: AsignacionPacienteCuidador): Boolean {
+                return if (idGrupoAsignacion != null) {
+                    asignacion.idGrupoAsignacion == idGrupoAsignacion
+                } else {
+                    AsignacionVigenciaHelper.perteneceAlRangoDeSincronizacion(
+                        asignacion = asignacion,
+                        fechaInicioIso = fechaInicioIso,
+                        fechaFinIso = fechaFinIso
+                    )
+                }
+            }
+
+            val asignacionesDelBloque = asignacionesUsuario.filter(::perteneceAlBloque)
             val ahoraIso = AsignacionVigenciaHelper.formatearIsoColombia(ahora)
+
             var operacionesCorrectas = true
             val idsEnConflicto = mutableSetOf<Int>()
             val idsConfirmados = mutableSetOf<Int>()
             var mensajeConflicto: String? = null
 
-            // 2. Desactivar únicamente las asignaciones activas del bloque actual
-            //    correspondientes a pacientes desmarcados (sin tocar otros bloques).
-            val activasDesmarcadas = asignacionesUsuario.filter {
+            fun registrarConflicto(idPaciente: Int, detalle: String?) {
+                idsEnConflicto.add(idPaciente)
+                if (mensajeConflicto == null) {
+                    mensajeConflicto = extraerMensajeErrorBackend(
+                        rawBody = detalle,
+                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
+                    )
+                }
+            }
+
+            // 2. Desactivar únicamente las asignaciones activas desmarcadas
+            // que pertenecen al bloque actual. No tocar otros grupos/turnos.
+            val asignacionesPorDesactivar = asignacionesDelBloque.filter {
                 AsignacionVigenciaHelper.esEstadoAsignacionPacienteActivo(it.estado) &&
-                    it.idPaciente !in idsSeleccionados
+                        it.idPaciente !in idsSeleccionados
             }
 
-            val asignacionesPorDesactivar = activasDesmarcadas.filter { asignacion ->
-                AsignacionVigenciaHelper.perteneceAlRangoDeSincronizacion(
-                    asignacion = asignacion,
-                    fechaInicioIso = fechaInicioIso,
-                    fechaFinIso = fechaFinIso
-                )
-            }
-
-            val omitidasOtroBloque = activasDesmarcadas.size - asignacionesPorDesactivar.size
+            val omitidasOtroBloque =
+                asignacionesUsuario.count {
+                    AsignacionVigenciaHelper.esEstadoAsignacionPacienteActivo(it.estado) &&
+                            it.idPaciente !in idsSeleccionados
+                } - asignacionesPorDesactivar.size
 
             logSyncDebug(
-                "Usuario=$idUsuario | rango=[$fechaInicioIso .. $fechaFinIso] | " +
-                    "seleccionados=$idsSeleccionados | porDesactivar=${asignacionesPorDesactivar.size} | " +
-                    "omitidasOtroBloque=$omitidasOtroBloque"
+                "Usuario=$idUsuario | grupo=${idGrupoAsignacion ?: "por-rango"} | " +
+                        "rango=[$fechaInicioIso .. $fechaFinIso] | " +
+                        "seleccionados=$idsSeleccionados | " +
+                        "porDesactivar=${asignacionesPorDesactivar.size} | " +
+                        "omitidasOtroBloque=$omitidasOtroBloque"
             )
 
             for (asignacion in asignacionesPorDesactivar) {
@@ -514,6 +574,10 @@ class PacienteRepository(
 
                 if (idAsignacion == null) {
                     operacionesCorrectas = false
+                    logSyncError(
+                        "No se pudo desactivar la asignación del paciente " +
+                                "${asignacion.idPaciente}: no tiene idAsignacion."
+                    )
                     continue
                 }
 
@@ -521,6 +585,7 @@ class PacienteRepository(
                     AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaInicio)
                 val finExistente =
                     AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaFin)
+
                 val fechaFinCierreIso = when {
                     inicioExistente != null && inicioExistente.after(ahora) ->
                         AsignacionVigenciaHelper.formatearIsoColombia(inicioExistente)
@@ -543,38 +608,36 @@ class PacienteRepository(
                     if (respuesta.isSuccessful) {
                         logSyncDebug(
                             "Asignación $idAsignacion (paciente=${asignacion.idPaciente}) " +
-                                "desactivada con fecha_fin=$fechaFinCierreIso"
+                                    "desactivada con fecha_fin=$fechaFinCierreIso"
                         )
                     } else {
                         operacionesCorrectas = false
+                        val detalle = respuesta.errorBody()?.string()
+                        if (respuesta.code() == HTTP_CONFLICT) {
+                            asignacion.idPaciente?.let {
+                                registrarConflicto(it, detalle)
+                            }
+                        }
                         logSyncError(
-                            "Error al desactivar $idAsignacion: HTTP ${respuesta.code()}"
+                            "Error al desactivar $idAsignacion: HTTP ${respuesta.code()} - " +
+                                    (detalle ?: "Sin detalle")
                         )
                     }
                 } catch (e: Exception) {
                     operacionesCorrectas = false
-                    logSyncError(
-                        "Error al desactivar asignación $idAsignacion",
-                        e
-                    )
+                    logSyncError("Error al desactivar asignación $idAsignacion", e)
                 }
             }
 
-            // 3. Procesar cada paciente seleccionado únicamente dentro del bloque actual.
+            // 3. Procesar cada paciente seleccionado exclusivamente en el bloque actual.
             for (idPaciente in idsSeleccionados) {
-
-                val asignacionesDelPaciente = asignacionesUsuario.filter {
+                val asignacionesDelPaciente = asignacionesDelBloque.filter {
                     it.idPaciente == idPaciente
                 }
 
                 val asignacionActiva = asignacionesDelPaciente
-                    .filter { asignacion ->
-                        AsignacionVigenciaHelper.esEstadoAsignacionPacienteActivo(asignacion.estado) &&
-                            AsignacionVigenciaHelper.perteneceAlRangoDeSincronizacion(
-                                asignacion = asignacion,
-                                fechaInicioIso = fechaInicioIso,
-                                fechaFinIso = fechaFinIso
-                            )
+                    .filter {
+                        AsignacionVigenciaHelper.esEstadoAsignacionPacienteActivo(it.estado)
                     }
                     .maxByOrNull { it.idAsignacion ?: 0 }
 
@@ -587,15 +650,15 @@ class PacienteRepository(
                             ahora = ahora
                         )
                     ) {
-                        // Ya existe una asignación activa y vigente para este bloque de turno.
                         idsConfirmados.add(idPaciente)
                         logSyncDebug(
-                            "Paciente $idPaciente ya tiene una asignación vigente (${asignacionActiva.idAsignacion}) para el bloque actual"
+                            "Paciente $idPaciente ya tiene una asignación activa y vigente " +
+                                    "en el bloque actual (${asignacionActiva.idAsignacion})."
                         )
                         continue
                     }
 
-                    // Actualizar únicamente la asignación activa perteneciente a este bloque.
+                    // Actualizar solamente la asignación activa del bloque actual.
                     val idAsignacion = asignacionActiva.idAsignacion
                     if (idAsignacion == null) {
                         operacionesCorrectas = false
@@ -615,51 +678,47 @@ class PacienteRepository(
                         if (respuesta.isSuccessful) {
                             idsConfirmados.add(idPaciente)
                             logSyncDebug(
-                                "Asignación activa $idAsignacion ajustada al rango del bloque actual para paciente $idPaciente"
+                                "Asignación $idAsignacion actualizada para paciente $idPaciente."
                             )
                         } else {
                             operacionesCorrectas = false
                             val detalle = respuesta.errorBody()?.string()
                             if (respuesta.code() == HTTP_CONFLICT) {
-                                idsEnConflicto.add(idPaciente)
-                                if (mensajeConflicto == null) {
-                                    mensajeConflicto = extraerMensajeErrorBackend(
-                                        rawBody = detalle,
-                                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
-                                    )
-                                }
+                                registrarConflicto(idPaciente, detalle)
                             }
                             logSyncError(
-                                "Error al ajustar $idAsignacion: HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
+                                "Error al actualizar asignación $idAsignacion: " +
+                                        "HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
                             )
                         }
                     } catch (e: Exception) {
                         operacionesCorrectas = false
                         logSyncError(
-                            "Error al ajustar asignación del paciente $idPaciente",
+                            "Error al actualizar la asignación del paciente $idPaciente",
                             e
                         )
                     }
                     continue
                 }
 
-                // Buscar únicamente una asignación inactiva dentro de este mismo bloque
-                // para reactivarla sin alterar registros históricos ni futuros de otros bloques.
+                // 4. Reactivar solo una asignación inactiva del mismo bloque.
                 val asignacionAnteriorBloque = asignacionesDelPaciente
                     .filter { asignacion ->
-                        AsignacionVigenciaHelper.esEstadoAsignacionPacienteInactivo(asignacion.estado) &&
-                            AsignacionVigenciaHelper.perteneceAMismoBloqueParaReactivar(
-                                asignacion = asignacion,
-                                fechaInicioIso = fechaInicioIso,
-                                fechaFinIso = fechaFinIso
-                            )
+                        AsignacionVigenciaHelper.esEstadoAsignacionPacienteInactivo(
+                            asignacion.estado
+                        ) && (
+                                idGrupoAsignacion != null ||
+                                        AsignacionVigenciaHelper.perteneceAMismoBloqueParaReactivar(
+                                            asignacion = asignacion,
+                                            fechaInicioIso = fechaInicioIso,
+                                            fechaFinIso = fechaFinIso
+                                        )
+                                )
                     }
                     .maxByOrNull { it.idAsignacion ?: 0 }
 
                 if (asignacionAnteriorBloque != null) {
-
                     val idAsignacion = asignacionAnteriorBloque.idAsignacion
-
                     if (idAsignacion == null) {
                         operacionesCorrectas = false
                         continue
@@ -678,34 +737,30 @@ class PacienteRepository(
                         if (respuesta.isSuccessful) {
                             idsConfirmados.add(idPaciente)
                             logSyncDebug(
-                                "Asignación $idAsignacion del mismo bloque reactivada para paciente $idPaciente"
+                                "Asignación $idAsignacion del bloque actual reactivada " +
+                                        "para paciente $idPaciente."
                             )
                         } else {
                             operacionesCorrectas = false
                             val detalle = respuesta.errorBody()?.string()
                             if (respuesta.code() == HTTP_CONFLICT) {
-                                idsEnConflicto.add(idPaciente)
-                                if (mensajeConflicto == null) {
-                                    mensajeConflicto = extraerMensajeErrorBackend(
-                                        rawBody = detalle,
-                                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
-                                    )
-                                }
+                                registrarConflicto(idPaciente, detalle)
                             }
                             logSyncError(
-                                "Error al reactivar $idAsignacion: HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
+                                "Error al reactivar asignación $idAsignacion: " +
+                                        "HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
                             )
                         }
                     } catch (e: Exception) {
                         operacionesCorrectas = false
                         logSyncError(
-                            "Error al reactivar asignación del paciente $idPaciente",
+                            "Error al reactivar la asignación del paciente $idPaciente",
                             e
                         )
                     }
-
                 } else {
-                    // Crear una nueva asignación para este bloque sin sobrescribir bloques anteriores o futuros.
+                    // 5. Crear una asignación nueva. Si el flujo usa grupos,
+                    // guardar también el idGrupoAsignacion para futuras sincronizaciones.
                     val nuevaAsignacion = AsignacionPacienteCuidador(
                         idAsignacion = null,
                         idUsuario = idUsuario,
@@ -713,7 +768,8 @@ class PacienteRepository(
                         fechaInicio = fechaInicioIso,
                         fechaFin = fechaFinIso,
                         estado = "Activo",
-                        observaciones = "Asignación desde app Cuidador"
+                        observaciones = "Asignación desde app Cuidador",
+                        idGrupoAsignacion = idGrupoAsignacion
                     )
 
                     try {
@@ -722,31 +778,24 @@ class PacienteRepository(
                         if (respuesta.isSuccessful) {
                             idsConfirmados.add(idPaciente)
                             logSyncDebug(
-                                "Nueva asignación creada para paciente $idPaciente en rango [$fechaInicioIso .. $fechaFinIso]"
+                                "Nueva asignación creada para paciente $idPaciente " +
+                                        "en grupo=${idGrupoAsignacion ?: "por-rango"}."
                             )
                         } else {
                             operacionesCorrectas = false
                             val detalle = respuesta.errorBody()?.string()
-
                             if (respuesta.code() == HTTP_CONFLICT) {
-                                idsEnConflicto.add(idPaciente)
-                                if (mensajeConflicto == null) {
-                                    mensajeConflicto = extraerMensajeErrorBackend(
-                                        rawBody = detalle,
-                                        fallback = MENSAJE_CONFLICTO_POR_DEFECTO
-                                    )
-                                }
+                                registrarConflicto(idPaciente, detalle)
                             }
-
                             logSyncError(
-                                "Error al crear asignación para $idPaciente: " +
-                                    "HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
+                                "Error al crear asignación para paciente $idPaciente: " +
+                                        "HTTP ${respuesta.code()} - ${detalle ?: "Sin detalle"}"
                             )
                         }
                     } catch (e: Exception) {
                         operacionesCorrectas = false
                         logSyncError(
-                            "Error al crear asignación del paciente $idPaciente",
+                            "Error al crear la asignación del paciente $idPaciente",
                             e
                         )
                     }
@@ -754,8 +803,8 @@ class PacienteRepository(
             }
 
             logSyncDebug(
-                "Sincronización finalizada. Correcta: $operacionesCorrectas | " +
-                    "confirmados=$idsConfirmados | conflictos=$idsEnConflicto"
+                "Sincronización finalizada. Correcta=$operacionesCorrectas | " +
+                        "confirmados=$idsConfirmados | conflictos=$idsEnConflicto"
             )
 
             ResultadoSincronizacionSeleccion(
@@ -765,12 +814,8 @@ class PacienteRepository(
                 idsConfirmados = idsConfirmados.toSet(),
                 mensajeError = mensajeConflicto
             )
-
         } catch (e: Exception) {
-            logSyncError(
-                "Error general al sincronizar asignaciones",
-                e
-            )
+            logSyncError("Error general al sincronizar asignaciones", e)
             ResultadoSincronizacionSeleccion(exitoso = false)
         }
     }

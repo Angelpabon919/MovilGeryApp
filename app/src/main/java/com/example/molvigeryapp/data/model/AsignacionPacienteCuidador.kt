@@ -1,3 +1,4 @@
+
 package com.example.molvigeryapp.data.model
 
 import com.google.gson.annotations.SerializedName
@@ -24,6 +25,9 @@ data class AsignacionPacienteCuidador(
     val estado: String,
 
     @SerializedName("observaciones")
-    val observaciones: String? = null
+    val observaciones: String? = null,
+
+    @SerializedName("id_grupo_asignacion")
+    val idGrupoAsignacion: String? = null
 
 ) : Serializable

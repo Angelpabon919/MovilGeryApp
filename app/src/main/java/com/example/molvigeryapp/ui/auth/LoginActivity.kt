@@ -183,6 +183,13 @@ class LoginActivity : AppCompatActivity() {
                     .putString("TOKEN", respuesta.token)
                     .apply()
 
+                //temporal
+                android.util.Log.d(
+                    "GERIAPP_AUTH",
+                    "Token autenticación: ${respuesta.token}"
+                )
+
+
                 // registra el token
                 registrarTokenFCM(idUsuario)
 
