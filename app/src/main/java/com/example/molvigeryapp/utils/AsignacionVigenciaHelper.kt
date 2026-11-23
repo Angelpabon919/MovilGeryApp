@@ -491,10 +491,12 @@ object AsignacionVigenciaHelper {
                 inicioBase
             }
 
+            // Mantener siempre la hora programada del turno.
+            // No reemplazarla por la hora actual del dispositivo.
             return RangoBloqueTurno(
-                fechaInicioIso = formatearIsoColombia(inicioReal),
+                fechaInicioIso = formatearIsoColombia(inicioBase),
                 fechaFinIso = formatearIsoColombia(finBase),
-                inicioDate = inicioReal,
+                inicioDate = inicioBase,
                 finDate = finBase,
                 asignacionTurno = asignacion,
                 turno = turno,

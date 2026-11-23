@@ -1,4 +1,3 @@
-
 package com.example.molvigeryapp.ui.encargado.citas
 
 import android.graphics.Color
