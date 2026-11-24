@@ -318,20 +318,11 @@ object AsignacionVigenciaHelper {
         asignacion: AsignacionPacienteCuidador,
         bloque: RangoBloqueTurno,
         ahora: Date = Date()
-    ): Boolean {
-        if (!estaVigente(asignacion, ahora)) return false
-
-        val inicioActual = parsearFechaIso(asignacion.fechaInicio) ?: return false
-        val finActual = parsearFechaIso(asignacion.fechaFin) ?: return false
-
-        return perteneceARangoBloque(
-            inicioActual = inicioActual,
-            finActual = finActual,
-            inicioBloque = bloque.inicioDate,
-            finBloque = bloque.finDate,
-            inicioBaseBloque = bloque.inicioBaseDate
-        )
-    }
+    ): Boolean = RecuperacionAsignacionHelper.perteneceABloqueVigente(
+        asignacion = asignacion,
+        bloque = bloque,
+        ahora = ahora
+    )
 
     /**
      * Verifica si una asignación activa pertenece al bloque/rango objetivo que se está sincronizando,
