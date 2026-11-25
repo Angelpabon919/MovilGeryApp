@@ -1,5 +1,6 @@
 package com.example.molvigeryapp.data.repository
 
+import com.example.molvigeryapp.data.api.ApiService
 import com.example.molvigeryapp.data.api.RetrofitClient
 import com.example.molvigeryapp.data.model.AsignacionTurnoUsuario
 import com.example.molvigeryapp.data.model.Turno
@@ -8,9 +9,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-class TurnoRepository {
-
-    private val api = RetrofitClient.apiService
+class TurnoRepository(
+    private val api: ApiService = RetrofitClient.apiService
+) {
 
     companion object {
         private const val CACHE_TURNOS_MS = 2_000L

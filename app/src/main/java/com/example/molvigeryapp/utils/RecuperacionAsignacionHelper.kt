@@ -184,4 +184,139 @@ object RecuperacionAsignacionHelper {
         val ahoraMs = ahora.time
         return fechasEfectivas.inicio.time <= ahoraMs && ahoraMs <= fechasEfectivas.fin.time
     }
+
+    /**
+     * Evalúa compatibilidad de grupo para operaciones de sincronización y liberación:
+     * - Si ambos tienen grupo y son iguales: coincide directamente.
+     * - Si ambos tienen grupo y difieren: nunca coincide.
+     * - Si el objetivo no tiene grupo pero la asignación pertenece a un grupo nombrado: no tocar.
+     * - Si la asignación no tiene grupo (caso real actual de BD): debe validarse por rango efectivo.
+     */
+    private enum class CompatibilidadGrupo {
+        COINCIDE_POR_GRUPO,
+        VALIDAR_POR_RANGO,
+        INCOMPATIBLE
+    }
+
+    private fun evaluarCompatibilidadGrupo(
+        grupoObjetivo: String?,
+        grupoAsignacion: String?
+    ): CompatibilidadGrupo {
+        val objetivo = grupoObjetivo?.trim()?.takeIf { it.isNotBlank() }
+        val actual = grupoAsignacion?.trim()?.takeIf { it.isNotBlank() }
+        return when {
+            objetivo != null && actual != null -> {
+                if (objetivo == actual) {
+                    CompatibilidadGrupo.COINCIDE_POR_GRUPO
+                } else {
+                    CompatibilidadGrupo.INCOMPATIBLE
+                }
+            }
+            objetivo == null && actual != null -> CompatibilidadGrupo.INCOMPATIBLE
+            else -> CompatibilidadGrupo.VALIDAR_POR_RANGO
+        }
+    }
+
+    /**
+     * Determina si una asignación del cuidador pertenece al bloque objetivo durante la
+     * sincronización (deselección / actualización / liberación), contemplando:
+     * - Compatibilidad de grupo (incluyendo registros reales del backend donde
+     *   `asignacion.idGrupoAsignacion` es null).
+     * - Comparación directa primero (sin doble conversión para -05:00 ni UTC 'Z').
+     * - Compensación exacta de -5h solo cuando corresponda.
+     */
+    fun perteneceABloqueParaSincronizacion(
+        asignacion: AsignacionPacienteCuidador,
+        fechaInicioIso: String,
+        fechaFinIso: String,
+        idGrupoAsignacion: String? = null,
+        fechaInicioBaseIso: String? = null
+    ): Boolean {
+        val inicioActual = AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaInicio)
+            ?: return false
+        val finActual = AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaFin)
+            ?: return false
+        val inicioObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaInicioIso)
+            ?: return false
+        val finObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaFinIso)
+            ?: return false
+        val inicioBaseObjetivo = fechaInicioBaseIso
+            ?.let { AsignacionVigenciaHelper.parsearFechaIso(it) }
+            ?: inicioObjetivo
+
+        return when (evaluarCompatibilidadGrupo(idGrupoAsignacion, asignacion.idGrupoAsignacion)) {
+            CompatibilidadGrupo.INCOMPATIBLE -> false
+            CompatibilidadGrupo.COINCIDE_POR_GRUPO -> true
+            CompatibilidadGrupo.VALIDAR_POR_RANGO -> {
+                resolverFechasEfectivasParaBloque(
+                    inicioActual = inicioActual,
+                    finActual = finActual,
+                    inicioBloque = inicioObjetivo,
+                    finBloque = finObjetivo,
+                    inicioBaseBloque = inicioBaseObjetivo
+                ) != null
+            }
+        }
+    }
+
+    /**
+     * Verifica si una asignación activa ya cubre de forma vigente el rango objetivo
+     * del bloque (tanto en comparación directa como con compensación exacta -5h),
+     * evitando crear POST duplicados o PATCH innecesarios para pacientes que siguen
+     * seleccionados.
+     */
+    fun coincideConRangoObjetivoEfectivo(
+        asignacion: AsignacionPacienteCuidador,
+        fechaInicioIso: String,
+        fechaFinIso: String,
+        ahora: Date = Date(),
+        idGrupoAsignacion: String? = null,
+        fechaInicioBaseIso: String? = null
+    ): Boolean {
+        if (!AsignacionVigenciaHelper.esEstadoAsignacionPacienteActivo(asignacion.estado)) {
+            return false
+        }
+
+        if (
+            evaluarCompatibilidadGrupo(
+                grupoObjetivo = idGrupoAsignacion,
+                grupoAsignacion = asignacion.idGrupoAsignacion
+            ) == CompatibilidadGrupo.INCOMPATIBLE
+        ) {
+            return false
+        }
+
+        val inicioActual = AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaInicio)
+            ?: return false
+        val finActual = AsignacionVigenciaHelper.parsearFechaIso(asignacion.fechaFin)
+            ?: return false
+        val inicioObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaInicioIso)
+            ?: return false
+        val finObjetivo = AsignacionVigenciaHelper.parsearFechaIso(fechaFinIso)
+            ?: return false
+        val inicioBaseObjetivo = fechaInicioBaseIso
+            ?.let { AsignacionVigenciaHelper.parsearFechaIso(it) }
+            ?: inicioObjetivo
+
+        val fechasEfectivas = resolverFechasEfectivasParaBloque(
+            inicioActual = inicioActual,
+            finActual = finActual,
+            inicioBloque = inicioObjetivo,
+            finBloque = finObjetivo,
+            inicioBaseBloque = inicioBaseObjetivo
+        ) ?: return false
+
+        val ahoraMs = ahora.time
+        val vigenteEnAhora =
+            fechasEfectivas.inicio.time <= ahoraMs && ahoraMs <= fechasEfectivas.fin.time
+        if (!vigenteEnAhora) {
+            return false
+        }
+
+        val mismoFin = abs(fechasEfectivas.fin.time - finObjetivo.time) <= TOLERANCIA_COMPARACION_MS
+        val finPosteriorAInicioBase =
+            fechasEfectivas.fin.time > limiteMinimoFinParaBloque(inicioBaseObjetivo, finObjetivo)
+
+        return mismoFin && finPosteriorAInicioBase
+    }
 }

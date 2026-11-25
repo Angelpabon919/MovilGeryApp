@@ -766,6 +766,28 @@ class CierreTurnoFragment : Fragment() {
                     )
 
                     if (esUltimoDia) {
+                        val asignacionesParaBloque = try {
+                            turnoRepository.obtenerAsignaciones(forceRefresh = false)
+                        } catch (_: Exception) {
+                            asignacionesTurnoCargadas
+                        }
+
+                        val resultadoLiberacion =
+                            com.example.molvigeryapp.utils.CicloSeleccionCuidadorHelper
+                                .liberarBloqueAlCerrarUltimoDiaTurno(
+                                    asignacionCerrada = asignacion,
+                                    turnoCerrado = turnoActual,
+                                    todasLasAsignacionesTurno = asignacionesParaBloque,
+                                    pacienteRepository = usuarioRepository
+                                )
+
+                        Log.d(
+                            "CIERRE_TURNO",
+                            "Respaldo de liberación de asignaciones en último día | " +
+                                "exitoso=${resultadoLiberacion.exitoso} | " +
+                                "desactivadas=${resultadoLiberacion.totalDesactivadas}/${resultadoLiberacion.totalEncontradas}"
+                        )
+
                         ProgramadorAlarmasMedicamentos.cancelarTodas(appContext)
 
                         val idUsuario = asignacion.id_usuario.takeIf { it > 0 }

@@ -181,7 +181,26 @@ class LoginActivity : AppCompatActivity() {
                     .putInt("ID_ROL", idRol)
                     .putInt("ID_USUARIO", idUsuario)
                     .putString("TOKEN", respuesta.token)
-                    .apply()
+                    .commit()
+
+                // Limpiar únicamente residuos locales de flujo/selección en el teléfono,
+                // sin enviar PATCH al servidor ni cancelar alarmas de medicamentos.
+                val prefsInstalacion = getSharedPreferences(
+                    com.example.molvigeryapp.utils.CicloSeleccionCuidadorHelper.PREF_INSTALACION,
+                    MODE_PRIVATE
+                )
+                val prefsLegacy = getSharedPreferences(
+                    com.example.molvigeryapp.utils.CicloSeleccionCuidadorHelper.PREF_LEGACY_SESSION,
+                    MODE_PRIVATE
+                )
+                com.example.molvigeryapp.utils.CicloSeleccionCuidadorHelper
+                    .prepararSesionCuidadorTrasLogin(
+                        idUsuario = idUsuario,
+                        idRol = idRol,
+                        preferenciasSesion = preferences,
+                        preferenciasInstalacion = prefsInstalacion,
+                        preferenciasLegacy = prefsLegacy
+                    )
 
                 //temporal
                 android.util.Log.d(
