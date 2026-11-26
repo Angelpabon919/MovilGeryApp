@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.molvigeryapp.R
@@ -22,7 +23,10 @@ import com.example.molvigeryapp.ui.cuidador.agenda.AgendaFragment
 import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
+import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModel
+import com.example.molvigeryapp.ui.cuidador.pacientes.PacienteViewModelFactory
 import com.example.molvigeryapp.ui.cuidador.pacientes.ProgramadorAlarmasMedicamentos
+import com.example.molvigeryapp.utils.CicloSeleccionCuidadorHelper
 import kotlinx.coroutines.launch
 
 class PerfilCuidadorFragment : Fragment() {
@@ -30,13 +34,33 @@ class PerfilCuidadorFragment : Fragment() {
     private var _binding: FragmentPerfilCuidadorBinding? = null
     private val binding get() = _binding!!
 
+    private val pacienteViewModel: PacienteViewModel by activityViewModels {
+        PacienteViewModelFactory(PacienteRepository())
+    }
+
     private val repository by lazy {
         PacienteRepository()
     }
 
+    private var cerrandoSesion = false
+
     private val preferenciasSesion by lazy {
         requireContext().getSharedPreferences(
             "SESION",
+            Context.MODE_PRIVATE
+        )
+    }
+
+    private val preferenciasInstalacion by lazy {
+        requireContext().getSharedPreferences(
+            CicloSeleccionCuidadorHelper.PREF_INSTALACION,
+            Context.MODE_PRIVATE
+        )
+    }
+
+    private val preferenciasLegacy by lazy {
+        requireContext().getSharedPreferences(
+            CicloSeleccionCuidadorHelper.PREF_LEGACY_SESSION,
             Context.MODE_PRIVATE
         )
     }
@@ -205,48 +229,52 @@ class PerfilCuidadorFragment : Fragment() {
 
     private fun configurarCerrarSesion() {
         binding.btnCerrarSesion.setOnClickListener {
+            ejecutarCierreSesionSeguro()
+        }
+    }
 
-            ProgramadorAlarmasMedicamentos.cancelarTodas(
-                requireContext().applicationContext
+    private fun ejecutarCierreSesionSeguro() {
+        if (cerrandoSesion) return
+
+        val appContext = requireContext().applicationContext
+        val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
+
+        cerrandoSesion = true
+        _binding?.btnCerrarSesion?.isEnabled = false
+
+        try {
+            CicloSeleccionCuidadorHelper.cerrarSesionCuidador(
+                idUsuario = idUsuario,
+                preferenciasSesion = preferenciasSesion,
+                preferenciasInstalacion = preferenciasInstalacion,
+                preferenciasLegacy = preferenciasLegacy,
+                onCancelarAlarmas = {
+                    ProgramadorAlarmasMedicamentos.cancelarTodas(appContext)
+                },
+                onLimpiarViewModel = {
+                    pacienteViewModel.restaurarListaCompleta()
+                }
             )
 
-            // 1. Guardamos el ID antes de limpiar la sesión.
-            val idUsuario = preferenciasSesion.getInt("ID_USUARIO", -1)
-
-            // 2. Limpiamos los datos de sesión.
-            preferenciasSesion.edit().clear().apply()
-
-            // 3. Conservamos la marca que indica que la selección
-            // debe permanecer vacía después del próximo inicio de sesión.
-            if (idUsuario > 0) {
-                preferenciasSesion.edit()
-                    .putBoolean(
-                        "seleccion_pacientes_usuario_$idUsuario",
-                        false
-                    )
-                    .remove(
-                        "pacientes_seleccionados_ids_usuario_$idUsuario"
-                    )
-                    .apply()
-
-                Log.d(
-                    "CIERRE_SESION",
-                    "Selección de pacientes reiniciada para usuario $idUsuario"
-                )
-            }
-
-            // 4. Regresamos al login y eliminamos la pantalla anterior
-            // de la pila de navegación.
-            val intent = Intent(
-                requireContext(),
-                LoginActivity::class.java
-            ).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-
-            startActivity(intent)
+            Log.d(
+                "CIERRE_SESION",
+                "Sesión cerrada localmente en el dispositivo para usuario=$idUsuario"
+            )
+            navegarALoginLimpio()
+        } finally {
+            cerrandoSesion = false
         }
+    }
+
+    private fun navegarALoginLimpio() {
+        val intent = Intent(
+            requireContext(),
+            LoginActivity::class.java
+        ).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
     }
 
     private fun configurarMenuInferior() {

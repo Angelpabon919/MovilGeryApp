@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <exclude domain="sharedpref" path="SESION.xml"/>
+    <exclude domain="sharedpref" path="GerIAppPrefs.xml"/>
+    <exclude domain="sharedpref" path="alarmas_medicamentos.xml"/>
+    <exclude domain="sharedpref" path="INSTALACION_APP.xml"/>
 </full-backup-content>

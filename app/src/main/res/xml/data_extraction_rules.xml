@@ -2,8 +2,14 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="SESION.xml"/>
+        <exclude domain="sharedpref" path="GerIAppPrefs.xml"/>
+        <exclude domain="sharedpref" path="alarmas_medicamentos.xml"/>
+        <exclude domain="sharedpref" path="INSTALACION_APP.xml"/>
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="SESION.xml"/>
+        <exclude domain="sharedpref" path="GerIAppPrefs.xml"/>
+        <exclude domain="sharedpref" path="alarmas_medicamentos.xml"/>
+        <exclude domain="sharedpref" path="INSTALACION_APP.xml"/>
     </device-transfer>
 </data-extraction-rules>
