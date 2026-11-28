@@ -29,7 +29,7 @@ class NotificacionesFragment : Fragment() {
 
     companion object {
         private const val TAG = "NOTIFICACIONES_CUIDADOR"
-        private const val INTERVALO_ACTUALIZACION = 8000L
+        private const val INTERVALO_ACTUALIZACION = 1000L
     }
 
     override fun onCreateView(

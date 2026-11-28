@@ -7,14 +7,19 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentCitasPacienteBinding
+import kotlinx.coroutines.launch
 
 class CitasPacienteFragment : Fragment() {
 
     private var _binding: FragmentCitasPacienteBinding? = null
+
     private val binding get() = _binding!!
 
     private lateinit var adapter: CitasPacienteAdapter
@@ -22,6 +27,8 @@ class CitasPacienteFragment : Fragment() {
     private val viewModel: AgendaViewModel by activityViewModels {
         AgendaViewModelFactory(PacienteRepository())
     }
+
+    private var ultimaRevisionProcesada: Long = 0L
 
     private var paciente: Paciente? = null
 
@@ -61,6 +68,8 @@ class CitasPacienteFragment : Fragment() {
         configurarRecyclerView()
         cargarCitas()
         configurarBotonVolver()
+        observarCitasActualizadas()
+        observarNovedadesAgenda()
     }
 
     // =============================================
@@ -98,6 +107,91 @@ class CitasPacienteFragment : Fragment() {
             } else {
                 "Cama no registrada"
             }
+    }
+
+    // =============================================
+// ESCUCHAR NOVEDADES MIENTRAS ESTAMOS
+// DENTRO DE LAS CITAS DEL PACIENTE
+// =============================================
+
+    private fun observarNovedadesAgenda() {
+
+        // Registrar la revisión actual antes de escuchar.
+        ultimaRevisionProcesada =
+            AgendaNovedadManager.revisionNovedad.value
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                AgendaNovedadManager.revisionNovedad.collect { revision ->
+
+                    if (revision != ultimaRevisionProcesada) {
+
+                        ultimaRevisionProcesada = revision
+
+                        android.util.Log.d(
+                            "AGENDA_ACTUALIZADOR",
+                            "CITAS_PACIENTE: Novedad detectada. " +
+                                    "Revisión: $revision"
+                        )
+
+                        // Consultar nuevamente la información del servidor.
+                        viewModel.actualizarAgenda(
+                            obtenerIdUsuario()
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun obtenerIdUsuario(): Int {
+
+        return requireActivity()
+            .getSharedPreferences(
+                "SESION",
+                android.content.Context.MODE_PRIVATE
+            )
+            .getInt("ID_USUARIO", -1)
+    }
+
+    // =============================================
+// OBSERVAR ACTUALIZACIONES DE LAS CITAS
+// =============================================
+
+    private fun observarCitasActualizadas() {
+
+        viewModel.citas.observe(viewLifecycleOwner) { citas ->
+
+            val idPaciente = paciente?.idPaciente ?: return@observe
+
+            val citasDelPaciente = citas
+                .filter { it.idPaciente == idPaciente }
+                .sortedWith(
+                    compareBy<com.example.molvigeryapp.data.model.Cita> {
+                        if (it.estado.equals("completada", ignoreCase = true)) 1 else 0
+                    }.thenBy { it.fecha }
+                        .thenBy { it.hora }
+                )
+
+            adapter.submitList(citasDelPaciente)
+
+            if (citasDelPaciente.isEmpty()) {
+                mostrarSinCitas()
+            } else {
+                mostrarListaCitas()
+            }
+
+            android.util.Log.d(
+                "AGENDA_ACTUALIZADOR",
+                "CITAS_PACIENTE: Lista actualizada. " +
+                        "Paciente: $idPaciente. " +
+                        "Citas: ${citasDelPaciente.size}"
+            )
+        }
     }
 
     // =============================================

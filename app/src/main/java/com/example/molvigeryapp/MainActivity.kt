@@ -39,6 +39,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import android.view.View
+import com.example.molvigeryapp.ui.cuidador.actualizador.detectores.ActualizadorCitas
+import com.example.molvigeryapp.ui.cuidador.actualizador.detectores.ActualizadorContenidoPaciente
+import com.example.molvigeryapp.ui.cuidador.actualizador.detectores.ActualizadorPacientes
 import com.example.molvigeryapp.ui.cuidador.pacientes.DetallePacienteFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.ProgramadorAlarmasMedicamentos
 
@@ -201,6 +204,14 @@ class MainActivity : AppCompatActivity() {
         procesarIntentAlarmaMedicamento(intent)
     }
 
+    override fun onResume(){
+        super.onResume()
+        //cada vez que gerIApp vuelve
+        //comprobar si el gps esta Activo
+        if (idRolActual ==ROL_CUIDADOR){
+            comprobarEstadoGPS()
+        }
+    }
 
     // =========================================================
     // CONTROL DEL BOTÓN FLOTANTE DE LLAMADA
@@ -589,15 +600,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun iniciarActualizadorGeriApp() {
         lifecycleScope.launch {
+            Log.d(
+                "ACTUALIZADOR_GERIAPP",
+                "Iniciando detector centralizado de citas."
+            )
+
             while (isActive) {
                 try {
-                    ActualizadorGeriApp.actualizar(applicationContext)
+                    //detector citas
+                    ActualizadorCitas.actualizar(applicationContext)
+                    //detector pacientes
+                    ActualizadorPacientes.actualizar(applicationContext)
+                    //detector de recomendaciones y cardex
+                    ActualizadorContenidoPaciente.actualizar(applicationContext)
+
                 } catch (e: CancellationException) {
                     throw e
+
                 } catch (e: Exception) {
                     Log.e(
-                        TAG,
-                        "Error actualizando datos de GerIApp",
+                        "ACTUALIZADOR_GERIAPP",
+                        "Error ejecutando detector de citas.",
                         e
                     )
                 }
@@ -728,10 +751,34 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private var dialogoUbicacionMostrado = false
+    private var dialogoUbicacionMostrado : AlertDialog? = null
 
     private fun comprobarEstadoGPS() {
-        if (isFinishing || isDestroyed || dialogoUbicacionMostrado) return
+
+        if (
+            idRolActual != ROL_CUIDADOR ||
+            isFinishing ||
+            isDestroyed
+        ) return
+
+        // Comprobar que el permiso de ubicación ya esté concedido.
+        val tieneUbicacionPrecisa =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val tieneUbicacionAproximada =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // No confundir permiso con GPS.
+        // Si no hay permiso, dejamos que funcione el flujo de permisos existente.
+        if (!tieneUbicacionPrecisa && !tieneUbicacionAproximada) {
+            return
+        }
 
         val locationManager =
             getSystemService(LOCATION_SERVICE) as android.location.LocationManager
@@ -748,26 +795,67 @@ class MainActivity : AppCompatActivity() {
             }
 
         if (ubicacionActivada) {
-            Log.d(TAG, "Ubicación activada correctamente")
+
+            Log.d(TAG, "GPS activado correctamente")
+
+            // Si había un diálogo anterior, lo cerramos.
+            dialogoUbicacionMostrado?.dismiss()
+            dialogoUbicacionMostrado = null
+
             return
         }
 
-        dialogoUbicacionMostrado = true
+        Log.w(TAG, "GPS desactivado. Bloqueando acceso a GerIApp")
 
-        AlertDialog.Builder(this)
-            .setTitle("Activa tu ubicación")
+        // Evitar mostrar varios diálogos simultáneamente.
+        if (dialogoUbicacionMostrado?.isShowing == true) {
+            return
+        }
+
+        dialogoUbicacionMostrado = AlertDialog.Builder(this)
+            .setTitle("Ubicación necesaria")
             .setMessage(
-                "GerIApp necesita que actives la ubicación de tu dispositivo " +
-                        "para verificar tu llegada y utilizar la geolocalización."
+                "Para utilizar GerIApp debes activar la ubicación " +
+                        "de tu dispositivo.\n\n" +
+                        "Esta función es necesaria para verificar tu llegada " +
+                        "y garantizar el correcto funcionamiento de tu turno."
             )
             .setCancelable(false)
-            .setNegativeButton("Ahora no", null)
             .setPositiveButton("Activar ubicación") { _, _ ->
-                startActivity(
-                    Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                )
+
+                try {
+                    val intentUbicacion = Intent(
+                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
+                    )
+
+                    startActivity(intentUbicacion)
+
+                } catch (e: Exception) {
+
+                    Log.e(
+                        TAG,
+                        "No se pudieron abrir los ajustes de ubicación",
+                        e
+                    )
+
+                    Toast.makeText(
+                        this,
+                        "No fue posible abrir los ajustes de ubicación.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
-            .show()
+            .create()
+            .also { dialogo ->
+
+                dialogo.setCanceledOnTouchOutside(false)
+
+                dialogo.setOnDismissListener {
+                    dialogoUbicacionMostrado = null
+                }
+
+                dialogo.show()
+            }
     }
 
     override fun onRequestPermissionsResult(

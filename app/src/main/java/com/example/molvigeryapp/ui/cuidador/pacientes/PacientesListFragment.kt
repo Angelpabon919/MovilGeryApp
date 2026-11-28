@@ -10,11 +10,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.model.Paciente
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.databinding.FragmentPacientesListBinding
+import kotlinx.coroutines.launch
 
 class PacientesListFragment : Fragment() {
 
@@ -65,6 +69,7 @@ class PacientesListFragment : Fragment() {
         observarResultadoSeleccion()
         configurarBotones()
         configurarBuscador()
+        observarNovedadesPacientes()
 
         binding.btnFiltroCuidado.text = "EPS"
 
@@ -127,6 +132,31 @@ class PacientesListFragment : Fragment() {
 
             aplicarFiltros()
             actualizarContador(adapter.obtenerCantidadSeleccionados())
+        }
+    }
+
+    private fun observarNovedadesPacientes() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+
+                Lifecycle.State.STARTED
+            ) {
+
+                PacientesNovedadManager.revisionNovedad.collect { revision ->
+
+                    if (revision > 0L) {
+
+                        android.util.Log.d(
+                            "PACIENTES_NOVEDAD",
+                            "Novedad recibida. Actualizando catálogo. Revisión=$revision"
+                        )
+
+                        viewModel.actualizarCatalogoPorNovedad()
+                    }
+                }
+            }
         }
     }
 

@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 
 class CardexFragment : Fragment() {
 
@@ -23,6 +24,9 @@ class CardexFragment : Fragment() {
     private val pacienteViewModel: PacienteViewModel by activityViewModels()
 
     private var cuidadoActual: CuidadoEnfermeria? = null
+
+    // Última revisión procesada por paciente.
+    private val revisionesProcesadas = mutableMapOf<Int, Long>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,7 +69,6 @@ class CardexFragment : Fragment() {
 
             if (idPaciente != null) {
 
-                // Realiza el GET de cuidados del paciente
                 pacienteViewModel.cargarCuidados(idPaciente)
 
             } else {
@@ -126,9 +129,72 @@ class CardexFragment : Fragment() {
             }
         }
 
-        iniciarActualizacionAutomatica()
+        // =============================================
+        // ESCUCHAR NOVEDADES DEL ACTUALIZADOR CENTRAL
+        // =============================================
 
+        observarNovedadesCardex()
+
+        // =============================================
+        // ACTUALIZACIÓN AUTOMÁTICA TEMPORAL
+        // NO RETIRAR HASTA VERIFICAR EL DETECTOR
+        // =============================================
+
+        iniciarActualizacionAutomatica()
     }
+
+    private fun observarNovedadesCardex() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                ContenidoPacienteNovedadManager
+                    .revisionCardex
+                    .collect { revisiones ->
+
+                        val idPaciente =
+                            pacienteViewModel.pacienteSeleccionado.value?.idPaciente
+                                ?: return@collect
+
+                        val revisionActual =
+                            revisiones[idPaciente] ?: 0L
+
+                        val revisionAnterior =
+                            revisionesProcesadas[idPaciente]
+
+                        if (revisionAnterior == null) {
+
+                            // Primera observación: establecer referencia.
+                            revisionesProcesadas[idPaciente] =
+                                revisionActual
+
+                        } else if (revisionActual > revisionAnterior) {
+
+                            // Se detectó una modificación real.
+                            revisionesProcesadas[idPaciente] =
+                                revisionActual
+
+                            android.util.Log.d(
+                                "ACTUALIZADOR_CARDEX",
+                                "Novedad detectada para paciente $idPaciente. Recargando."
+                            )
+
+                            pacienteViewModel.cargarCuidados(
+                                idPaciente
+                            )
+                        }
+                    }
+            }
+        }
+    }
+
+    // =============================================
+    // ACTUALIZACIÓN AUTOMÁTICA TEMPORAL
+    // =============================================
+
     private fun iniciarActualizacionAutomatica() {
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -168,8 +234,6 @@ class CardexFragment : Fragment() {
         binding.etLiquidos.isEnabled = false
         binding.etControlDeposicion.isEnabled = false
         binding.etAdminMedicamentos.isEnabled = false
-
-        // Ya no se guarda desde esta pantalla
     }
 
     // =============================================
