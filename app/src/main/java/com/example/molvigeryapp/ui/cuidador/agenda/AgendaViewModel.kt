@@ -7,8 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.molvigeryapp.data.model.Cita
 import com.example.molvigeryapp.data.model.Paciente
+import com.example.molvigeryapp.data.repository.CitasRepository
 import com.example.molvigeryapp.data.repository.PacienteRepository
 import com.example.molvigeryapp.utils.AsignacionVigenciaHelper
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -40,332 +44,423 @@ class AgendaViewModel(
     val error: LiveData<String?>
         get() = _error
 
+    // Evita ejecutar varias cargas simultáneamente.
+    private var cargaAgendaJob: Job? = null
+
+    // Si llega una novedad durante una carga,
+    // se realizará otra consulta al terminar.
+    private var actualizacionPendiente = false
+
+
+    // ------------------------------------------------------
+    // CARGA INICIAL DE AGENDA
+    // ------------------------------------------------------
 
     fun cargarAgenda(idUsuario: Int) {
+        solicitarCargaAgenda(idUsuario)
+    }
 
-        viewModelScope.launch {
 
+    // ------------------------------------------------------
+    // ACTUALIZACIÓN AUTOMÁTICA DE AGENDA
+    // ------------------------------------------------------
+
+    fun actualizarAgenda(idUsuario: Int) {
+
+        Log.d(
+            "AGENDA_ACTUALIZADOR",
+            "Se solicitó actualizar la Agenda."
+        )
+
+        solicitarCargaAgenda(idUsuario)
+    }
+
+
+    // ------------------------------------------------------
+    // CONTROL DE CARGAS Y ACTUALIZACIONES
+    // ------------------------------------------------------
+
+    private fun solicitarCargaAgenda(idUsuario: Int) {
+
+        if (cargaAgendaJob?.isActive == true) {
+
+            Log.d(
+                "AGENDA_ACTUALIZADOR",
+                "Ya existe una carga en ejecución. " +
+                        "Se programará una actualización pendiente."
+            )
+
+            actualizacionPendiente = true
+            return
+        }
+
+        cargaAgendaJob = viewModelScope.launch {
+
+            do {
+
+                actualizacionPendiente = false
+
+                ejecutarCargaAgenda(idUsuario)
+
+            } while (
+                actualizacionPendiente && isActive
+            )
+        }
+    }
+
+
+    // ------------------------------------------------------
+    // PROCESAR INFORMACIÓN DE AGENDA
+    // ------------------------------------------------------
+
+    private suspend fun ejecutarCargaAgenda(idUsuario: Int) {
+
+        // Solo mostrar el indicador en la carga inicial.
+        // Las actualizaciones posteriores no deben provocar
+        // parpadeos innecesarios en la pantalla.
+
+        val mostrarCarga =
+            _pacientesConCitas.value == null &&
+                    _citas.value == null
+
+        if (mostrarCarga) {
             _cargando.value = true
-            _error.value = null
+        }
 
-            try {
+        _error.value = null
 
-                // --------------------------------------------------
-                // 1. VALIDAR USUARIO
-                // --------------------------------------------------
+        try {
 
-                if (idUsuario <= 0) {
+            // --------------------------------------------------
+            // 1. VALIDAR USUARIO
+            // --------------------------------------------------
 
-                    Log.e(
-                        "AGENDA_ERROR",
-                        "No se encontró un ID_USUARIO válido."
-                    )
-
-                    _pacientesConCitas.value = emptyList()
-                    _citas.value = emptyList()
-
-                    _error.value =
-                        "No se pudo identificar al cuidador."
-
-                    return@launch
-                }
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "ID DEL CUIDADOR ACTUAL: $idUsuario"
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-
-                // --------------------------------------------------
-                // 2. OBTENER TODAS LAS ASIGNACIONES
-                // --------------------------------------------------
-
-                val asignaciones =
-                    repository.obtenerAsignacionesPacienteCuidador()
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "TOTAL DE ASIGNACIONES RECIBIDAS: ${asignaciones.size}"
-                )
-
-
-                // --------------------------------------------------
-                // 3. MOSTRAR TODAS LAS ASIGNACIONES
-                // --------------------------------------------------
-
-                asignaciones.forEach { asignacion ->
-
-                    Log.d(
-                        "AGENDA_DEBUG",
-                        """
-                        ASIGNACION ->
-                        idAsignacion=${asignacion.idAsignacion}
-                        idUsuario=${asignacion.idUsuario}
-                        idPaciente=${asignacion.idPaciente}
-                        estado=${asignacion.estado}
-                        fechaInicio=${asignacion.fechaInicio}
-                        fechaFin=${asignacion.fechaFin}
-                        """.trimIndent()
-                    )
-                }
-
-
-                // --------------------------------------------------
-                // 4. FILTRAR ASIGNACIONES DEL CUIDADOR ACTUAL
-                //    Y QUE ESTEN ACTIVAS
-                // --------------------------------------------------
-
-                val ahora = Date()
-
-                val asignacionesDelCuidador =
-                    asignaciones.filter { asignacion ->
-
-                        asignacion.idUsuario == idUsuario &&
-                                AsignacionVigenciaHelper.estaVigente(
-                                    asignacion,
-                                    ahora
-                                )
-                    }
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "ASIGNACIONES ACTIVAS DEL CUIDADOR: " +
-                            asignacionesDelCuidador.size
-                )
-
-
-                asignacionesDelCuidador.forEach { asignacion ->
-
-                    Log.d(
-                        "AGENDA_DEBUG",
-                        "ACTIVA -> " +
-                                "idAsignacion=${asignacion.idAsignacion}, " +
-                                "idPaciente=${asignacion.idPaciente}, " +
-                                "estado=${asignacion.estado}"
-                    )
-                }
-
-
-                // --------------------------------------------------
-                // 5. OBTENER IDS DE PACIENTES ASIGNADOS
-                // --------------------------------------------------
-
-                val idsPacientesSeleccionados =
-                    asignacionesDelCuidador
-                        .map { it.idPaciente }
-                        .toSet()
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "IDS DE PACIENTES SELECCIONADOS: " +
-                            idsPacientesSeleccionados
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "CANTIDAD DE PACIENTES SELECCIONADOS: " +
-                            idsPacientesSeleccionados.size
-                )
-
-
-                // --------------------------------------------------
-                // 6. OBTENER PACIENTES
-                // --------------------------------------------------
-
-                val pacientes =
-                    repository.obtenerPacientes()
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "TOTAL DE PACIENTES RECIBIDOS: " +
-                            pacientes.size
-                )
-
-
-                // --------------------------------------------------
-                // 7. OBTENER CITAS
-                // --------------------------------------------------
-
-                val todasLasCitas =
-                    repository.obtenerCitas()
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "TOTAL DE CITAS RECIBIDAS: " +
-                            todasLasCitas.size
-                )
-
-
-                // --------------------------------------------------
-                // 8. MOSTRAR TODAS LAS CITAS
-                // --------------------------------------------------
-
-                todasLasCitas.forEach { cita ->
-
-                    Log.d(
-                        "AGENDA_DEBUG",
-                        """
-                        CITA ->
-                        id=${cita.idCita}
-                        paciente=${cita.idPaciente}
-                        fecha=${cita.fecha}
-                        hora=${cita.hora}
-                        estado=${cita.estado}
-                        """.trimIndent()
-                    )
-                }
-
-
-                // --------------------------------------------------
-                // 9. FILTRAR CITAS DE LOS PACIENTES SELECCIONADOS
-                // --------------------------------------------------
-
-                val citasDelCuidador =
-                    todasLasCitas.filter { cita ->
-
-                        cita.idPaciente != null &&
-                                cita.idPaciente in
-                                idsPacientesSeleccionados
-                    }
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "CITAS DE PACIENTES SELECCIONADOS: " +
-                            citasDelCuidador.size
-                )
-
-
-                // --------------------------------------------------
-                // 10. GUARDAR CITAS
-                // --------------------------------------------------
-
-                _citas.value =
-                    citasDelCuidador
-
-
-                // --------------------------------------------------
-                // 11. OBTENER PACIENTES QUE TIENEN CITAS
-                // --------------------------------------------------
-
-                val idsPacientesConCitas =
-                    citasDelCuidador
-                        .mapNotNull { it.idPaciente }
-                        .toSet()
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "IDS DE PACIENTES CON CITAS: " +
-                            idsPacientesConCitas
-                )
-
-
-                // --------------------------------------------------
-                // 12. FILTRAR PACIENTES PARA MOSTRAR EN AGENDA
-                // --------------------------------------------------
-
-                val pacientesFiltrados =
-                    pacientes.filter { paciente ->
-
-                        paciente.idPaciente != null &&
-
-                                paciente.idPaciente in
-                                idsPacientesSeleccionados &&
-
-                                paciente.idPaciente in
-                                idsPacientesConCitas
-                    }
-
-
-                // --------------------------------------------------
-                // 13. MOSTRAR RESULTADO FINAL
-                // --------------------------------------------------
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "PACIENTES MOSTRADOS EN AGENDA: " +
-                            pacientesFiltrados.size
-                )
-
-
-                pacientesFiltrados.forEach { paciente ->
-
-                    Log.d(
-                        "AGENDA_DEBUG",
-                        "PACIENTE MOSTRADO -> " +
-                                "idPaciente=${paciente.idPaciente}"
-                    )
-                }
-
-
-                Log.d(
-                    "AGENDA_DEBUG",
-                    "======================================"
-                )
-
-
-                // --------------------------------------------------
-                // 14. ACTUALIZAR LIVE DATA
-                // --------------------------------------------------
-
-                _pacientesConCitas.value =
-                    pacientesFiltrados
-
-            } catch (e: Exception) {
+            if (idUsuario <= 0) {
 
                 Log.e(
                     "AGENDA_ERROR",
-                    "Error al cargar agenda",
-                    e
+                    "No se encontró un ID_USUARIO válido."
                 )
 
-                _pacientesConCitas.value =
-                    emptyList()
-
-                _citas.value =
-                    emptyList()
+                _pacientesConCitas.value = emptyList()
+                _citas.value = emptyList()
 
                 _error.value =
-                    "No se pudo cargar la agenda."
+                    "No se pudo identificar al cuidador."
 
-            } finally {
+                return
+            }
 
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "ID DEL CUIDADOR ACTUAL: $idUsuario"
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+
+            // --------------------------------------------------
+            // 2. OBTENER ASIGNACIONES DIRECTAMENTE
+            // --------------------------------------------------
+
+            val resultadoAsignaciones =
+                repository.obtenerAsignacionesPacienteCuidadorResult()
+
+            val asignaciones =
+                resultadoAsignaciones.getOrThrow()
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "TOTAL DE ASIGNACIONES RECIBIDAS: ${asignaciones.size}"
+            )
+
+
+            // --------------------------------------------------
+            // 3. MOSTRAR TODAS LAS ASIGNACIONES
+            // --------------------------------------------------
+
+            asignaciones.forEach { asignacion ->
+
+                Log.d(
+                    "AGENDA_DEBUG",
+                    """
+                    ASIGNACION ->
+                    idAsignacion=${asignacion.idAsignacion}
+                    idUsuario=${asignacion.idUsuario}
+                    idPaciente=${asignacion.idPaciente}
+                    estado=${asignacion.estado}
+                    fechaInicio=${asignacion.fechaInicio}
+                    fechaFin=${asignacion.fechaFin}
+                    """.trimIndent()
+                )
+            }
+
+
+            // --------------------------------------------------
+            // 4. FILTRAR ASIGNACIONES DEL CUIDADOR ACTUAL
+            //    Y QUE ESTEN VIGENTES
+            // --------------------------------------------------
+
+            val ahora = Date()
+
+            val asignacionesDelCuidador =
+                asignaciones.filter { asignacion ->
+
+                    asignacion.idUsuario == idUsuario &&
+                            AsignacionVigenciaHelper.estaVigente(
+                                asignacion,
+                                ahora
+                            )
+                }
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "ASIGNACIONES ACTIVAS DEL CUIDADOR: " +
+                        asignacionesDelCuidador.size
+            )
+
+
+            asignacionesDelCuidador.forEach { asignacion ->
+
+                Log.d(
+                    "AGENDA_DEBUG",
+                    "ACTIVA -> " +
+                            "idAsignacion=${asignacion.idAsignacion}, " +
+                            "idPaciente=${asignacion.idPaciente}, " +
+                            "estado=${asignacion.estado}"
+                )
+            }
+
+
+            // --------------------------------------------------
+            // 5. OBTENER IDS DE PACIENTES ASIGNADOS
+            // --------------------------------------------------
+
+            val idsPacientesSeleccionados =
+                asignacionesDelCuidador
+                    .map { it.idPaciente }
+                    .toSet()
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "IDS DE PACIENTES SELECCIONADOS: " +
+                        idsPacientesSeleccionados
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "CANTIDAD DE PACIENTES SELECCIONADOS: " +
+                        idsPacientesSeleccionados.size
+            )
+
+
+            // --------------------------------------------------
+            // 6. OBTENER PACIENTES ACTUALIZADOS
+            // --------------------------------------------------
+
+            val resultadoPacientes =
+                repository.obtenerPacientesResult()
+
+            val pacientes =
+                resultadoPacientes.getOrThrow()
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "TOTAL DE PACIENTES RECIBIDOS: " +
+                        pacientes.size
+            )
+
+
+            // --------------------------------------------------
+            // 7. OBTENER CITAS ACTUALIZADAS DEL SERVIDOR
+            // --------------------------------------------------
+
+            val resultadoCitas =
+                CitasRepository.obtenerCitasParaActualizador()
+
+            val todasLasCitas =
+                resultadoCitas.getOrThrow()
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "TOTAL DE CITAS RECIBIDAS DEL SERVIDOR: " +
+                        todasLasCitas.size
+            )
+
+
+            // --------------------------------------------------
+            // 8. MOSTRAR TODAS LAS CITAS
+            // --------------------------------------------------
+
+            todasLasCitas.forEach { cita ->
+
+                Log.d(
+                    "AGENDA_DEBUG",
+                    """
+                    CITA ->
+                    id=${cita.id ?: cita.idCita}
+                    paciente=${cita.idPaciente}
+                    fecha=${cita.fecha}
+                    hora=${cita.hora}
+                    estado=${cita.estado}
+                    """.trimIndent()
+                )
+            }
+
+
+            // --------------------------------------------------
+            // 9. FILTRAR CITAS DE LOS PACIENTES SELECCIONADOS
+            // --------------------------------------------------
+
+            val citasDelCuidador =
+                todasLasCitas.filter { cita ->
+
+                    cita.idPaciente != null &&
+                            cita.idPaciente in
+                            idsPacientesSeleccionados
+                }
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "CITAS DE PACIENTES SELECCIONADOS: " +
+                        citasDelCuidador.size
+            )
+
+
+            // --------------------------------------------------
+            // 10. OBTENER PACIENTES QUE TIENEN CITAS
+            // --------------------------------------------------
+
+            val idsPacientesConCitas =
+                citasDelCuidador
+                    .mapNotNull { it.idPaciente }
+                    .toSet()
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "IDS DE PACIENTES CON CITAS: " +
+                        idsPacientesConCitas
+            )
+
+
+            // --------------------------------------------------
+            // 11. FILTRAR PACIENTES PARA MOSTRAR EN AGENDA
+            // --------------------------------------------------
+
+            val pacientesFiltrados =
+                pacientes.filter { paciente ->
+
+                    paciente.idPaciente != null &&
+
+                            paciente.idPaciente in
+                            idsPacientesSeleccionados &&
+
+                            paciente.idPaciente in
+                            idsPacientesConCitas
+                }
+
+
+            // --------------------------------------------------
+            // 12. MOSTRAR RESULTADO FINAL
+            // --------------------------------------------------
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "PACIENTES MOSTRADOS EN AGENDA: " +
+                        pacientesFiltrados.size
+            )
+
+
+            pacientesFiltrados.forEach { paciente ->
+
+                Log.d(
+                    "AGENDA_DEBUG",
+                    "PACIENTE MOSTRADO -> " +
+                            "idPaciente=${paciente.idPaciente}"
+                )
+            }
+
+
+            Log.d(
+                "AGENDA_DEBUG",
+                "======================================"
+            )
+
+
+            // --------------------------------------------------
+            // 13. ACTUALIZAR LIVE DATA
+            // --------------------------------------------------
+
+            _citas.value = citasDelCuidador
+
+            _pacientesConCitas.value =
+                pacientesFiltrados
+
+
+            Log.d(
+                "AGENDA_ACTUALIZADOR",
+                "Agenda actualizada correctamente."
+            )
+
+        } catch (e: CancellationException) {
+
+            throw e
+
+        } catch (e: Exception) {
+
+            Log.e(
+                "AGENDA_ERROR",
+                "Error al cargar o actualizar Agenda. " +
+                        "Se conservan los datos anteriores.",
+                e
+            )
+
+            // No vaciar las listas si falla una consulta.
+            // Se conserva lo que el usuario ya estaba viendo.
+
+            _error.value =
+                "No se pudo actualizar la agenda. " +
+                        "Comprueba tu conexión."
+
+        } finally {
+
+            if (mostrarCarga) {
                 _cargando.value = false
             }
         }

@@ -58,6 +58,7 @@ class PacienteViewModel(
     private var idsSeleccionadosVigentes: Set<Int> = emptySet()
     private var solicitudCatalogoGeneralSeq: Long = 0L
     private var solicitudSeleccionSeq: Long = 0L
+    private var solicitudCatalogoNovedadSeq: Long = 0L
 
     private val _pacienteSeleccionado = MutableLiveData<Paciente?>()
     val pacienteSeleccionado: LiveData<Paciente?>
@@ -743,6 +744,77 @@ class PacienteViewModel(
                             resolverPacientesSeleccionadosHome()
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Actualiza el catálogo cuando se detectan pacientes nuevos.
+     *
+     * Conserva las selecciones manuales que todavía no se han guardado.
+     * No modifica las asignaciones del backend ni las preferencias locales.
+     */
+    fun actualizarCatalogoPorNovedad() {
+
+        val solicitudId = ++solicitudCatalogoNovedadSeq
+
+        viewModelScope.launch {
+            try {
+                Log.d(
+                    "SELECCION_PACIENTES",
+                    "Actualizando catálogo por detección de novedades..."
+                )
+
+                val pacientesActualizados =
+                    repository.obtenerPacientesDisponiblesParaSeleccion()
+
+                // Evitar que una consulta anterior sobrescriba una más reciente.
+                if (solicitudId != solicitudCatalogoNovedadSeq) {
+                    return@launch
+                }
+
+                // Recuperar las selecciones manuales actuales por ID.
+                val seleccionesLocales = listaPacientesSeleccion
+                    .mapNotNull { paciente ->
+                        paciente.idPaciente?.let { id ->
+                            id to paciente.isSelected
+                        }
+                    }
+                    .toMap()
+
+                // Aplicar las selecciones anteriores a los objetos nuevos.
+                pacientesActualizados.forEach { paciente ->
+
+                    val idPaciente = paciente.idPaciente
+
+                    paciente.isSelected = if (idPaciente != null) {
+                        seleccionesLocales[idPaciente]
+                            ?: (idPaciente in idsSeleccionadosVigentes)
+                    } else {
+                        false
+                    }
+                }
+
+                // Reemplazar el catálogo sin modificar las asignaciones.
+                listaPacientesSeleccion = pacientesActualizados
+
+                _pacientesDisponiblesSeleccion.value =
+                    listaPacientesSeleccion.toList()
+
+                Log.d(
+                    "SELECCION_PACIENTES",
+                    "Catálogo actualizado correctamente. " +
+                            "Pacientes recibidos=${pacientesActualizados.size} | " +
+                            "Seleccionados=${pacientesActualizados.count { it.isSelected }}"
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "SELECCION_PACIENTES",
+                    "Error al actualizar el catálogo por novedades.",
+                    e
+                )
             }
         }
     }

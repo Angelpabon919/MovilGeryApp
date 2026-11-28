@@ -187,9 +187,12 @@ class PacientesCierreTurnoFragment : Fragment() {
 
                 val idsDelTurno = if (rangoTurno != null) {
                     val (inicioTurno, finTurno) = rangoTurno
+
                     asignaciones
                         .filter { asignacion ->
                             asignacion.idUsuario == idUsuarioCuidador &&
+                                    asignacion.estado.trim()
+                                        .equals("Activo", ignoreCase = true) &&
                                     AsignacionVigenciaHelper.perteneceATurno(
                                         asignacion = asignacion,
                                         inicio = inicioTurno,
@@ -198,11 +201,15 @@ class PacientesCierreTurnoFragment : Fragment() {
                         }
                         .map { it.idPaciente }
                         .toSet()
+
                 } else {
                     val ahora = Date()
+
                     asignaciones
                         .filter { asignacion ->
                             asignacion.idUsuario == idUsuarioCuidador &&
+                                    asignacion.estado.trim()
+                                        .equals("Activo", ignoreCase = true) &&
                                     AsignacionVigenciaHelper.estaVigente(
                                         asignacion = asignacion,
                                         ahora = ahora

@@ -74,6 +74,20 @@ class PacienteRepository(
             api.getPacientes()
         }
 
+    suspend fun obtenerPacientesResult(): Result<List<Paciente>> =
+        withContext(Dispatchers.IO) {
+            try {
+                Result.success(api.getPacientes())
+            } catch (e: Exception) {
+                Log.e(
+                    "API_ERROR",
+                    "Error al obtener pacientes para actualizar Agenda",
+                    e
+                )
+                Result.failure(e)
+            }
+        }
+
     suspend fun obtenerPacientesDisponiblesParaSeleccion(): List<Paciente> =
         withContext(Dispatchers.IO) {
             api.getPacientesDisponiblesSeleccion(true)

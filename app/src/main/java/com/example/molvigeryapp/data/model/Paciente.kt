@@ -57,4 +57,6 @@ data class Paciente(
     val foto: String? = null,
 
     var isSelected: Boolean = false
-) : Serializable
+) : Serializable {
+    val id: Int? get() = idPaciente
+}

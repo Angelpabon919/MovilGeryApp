@@ -2,12 +2,16 @@ package com.example.molvigeryapp.ui.cuidador.agenda
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.molvigeryapp.R
 import com.example.molvigeryapp.data.repository.PacienteRepository
@@ -17,6 +21,7 @@ import com.example.molvigeryapp.ui.cuidador.camara.EventosCamaraFragment
 import com.example.molvigeryapp.ui.cuidador.notificaciones.NotificacionesFragment
 import com.example.molvigeryapp.ui.cuidador.pacientes.HomeFragment
 import com.example.molvigeryapp.ui.cuidador.perfil.PerfilCuidadorFragment
+import kotlinx.coroutines.launch
 
 class AgendaFragment : Fragment() {
 
@@ -28,6 +33,11 @@ class AgendaFragment : Fragment() {
     private val viewModel: AgendaViewModel by activityViewModels {
         AgendaViewModelFactory(PacienteRepository())
     }
+
+    // Última revisión de novedades procesada.
+    // Se conserva mientras exista esta instancia del Fragment.
+    private var ultimaRevisionProcesada: Long? = null
+
 
     // =========================================================
     // CREAR VISTA
@@ -47,6 +57,7 @@ class AgendaFragment : Fragment() {
 
         return binding.root
     }
+
 
     // =========================================================
     // VISTA CREADA
@@ -74,15 +85,81 @@ class AgendaFragment : Fragment() {
             -1
         )
 
+        // Registrar la revisión actual antes de iniciar
+        // la escucha para evitar una actualización duplicada.
+        if (ultimaRevisionProcesada == null) {
+
+            ultimaRevisionProcesada =
+                AgendaNovedadManager.revisionNovedad.value
+        }
+
         // Cargar la agenda del cuidador.
         viewModel.cargarAgenda(idUsuario)
+
+        // Escuchar novedades mientras Agenda esté visible.
+        observarNovedadesAgenda(idUsuario)
     }
+
+
+    // =========================================================
+    // ESCUCHAR NOVEDADES DE AGENDA
+    // =========================================================
+
+    private fun observarNovedadesAgenda(idUsuario: Int) {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                AgendaNovedadManager.revisionNovedad.collect { revision ->
+
+                    val revisionAnterior =
+                        ultimaRevisionProcesada
+
+                    if (
+                        revisionAnterior != null &&
+                        revision != revisionAnterior
+                    ) {
+
+                        ultimaRevisionProcesada = revision
+
+                        android.util.Log.d(
+                            "AGENDA_ACTUALIZADOR",
+                            "Nueva revisión detectada: $revision"
+                        )
+
+                        // Actualizar sin abandonar Agenda.
+                        viewModel.actualizarAgenda(idUsuario)
+
+                    } else if (revisionAnterior == null) {
+
+                        ultimaRevisionProcesada = revision
+
+                        Log.d(
+                            "AGENDA_ACTUALIZADOR",
+                            "FRAGMENT: Solicitando actualización de Agenda."
+                        )
+
+                        viewModel.actualizarAgenda(idUsuario)
+
+                    } else if (revisionAnterior == null) {
+
+                        ultimaRevisionProcesada = revision
+                    }
+                }
+            }
+        }
+    }
+
 
     // =========================================================
     // NOTIFICACIONES
     // =========================================================
 
     private fun configurarBotonNotificaciones() {
+
         binding.btnNotificationAgenda.setOnClickListener {
 
             parentFragmentManager
@@ -95,6 +172,7 @@ class AgendaFragment : Fragment() {
                 .commit()
         }
     }
+
 
     // =========================================================
     // NAVEGACIÓN INFERIOR
@@ -160,6 +238,7 @@ class AgendaFragment : Fragment() {
         )
     }
 
+
     // =========================================================
     // CONFIGURAR RECYCLERVIEW
     // =========================================================
@@ -201,6 +280,7 @@ class AgendaFragment : Fragment() {
         binding.rvPacientesAgenda.adapter = adapter
     }
 
+
     // =========================================================
     // OBSERVAR DATOS
     // =========================================================
@@ -226,17 +306,21 @@ class AgendaFragment : Fragment() {
             }
         }
 
-        // Burbuja de novedades de Agenda.
+
+        // Citas actualizadas correctamente.
         viewModel.citas.observe(
             viewLifecycleOwner
         ) {
 
+            // Solo se marca como vista cuando el ViewModel
+            // ha recibido correctamente las citas.
             AgendaNovedadManager.marcarComoVista(
                 requireContext()
             )
 
             binding.badgeAgenda.visibility = View.GONE
         }
+
 
         // Indicador de carga.
         viewModel.cargando.observe(
@@ -246,6 +330,7 @@ class AgendaFragment : Fragment() {
             binding.progressAgenda.visibility =
                 if (cargando) View.VISIBLE else View.GONE
         }
+
 
         // Mensajes de error.
         viewModel.error.observe(
@@ -262,6 +347,7 @@ class AgendaFragment : Fragment() {
             }
         }
     }
+
 
     // =========================================================
     // LIMPIAR BINDING

@@ -11,6 +11,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+
 object CitasRepository {
 
     private const val TAG = "CitasRepository"
@@ -36,6 +37,8 @@ object CitasRepository {
         citasCache = null
         citasCacheTiempo = 0L
     }
+
+
 
     fun invalidarCache() {
         invalidarCacheCitas()
@@ -70,6 +73,8 @@ object CitasRepository {
             }
         }
     }
+
+
 
     suspend fun obtenerPacientesDesdeApi(
         forceRefresh: Boolean = false
@@ -151,6 +156,68 @@ object CitasRepository {
             } catch (e: Exception) {
                 Log.e(TAG, "Error al obtener citas", e)
                 citasCache ?: emptyList()
+            }
+        }
+    }
+
+    suspend fun obtenerCitasParaActualizador(): Result<List<Cita>> {
+        return mutexCitas.withLock {
+            try {
+                val respuesta = RetrofitClient.apiService.getCitas()
+
+                if (!respuesta.isSuccessful) {
+                    val mensaje = "Error HTTP ${respuesta.code()} al actualizar citas"
+                    Log.e(TAG, mensaje)
+                    return@withLock Result.failure(Exception(mensaje))
+                }
+
+                val citas = respuesta.body()
+                    ?: return@withLock Result.failure(
+                        Exception("El servidor devolvió una respuesta vacía al consultar citas")
+                    )
+
+                val necesitaPacientes = citas.any {
+                    it.nombrePaciente.isNullOrBlank() && it.idPaciente != null
+                }
+
+                val pacientes = if (necesitaPacientes) {
+                    obtenerPacientes(forceRefresh = true)
+                } else {
+                    emptyList()
+                }
+
+                val citasCompletas = citas.map { cita ->
+
+                    val paciente = pacientes.find {
+                        it.idPaciente == cita.idPaciente
+                    }
+
+                    val nombreCompleto = paciente?.let {
+                        "${it.nombre} ${it.apellido}".trim()
+                    }
+
+                    cita.copy(
+                        nombrePaciente = cita.nombrePaciente
+                            ?.takeIf { it.isNotBlank() }
+                            ?:nombreCompleto,
+                        habitacion = cita.habitacion
+                            ?: paciente?.habitacion,
+                        cama = cita.cama
+                            ?: paciente?.cama
+                    )
+                }
+
+                // Actualizar caché únicamente cuando la consulta fue exitosa.
+                citasCache = citasCompletas
+                citasCacheTiempo = obtenerTiempo()
+
+                Result.success(citasCompletas)
+
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error consultando citas para el actualizador", e)
+                Result.failure(e)
             }
         }
     }

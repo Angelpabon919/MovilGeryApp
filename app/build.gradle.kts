@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.androidx.compiler)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.room.ktx)
     implementation(libs.material)
     implementation(libs.androidx.navigation.fragment.ktx)
